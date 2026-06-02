@@ -71,10 +71,7 @@ def choose_scaffold(default: str = RECOMMENDED.scaffold) -> str:
 def choose_agent(default: str = RECOMMENDED.agent) -> str:
     """Arrow-key select for the coding agent. Exactly one is chosen."""
     agents = list(AGENTS)
-    options = [
-        f"[bold]{agent}[/bold]{RECOMMENDED_SUFFIX if agent == RECOMMENDED.agent else ''}"
-        for agent in agents
-    ]
+    options = [f"[bold]{agent}[/bold]{RECOMMENDED_SUFFIX if agent == RECOMMENDED.agent else ''}" for agent in agents]
     default_index = agents.index(default) if default in agents else 0
 
     console.print(strings.PROMPT_AGENT_HEADER)

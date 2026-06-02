@@ -53,11 +53,7 @@ def validate_agent(*, scaffold: str, agent: str) -> None:
     """Refuse to assemble an agent the scaffold doesn't vendor. No filesystem writes."""
     agents_dir = SCAFFOLDS_DIR / scaffold / PER_AGENT_DIR
     if not (agents_dir / agent).is_dir():
-        available = (
-            ", ".join(sorted(p.name for p in agents_dir.iterdir() if p.is_dir()))
-            if agents_dir.is_dir()
-            else ""
-        )
+        available = ", ".join(sorted(p.name for p in agents_dir.iterdir() if p.is_dir())) if agents_dir.is_dir() else ""
         raise ScaffoldError(
             strings.ERROR_UNKNOWN_AGENT.format(
                 agent=agent,
