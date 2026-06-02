@@ -13,9 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The minimal workspace is now a complete, runnable "Hello World" example: `pipeline.py` ingests a public sample online-shop REST API (`sample_shop`), a new `report_notebook.py` (Marimo) charts the loaded data, and a new `README.md` walks through the ingest → load → visualise → deploy loop. Next-steps copy and the "Created" panel updated accordingly; `pyproject.toml` gains `marimo` and `altair`.
 - The recommended default scaffold is now `minimal_workspace`: `--yes` and the interactive picker default to the minimal single-pipeline workspace, which is also listed first in the scaffold options.
 - Bumped `WORKBENCH_REF` to `c4250057` and refreshed the bundled AI workbench scaffold.
+- Polished the Hello World onboarding: the minimal scaffold's picker label is now "Hello World", the agent-selection prompt reads "Choose your coding agents", and the post-setup "next steps" show a relative `cd` path.
+- Renamed the minimal workspace's sample job `load_data` → `load_sample_shop` and dropped its `expose` display name (so the dltHub UI shows a single, clear job name).
+- The minimal workspace now depends on `dlt[hub,filesystem]`.
 
 ### Removed
 - Dropped the `data-quality` and `transformations` toolkits from the bundled scaffolds (removing the related skills, including ontology/CDM modeling).
+- Dropped the `sql-database-pipeline` and `filesystem-pipeline` toolkits from the bundled scaffolds, leaving `data-exploration`, `dlthub-platform`, and `rest-api-pipeline`.
 
 ## [0.4.0] - 2026-05-26
 
