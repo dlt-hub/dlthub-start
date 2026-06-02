@@ -13,9 +13,9 @@ SCAFFOLDS = (
         "the full local dltHub workspace experience: agentic ingestion, transformations, data quality, and notebooks.",
     ),
     (
-        "minimal_workspace",
+        "hello_world_workspace",
         "Minimal",
-        "a local dltHub workspace with a single dlt pipeline: for a quick look how dltHub Pro works.",
+        "a local dltHub workspace with a dlt pipeline and a Marimo notebook: for a quick look how dltHub Pro works.",
     ),
 )
 
@@ -58,7 +58,7 @@ class RecommendedPath:
 
 
 RECOMMENDED = RecommendedPath(
-    scaffold="starter_workspace",
+    scaffold="hello_world_workspace",
     install_uv=True,
     run_uv_sync=True,
     agents=AGENTS,
