@@ -22,7 +22,7 @@ NEXT_STEPS: dict[str, tuple[tuple[str, str | None], ...]] = {
         (strings.STEPS_LABEL_RUN_BREWERIES, strings.CMD_DLTHUB_RUN_BREWERIES),
         (strings.STEPS_LABEL_VIEW_JOB_RUNS, strings.CMD_DLTHUB_JOB_RUNS_SHOW_BREWERIES),
     ),
-    "minimal_workspace": (
+    "hello_world_workspace": (
         (strings.STEPS_LABEL_RUN_PLACEHOLDER, strings.CMD_DLTHUB_RUN_LOAD_DATA),
         (strings.STEPS_LABEL_VIEW_PLACEHOLDER_RUNS, strings.CMD_DLTHUB_JOB_RUNS_SHOW_LOAD_DATA),
         (strings.STEPS_LABEL_EDIT_PIPELINE, None),
@@ -39,11 +39,14 @@ CREATED_TREE: dict[str, tuple[str, ...]] = {
         ".dlt/",
         ".agents/",
     ),
-    "minimal_workspace": (
+    "hello_world_workspace": (
         "pyproject.toml",
         "pipeline.py",
+        "report_notebook.py",
+        "__deployment__.py",
         ".dlt/",
         ".agents/",
+        "README.md",
     ),
 }
 
