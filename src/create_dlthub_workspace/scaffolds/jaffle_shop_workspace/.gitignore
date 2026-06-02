@@ -1,0 +1,28 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/
+
+# dlt runtime state (keep .dlt/*.toml configs tracked)
+.dlt/.var/
+.dlt/data/
+.dlt/state/
+
+# Caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Secrets
+secrets.toml
+*.secrets.toml
+
+# Local-only scratch
+_local/

@@ -1,0 +1,11 @@
+[runtime]
+log_level="WARNING"
+dlthub_telemetry = true
+workspace_id = "dcb03c18-d072-4c7a-86cd-ca329173f6b8"
+organization_id = "1548a6a7-1722-4931-8d08-9a794561f2a2"
+
+[destination.warehouse]
+destination_type="duckdb"
+
+[workspace.settings]
+name = "start-test"
