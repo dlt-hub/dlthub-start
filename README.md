@@ -151,3 +151,17 @@ run `uv sync` directly after fixing the underlying dependency or network issue.
 
 For local setup, tests, build commands, `make workspace`, and AI workbench
 scaffold regeneration, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Publishing
+
+To build and publish a release to PyPI:
+
+```bash
+make publish-library
+```
+
+This removes any previous `dist/` artifacts, builds the package with
+`uv build`, lists the artifacts, and prompts for a PyPI API token before
+uploading with `uv publish`. Before publishing, run the release checklist in
+[CONTRIBUTING.md](CONTRIBUTING.md) and make sure the version in
+`pyproject.toml` has been bumped.
