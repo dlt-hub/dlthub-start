@@ -33,11 +33,8 @@ def sample_shop():
     )
 
 
-@run.pipeline(
-    "sample_shop_pipeline",
-    expose={"display_name": "Sample Shop pipeline"}
-)
-def load_data():
+@run.pipeline("sample_shop_pipeline")
+def load_sample_shop():
     """Load sample shop data from the public REST API."""
 
     pipeline = dlt.pipeline(
@@ -51,4 +48,4 @@ def load_data():
 
 
 if __name__ == "__main__":
-    load_data()
+    load_sample_shop()

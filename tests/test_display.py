@@ -6,6 +6,7 @@ the content of rich panels.
 
 from __future__ import annotations
 
+import os
 import unittest
 from pathlib import Path
 
@@ -13,6 +14,7 @@ from create_dlthub_workspace.config import VERSION
 from create_dlthub_workspace.display import (
     CREATED_TREE,
     NEXT_STEPS,
+    _cd_target,
     console,
     print_banner,
     print_next_steps,
@@ -47,7 +49,7 @@ class PrintNextStepsTests(unittest.TestCase):
         self.assertIn("Created", output)
         self.assertIn("pipeline.py", output)
         self.assertNotIn("starter_pipeline.py", output)
-        self.assertIn("uv run dlthub run load_data", output)
+        self.assertIn("uv run dlthub run load_sample_shop", output)
         # Minimal scaffold has an instruction-only step with no command.
         self.assertIn("Edit pipeline.py", output)
 
@@ -62,6 +64,32 @@ class PrintNextStepsTests(unittest.TestCase):
     def test_unknown_scaffold_raises_key_error(self) -> None:
         with self.assertRaises(KeyError):
             print_next_steps(Path("/tmp/my_workspace"), scaffold="bogus")
+
+    def test_cd_step_uses_relative_path_for_workspace_under_cwd(self) -> None:
+        # A workspace created under the cwd should render a short, relative
+        # `cd` so the command is copy-pasteable from where the user ran us.
+        project_dir = Path.cwd() / "hello-world"
+        with console.capture() as cap:
+            print_next_steps(project_dir, scaffold="minimal_workspace")
+        output = cap.get()
+
+        self.assertIn("cd hello-world", output)
+        self.assertNotIn(f"cd {project_dir}", output)
+
+
+class CdTargetTests(unittest.TestCase):
+    def test_relative_when_directly_under_cwd(self) -> None:
+        self.assertEqual(_cd_target(Path.cwd() / "hello-world"), "hello-world")
+
+    def test_relative_for_nested_path_under_cwd(self) -> None:
+        target = Path.cwd() / "nested" / "hello-world"
+        self.assertEqual(_cd_target(target), os.path.join("nested", "hello-world"))
+
+    def test_absolute_when_outside_cwd(self) -> None:
+        # A sibling of the cwd would relativize to "../..", so we keep it
+        # absolute instead of printing an ugly traversal.
+        outside = Path.cwd().parent / "outside-xyz" / "hello-world"
+        self.assertEqual(_cd_target(outside), str(outside))
 
 
 class CreatedTreeTests(unittest.TestCase):

@@ -9,7 +9,7 @@ VERSION = "0.5.0"
 SCAFFOLDS = (
     (
         "minimal_workspace",
-        "Minimal",
+        "Hello World",
         "a local dltHub workspace with a single dlt pipeline: for a quick look how dltHub Pro works.",
     ),
     (
