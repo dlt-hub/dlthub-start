@@ -24,7 +24,7 @@ from __future__ import annotations
 PROMPT_PROJECT_NAME = "[bold]What should we call the workspace?[/bold]"
 PROMPT_SCAFFOLD_HEADER = "\n[bold]Choose your onboarding experience[/bold] [dim](↑/↓ to move, enter to confirm)[/dim]"
 PROMPT_AGENTS_HEADER = (
-    "\n[bold]Choose AI workbench(es)[/bold] "
+    "\n[bold]Choose your coding agents[/bold] "
     "[dim](recommended: keep them all selected; space to toggle, enter to confirm)[/dim]"
 )
 PROMPT_INSTALL_UV = "uv is required but was not found. Install uv now?"
@@ -100,7 +100,7 @@ STEPS_LABEL_INSTALL_DEPS = "Install workspace dependencies:"
 CMD_INSTALL_UV_UNIX = "curl -LsSf https://astral.sh/uv/install.sh | sh"
 CMD_UV_SYNC = "uv sync"
 CMD_DLTHUB_RUN_BREWERIES = "uv run dlthub run load_breweries"
-CMD_DLTHUB_RUN_LOAD_DATA = "uv run dlthub run load_data"
+CMD_DLTHUB_RUN_SAMPLE_SHOP = "uv run dlthub run load_sample_shop"
 CMD_DLTHUB_JOB_RUNS_SHOW_BREWERIES = "uv run dlthub job runs show starter_pipeline.load_breweries"
-CMD_DLTHUB_JOB_RUNS_SHOW_LOAD_DATA = "uv run dlthub job runs show pipeline.load_data"
+CMD_DLTHUB_JOB_RUNS_SHOW_SAMPLE_SHOP = "uv run dlthub job runs show pipeline.load_sample_shop"
 CMD_CD = "cd {project_dir}"

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
@@ -23,8 +24,8 @@ NEXT_STEPS: dict[str, tuple[tuple[str, str | None], ...]] = {
         (strings.STEPS_LABEL_VIEW_JOB_RUNS, strings.CMD_DLTHUB_JOB_RUNS_SHOW_BREWERIES),
     ),
     "minimal_workspace": (
-        (strings.STEPS_LABEL_RUN_SAMPLE_SHOP, strings.CMD_DLTHUB_RUN_LOAD_DATA),
-        (strings.STEPS_LABEL_VIEW_SAMPLE_SHOP_RUNS, strings.CMD_DLTHUB_JOB_RUNS_SHOW_LOAD_DATA),
+        (strings.STEPS_LABEL_RUN_SAMPLE_SHOP, strings.CMD_DLTHUB_RUN_SAMPLE_SHOP),
+        (strings.STEPS_LABEL_VIEW_SAMPLE_SHOP_RUNS, strings.CMD_DLTHUB_JOB_RUNS_SHOW_SAMPLE_SHOP),
         (strings.STEPS_LABEL_EDIT_PIPELINE, None),
     ),
 }
@@ -235,13 +236,26 @@ def print_banner() -> None:
     )
 
 
+def _cd_target(project_dir: Path) -> str:
+    """Path for the `cd` step. Relative to the cwd the user ran from when the
+    workspace sits under it (so the command is short and copy-pasteable);
+    absolute otherwise (different parent, or a different Windows drive)."""
+    try:
+        relative = Path(os.path.relpath(project_dir))
+    except ValueError:
+        return str(project_dir)
+    if os.pardir in relative.parts:
+        return str(project_dir)
+    return str(relative)
+
+
 def print_next_steps(project_dir: Path, *, scaffold: str, agents: tuple[str, ...] = ()) -> None:
     """Post-setup tips panel. Steps are tailored to the chosen scaffold."""
     created_tree = CREATED_TREE[scaffold]
     # Every panel starts the user at "go to the directory" so the rest of the
     # numbered commands can be copy-pasted without context-switching.
     steps: tuple[tuple[str, str | None], ...] = (
-        (strings.STEPS_LABEL_CD, strings.CMD_CD.format(project_dir=project_dir)),
+        (strings.STEPS_LABEL_CD, strings.CMD_CD.format(project_dir=_cd_target(project_dir))),
         *NEXT_STEPS[scaffold],
     )
 
@@ -283,7 +297,7 @@ def print_resume_steps(project_dir: Path, *, uv_installed: bool) -> None:
     workspace (vendored into the scaffold), so the only thing the user still
     needs to do is finish the uv setup."""
     steps: list[tuple[str, str]] = [
-        (strings.STEPS_LABEL_CD, strings.CMD_CD.format(project_dir=project_dir)),
+        (strings.STEPS_LABEL_CD, strings.CMD_CD.format(project_dir=_cd_target(project_dir))),
     ]
     if not uv_installed:
         steps.append((strings.STEPS_LABEL_INSTALL_UV, strings.CMD_INSTALL_UV_UNIX))

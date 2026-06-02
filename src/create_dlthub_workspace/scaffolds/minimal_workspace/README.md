@@ -16,13 +16,13 @@ The smallest complete trip through the full dltHub workflow: **ingest â†’ load â
 cd <your-workspace>
 
 # Deploy and run the pipeline (you'll be prompted to connect/login the first time)
-uv run dlthub run load_data
+uv run dlthub run load_sample_shop
 ```
 
 ## Watch the run
 
 ```bash
-uv run dlthub job runs show pipeline.load_data
+uv run dlthub job runs show pipeline.load_sample_shop
 ```
 
 Open [app.dlthub.com](https://app.dlthub.com) to monitor and schedule your jobs.
@@ -37,4 +37,4 @@ uv run dlthub job serve report_notebook
 
 ## Make it yours
 
-Edit `pipeline.py` to swap in your own source, then re-run with `uv run dlthub run load_data`.
+Edit `pipeline.py` to swap in your own source, then re-run with `uv run dlthub run load_sample_shop`.
