@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "dlthub-start"
-version = "0.4.0"
+version = "0.5.0"
 description = "Scaffold a dltHub workspace from the official starter project."
 readme = "README.md"
 requires-python = ">=3.10"

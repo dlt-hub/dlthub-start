@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-VERSION = "0.4.0"
+VERSION = "0.5.0"
 
 SCAFFOLDS = (
     (
