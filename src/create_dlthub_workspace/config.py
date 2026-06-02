@@ -8,14 +8,14 @@ VERSION = "0.4.0"
 
 SCAFFOLDS = (
     (
-        "starter_workspace",
-        "Starter",
-        "the full local dltHub workspace experience: agentic ingestion, transformations, data quality, and notebooks.",
-    ),
-    (
         "minimal_workspace",
         "Minimal",
         "a local dltHub workspace with a single dlt pipeline: for a quick look how dltHub Pro works.",
+    ),
+    (
+        "starter_workspace",
+        "Starter",
+        "the full local dltHub workspace experience: agentic ingestion, transformations, data quality, and notebooks.",
     ),
 )
 
@@ -56,7 +56,7 @@ class RecommendedPath:
 
 
 RECOMMENDED = RecommendedPath(
-    scaffold="starter_workspace",
+    scaffold="minimal_workspace",
     install_uv=True,
     run_uv_sync=True,
     agents=AGENTS,

@@ -65,7 +65,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--yes",
         "-y",
         action="store_true",
-        help="Run the recommended path (starter scaffold, install uv, uv sync, all AI workbenches).",
+        help="Run the recommended path (minimal scaffold, install uv, uv sync, all AI workbenches).",
     )
     parser.add_argument(
         "--verbose",

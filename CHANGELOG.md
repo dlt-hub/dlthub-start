@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- The recommended default scaffold is now `minimal_workspace`: `--yes` and the interactive picker default to the minimal single-pipeline workspace, which is also listed first in the scaffold options.
 - Bumped `WORKBENCH_REF` to `c4250057` and refreshed the bundled AI workbench scaffold.
 
 ### Removed
