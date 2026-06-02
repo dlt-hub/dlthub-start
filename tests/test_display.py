@@ -41,7 +41,7 @@ class PrintNextStepsTests(unittest.TestCase):
 
     def test_minimal_scaffold_renders_with_its_pipeline_command(self) -> None:
         with console.capture() as cap:
-            print_next_steps(Path("/tmp/my_workspace"), scaffold="minimal_workspace")
+            print_next_steps(Path("/tmp/my_workspace"), scaffold="hello_world_workspace")
         output = cap.get()
 
         self.assertIn("Created", output)
