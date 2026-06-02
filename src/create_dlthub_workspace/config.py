@@ -28,9 +28,7 @@ DEFAULT_PROJECT_NAME = "my-workspace"
 TOOLKITS = (
     "data-exploration",
     "dlthub-platform",
-    "filesystem-pipeline",
     "rest-api-pipeline",
-    "sql-database-pipeline",
 )
 
 # Pinned commit of dlt-hub/dlthub-ai-workbench that `make generate-ai` fetches.

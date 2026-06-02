@@ -90,33 +90,6 @@ dlthub-platform:
     .agents/skills/dlthub-platform-workflow/SKILL.md:
       sha3_256: bc503fdbe6b822b77281b7e7b1366009e557c8c4c72b8c4714cb11928e9cfdfa
   name: dlthub-platform
-filesystem-pipeline:
-  version: 0.1.0
-  description: Load files (CSV, Parquet, JSONL, or custom) from local disk, S3, GCS,
-    Azure, or SFTP into a destination using dlt's filesystem source.
-  tags:
-  - dlt
-  - filesystem
-  - s3
-  - gcs
-  - azure
-  - sftp
-  - csv
-  - parquet
-  - jsonl
-  dependencies:
-  - init
-  workflow_entry_skill: create-filesystem-pipeline
-  installed_at: '1970-01-01T00:00:00+00:00'
-  agent: codex
-  files:
-    .agents/skills/add-incremental-loading/SKILL.md:
-      sha3_256: 71651e931da9336eafb103bd5f33826075df7c167d9ce32279031282305fc1cc
-    .agents/skills/create-filesystem-pipeline/SKILL.md:
-      sha3_256: 98f4df9c847c6be29bf38f309418f4bc2b09f1eefe141d205583115d4a1885dd
-    .agents/skills/filesystem-pipeline-workflow/SKILL.md:
-      sha3_256: 28c4e3c09fcddf32423105fdde85c1f328dd165c3474d8d70ddbe09ef7203f1a
-  name: filesystem-pipeline
 rest-api-pipeline:
   version: 0.1.0
   description: 'Build REST API pipelines with dlt: scope, debug and validate data'
@@ -147,41 +120,5 @@ rest-api-pipeline:
       sha3_256: 02d15c32d6acdd1f20b87e2a673e0c836481ef49f1681cca32a6d151e5d0a2e6
     .agents/skills/rest-api-pipeline-workflow/SKILL.md:
       sha3_256: 6f032ab42208ab3852d96a0754a15744a66096f7b1da95ec1fe0bebc3e0f3d8d
-  mcp_servers:
-  - dlt-workspace-mcp
-  name: rest-api-pipeline
-sql-database-pipeline:
-  version: 0.1.0
-  description: 'Build SQL database pipelines with dlt: connect to any SQL source,
-    load tables to a destination, tune performance with backends'
-  tags:
-  - dlt
-  - etl
-  - data-pipeline
-  - python
-  - sql
-  - database
-  dependencies:
-  - init
-  workflow_entry_skill: find-source
-  installed_at: '1970-01-01T00:00:00+00:00'
-  agent: codex
-  files:
-    .agents/skills/add-table/SKILL.md:
-      sha3_256: 3bfd4cb487748055e6d52106bff21364292860e872a98245c705c1f75f7c5435
-    .agents/skills/adjust-table/SKILL.md:
-      sha3_256: ca6662f2924086621d0553c3151e43ad31105fb0df6fae84b1bbed768b470b87
-    .agents/skills/create-sql-database-pipeline/SKILL.md:
-      sha3_256: 90b52616aa42b95013c86be314625d7fd2b1a5b69ffc5bdf8ce769be6cd1eb51
-    .agents/skills/debug-pipeline/SKILL.md:
-      sha3_256: ba1c3bac833d63b4f56d0639cbbf8b6a5d8d901a24b7cea0a06efc0ae601f883
-    .agents/skills/find-source/SKILL.md:
-      sha3_256: 2e3da4ff822a66feed63ec315114b1317e9cba062f96e57ee02e0ee651fa0048
-    .agents/skills/validate-data/SKILL.md:
-      sha3_256: c418cac9d1a685e2c7db71d9a90ae1e74e9b57fc4961028369bb1784d762e7f4
-    .agents/skills/view-data/SKILL.md:
-      sha3_256: 861538e8835b3f0edc920028d128fdf40577e7837ad4b81c35faa9774e839b5c
-    .agents/skills/sql-database-pipeline-workflow/SKILL.md:
-      sha3_256: 0b36a2f1801b324ecf9662b470ae6ec73368c350482fc88da2a3620957318b7b
   mcp_servers:
   - dlt-workspace-mcp

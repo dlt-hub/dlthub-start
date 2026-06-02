@@ -1,6 +1,6 @@
 ---
 name: view-data
-description: Query, explore, or view data loaded by a dlt SQL database pipeline. Use when the user asks to query data, explore loaded tables, check row counts, write Python that reads pipeline data, or asks questions like "show me the data", "what users are there", "how much did we spend". Covers dlt dataset API, ibis expressions, and ReadableRelation. NOT for querying the source database — use the pipeline's destination.
+description: Query, explore, or view data loaded by a dlt pipeline. Use when the user asks to query data, explore loaded tables, check row counts, write Python that reads pipeline data, or asks questions like "show me the data", "what users are there", "how much did we spend". Covers dlt dataset API, ibis expressions, and ReadableRelation.
 argument-hint: "[pipeline-name] [query]"
 ---
 
@@ -80,4 +80,4 @@ dataset("SELECT * FROM my_table WHERE amount > 100").df()
 
 ## Custom charts and insights
 
-If the user wants to create custom charts or generate insights from their data, install the **data-exploration** toolkit (`dlthub ai toolkit data-exploration install`) and follow the workflow there.
+If the user wants to create custom charts or generate insights from their data, install the **data-exploration** toolkit (`dlthub ai toolkit install data-exploration`) and follow the workflow there.

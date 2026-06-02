@@ -1,14 +1,12 @@
 ---
 name: debug-pipeline
-description: Debug and inspect a dlt SQL database pipeline after running it. Use after a pipeline run (success or failure) to inspect traces, load packages, schema, and diagnose errors like connection failures, missing credentials, driver issues, or failed jobs.
+description: Debug and inspect a dlt pipeline after running it. Use after a pipeline run (success or failure) to inspect traces, load packages, schema, data, and diagnose errors like missing credentials or failed jobs.
 argument-hint: "[pipeline-name] [issue]"
 ---
 
-# Debug a SQL database dlt pipeline
+# Debug a dlt pipeline
 
-**Essential Reading:** 
-- https://dlthub.com/docs/dlt-ecosystem/verified-sources/sql_database/troubleshooting
-- https://dlthub.com/docs/dlt-ecosystem/verified-sources/sql_database/advanced
+**Essential Reading** https://dlthub.com/docs/reference/explainers/how-dlt-works
 
 Parse `$ARGUMENTS`:
 - `pipeline-name` (optional): the dlt pipeline name. If omitted, infer from session context. If ambiguous, ask the user and stop.
@@ -18,21 +16,27 @@ Parse `$ARGUMENTS`:
 
 Always do this first before any pipeline debugging:
 
-**IMPORTANT:** Note the current values before changing them so you can restore exactly what you changed — only revert what YOU modified.
+**IMPORTANT:** Before making changes, note the current values in config files and pipeline code so you can restore them exactly. You are changing the user's files — only revert what YOU changed.
 
 1. **Set log level to INFO** in `.dlt/config.toml`:
    ```toml
    [runtime]
-   log_level = "INFO"
+   log_level="INFO"
    ```
 
-2. **Add progress logging** to the `dlt.pipeline()` call:
+2. **Show HTTP error response bodies** (hidden by default!):
+   ```toml
+   [runtime]
+   http_show_error_body = true
+   ```
+
+3. **Add progress logging** to the `dlt.pipeline()` call (NOT `pipeline.run()` — that argument doesn't exist):
    ```python
    pipeline = dlt.pipeline(..., progress="log")
    ```
-   NOTE: `progress` goes on `dlt.pipeline()`, **not** on `pipeline.run()` — that argument does not exist on `run()`.
 
-This shows SQL queries being executed, rows fetched, reflection steps, and normalize/load progress.
+This shows HTTP requests being made, data extracted, pagination steps, and normalize/load progress. Essential for diagnosing any issue.
+**Essential reading if problems PERSIST**: https://dlthub.com/docs/general-usage/http/rest-client.md
 
 ## Run the pipeline
 
@@ -40,66 +44,58 @@ This shows SQL queries being executed, rows fetched, reflection steps, and norma
 uv run python <source>_pipeline.py
 ```
 
-### Common exceptions and what they mean
+Common exceptions and what they mean:
+- `ConfigFieldMissingException` - config / secrets are missing. inspect exception message
+- `PipelineFailedException` - pipeline failed in one of the steps. inspect exception trace to find a root cause. find **load_id** to identify load package that failed
 
-| Exception | Cause |
-|---|---|
-| `ConfigFieldMissingException` | A credentials field is missing or misnamed in `secrets.toml` — check the section name and field names exactly |
-| `OperationalError` / `Can't connect` | Wrong host, port, or credentials; DB not reachable from this network |
-| `ModuleNotFoundError: No module named 'sqlalchemy'` | Run `uv add "dlt[sql_database]"` |
-| `ModuleNotFoundError: No module named 'pymysql'` | Install the dialect driver, e.g. `uv add pymysql` |
-| `MissingDependencyException: numpy required` | The pyarrow backend also needs numpy: `uv add numpy` |
-| `NoSuchTableError` | Table name or schema is wrong — check spelling and schema parameter |
-| `PipelineStepFailed` at extract | Check the full traceback; usually a connection or reflection error |
+In extract step most of the exceptions are coming from source/resource code that you wrote!
 
-### Pipeline loads 0 rows
+### First run of the pipeline
 
-- Check that the table name matches exactly (case-sensitive on some databases)
-- If using `schema=`, verify the schema name is correct
-- Run `DESCRIBE <table>` or `SELECT COUNT(*) FROM <table>` directly against the DB to confirm data exists
+**Suggest to run** the pipeline before asking the user to fill in credentials:
+
+Expected: a `ConfigFieldMissingException` or `401 Unauthorized` error confirming:
+- The pipeline structure is correct
+- Config/secrets resolution is wired up properly
+- The right API endpoint is being hit
+
+Tell the user what credentials to fill in and how to get them. If credentials are unknown, research the data source (web search for API docs, auth setup guides — similar to what `find-source` does).
+
+After any run (success or failure), use the dlt CLI for inspection:
 
 ### Pipeline appears stuck / runs too long
 
-Large tables with no `add_limit()` can take a long time — check `progress="log"` output to confirm rows are flowing. If truly stuck:
+A pipeline that runs for a long time is suspicious but MAY be normal (large datasets). Analyze stdout before killing it:
 
-- The DB may be throttling or has a slow full-scan — add a `WHERE` clause via `query_adapter_callback`
-- Try `chunk_size=100` to reduce memory pressure and confirm rows are trickling through
-- To isolate which table is slow in a multi-table pipeline, load one table at a time:
-  ```python
-  source = sql_database(table_names=["orders", "users"])
-  pipeline.run(source.with_resources("orders").add_limit(1))
+**Paginator loops forever** — repeated requests to the same URL or page:
+- dlt's auto-detected paginator can guess wrong and loop. Fix: set an explicit `"paginator"` in the resource config.
+- `OffsetPaginator`/`PageNumberPaginator` without `stop_after_empty_page=True` require `total_path` or `maximum_offset`/`maximum_page`, otherwise they loop forever.
+- `JSONResponseCursorPaginator` with wrong `cursor_path` → cursor never advances → infinite loop.
+
+**Silent retries look like a hang** — the pipeline may be retrying failed HTTP requests:
+- Default: 5 retries with exponential backoff (up to 16s per attempt), 60s request timeout.
+- A single failing endpoint can stall for 60-80+ seconds before raising an error.
+- Override in `.dlt/config.toml` for faster failure during debugging:
+  ```toml
+  [runtime]
+  request_timeout = 15
+  request_max_attempts = 2
   ```
+- Ref: https://dlthub.com/docs/general-usage/http/requests.md (timeouts and retries)
 
-**Check that `table_names` is set on the source, not filtered via `.with_resources()`.**
+**Working but slow** — each request returns new data and URL changes. Use `.add_limit(N)` to cap pages during development.
 
-`sql_database()` without `table_names` reflects the entire schema before filtering — slow on large databases. Always pass the tables you need upfront:
-
-```python
-# good — reflects only these two tables
-source = sql_database(table_names=["family", "clan"])
-
-# slow — reflects all tables in the schema first, then filters
-source = sql_database().with_resources("family", "clan")
+**Can't tell which resource is stuck** in a multi-resource pipeline — switch to sequential extraction:
+```toml
+[extract]
+next_item_mode = "fifo"
 ```
+This makes one resource complete fully before the next starts, making logs much easier to follow.
+Ref: https://dlthub.com/docs/reference/performance.md (extraction modes)
 
-**Check the backend — this is the most common cause of slow pipelines.**
+### Pipeline succeeds but loads 0 rows
 
-The default `sqlalchemy` backend fetches rows one at a time through Python objects. Switch to a faster backend:
-
-| Backend | Speed | Notes |
-| --- | --- | --- |
-| `sqlalchemy` | baseline | Default; safe but slow |
-| `pyarrow` | ~20–30x faster | Best general upgrade; also needs `numpy` (`uv add numpy`) |
-| `connectorx` | ~2x faster than pyarrow | Rust-based; great for large MySQL/PostgreSQL tables; uses its own connection string format |
-
-Apply by passing `backend=` to `sql_table` or `sql_database`:
-```python
-source = sql_database(table_names=["orders"], backend="pyarrow")
-# or
-source = sql_database(table_names=["orders"], backend="connectorx")
-```
-
-Ref: https://dlthub.com/docs/dlt-ecosystem/verified-sources/sql_database/configuration#configuring-the-backend
+Likely a wrong or missing `data_selector`. dlt auto-detects the data array in the response but can fail silently on complex/nested responses. Fix: explicitly set `data_selector` as a JSONPath to the array (e.g. `"data"`, `"results.items"`).
 
 ### Incremental loading stops picking up new data
 
@@ -111,15 +107,13 @@ Look for `last_value` in the resource state — verify it updates between runs. 
 Ref: https://dlthub.com/docs/general-usage/incremental/troubleshooting.md
 
 
-## Post-mortem debugging
-
-Inspect the last pipeline run:
+## Post mortem debugging and trace
+You can inspect last pipeline run:
 
 ```
 dlt pipeline -vv <pipeline_name> trace
 ```
-
-`-vv` goes BEFORE the pipeline name. Shows credentials resolution, step timing, and failures.
+Note: `-vv` goes BEFORE the pipeline name. Shows config/secret resolution, step timing, failures.
 
 ## Load packages
 Each pipeline run generated one or more load packages. Use trace tool to find their ids.
@@ -156,15 +150,18 @@ Useful for verifying data transformations and debugging destination errors.
 
 ## Clean up after debugging
 
-Before moving on, revert all debugging settings YOU introduced:
+Before moving on, revert all debugging settings YOU introduced. Only revert what you changed — preserve any user settings that existed before.
 
-- [ ] `.dlt/config.toml` — restore `log_level` to its previous value (or remove if you added it)
+Checklist:
+- [ ] `.dlt/config.toml` — restore `log_level` to its previous value (e.g. `WARNING`). Remove `http_show_error_body`, `request_timeout`, `request_max_attempts` if you added them. Remove `[extract] next_item_mode` if you added it.
 - [ ] Pipeline script — remove `progress="log"` from `dlt.pipeline()` if you added it. Remove `.add_limit(N)` if you added it for debugging.
 
-Do NOT remove settings the user had before you started.
+Do NOT remove settings the user had before you started debugging.
 
 ## Next steps
 
-- **Load successful** → use `validate-data` to inspect schema and data, or hand over to `explore-data` (`data-exploration` toolkit) to jump straight into charts and analysis
-- **Config/secrets missing** → revisit `create-sql-database-pipeline` — "Set up config and secrets" section
-- **No pipeline exists yet** → use `create-sql-database-pipeline` to scaffold one first
+*If a quick-start path is active, follow that path's sequence instead — this list is for standalone use.*
+
+- **Load successful** → use `validate-data` to inspect schema and data, or hand over to `explore-data` (data-exploration toolkit) to jump straight into charts and analysis
+- **Config/secrets missing** → check TOML sections, revisit `create-rest-api-pipeline` step 6b for credential setup
+- **No pipeline exists** → use `create-rest-api-pipeline` to scaffold one first
