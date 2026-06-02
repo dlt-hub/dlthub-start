@@ -7,15 +7,23 @@ from pathlib import Path
 from create_dlthub_workspace.config import AGENTS
 from create_dlthub_workspace.errors import ScaffoldError
 from create_dlthub_workspace.scaffold import (
-    AGENT_FILES,
     INSTALL_TIME_SENTINEL,
+    PER_AGENT_DIR,
     SCAFFOLDS_DIR,
-    _drop_unselected_agent_entries,
     _stamp_install_time,
     copy_scaffold,
+    validate_agent,
     validate_scaffold_name,
     validate_target_dir,
 )
+
+# Top-level entries that belong to each agent. Used only by the tests to assert
+# the assembled workspace contains the selected agent's files and none other.
+AGENT_OWNED = {
+    "claude": (".claude", ".claudeignore", ".mcp.json"),
+    "cursor": (".cursor", ".cursorignore"),
+    "codex": (".codex", ".codexignore", "AGENTS.md", ".agents"),
+}
 
 
 class CopyScaffoldTests(unittest.TestCase):
@@ -50,10 +58,54 @@ class CopyScaffoldTests(unittest.TestCase):
                 self.assertFalse((project_dir / ".dlt" / "data").exists())
                 self.assertFalse((project_dir / ".dlt" / "state").exists())
 
+    def test_no_agent_copies_only_shared_source(self) -> None:
+        # Without an agent we lay down just the shared source — no AI files and
+        # not the _agents/ pool itself.
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_dir = Path(tmpdir) / "shared_only"
+            copy_scaffold(project_dir, scaffold="minimal_workspace")
+
+            self.assertFalse((project_dir / PER_AGENT_DIR).exists())
+            for entries in AGENT_OWNED.values():
+                for entry in entries:
+                    self.assertFalse((project_dir / entry).exists(), f"{entry} should not be present")
+
+    def test_assembles_only_the_selected_agent(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_dir = Path(tmpdir) / "claude_only"
+            copy_scaffold(project_dir, scaffold="minimal_workspace", agent="claude")
+
+            # The selected agent's files are present...
+            for entry in AGENT_OWNED["claude"]:
+                self.assertTrue((project_dir / entry).exists(), f"{entry} should be present")
+            # ...the others are not, and the _agents/ pool is never shipped.
+            for entry in (*AGENT_OWNED["cursor"], *AGENT_OWNED["codex"]):
+                self.assertFalse((project_dir / entry).exists(), f"{entry} should not be present")
+            self.assertFalse((project_dir / PER_AGENT_DIR).exists())
+            # The agent brings its own toolkits manifest, merged into shared .dlt/.
+            self.assertTrue((project_dir / ".dlt" / ".toolkits").exists())
+            self.assertTrue((project_dir / ".dlt" / "config.toml").exists())
+
+    def test_codex_ships_agents_dir(self) -> None:
+        # `.agents/` is codex's skill source and should ship only with codex.
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_dir = Path(tmpdir) / "codex_only"
+            copy_scaffold(project_dir, scaffold="minimal_workspace", agent="codex")
+
+            self.assertTrue((project_dir / ".agents").is_dir())
+            self.assertTrue((project_dir / "AGENTS.md").exists())
+            self.assertFalse((project_dir / ".claude").exists())
+            self.assertFalse((project_dir / ".cursor").exists())
+
     def test_raises_for_unknown_scaffold(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             with self.assertRaises(ScaffoldError):
                 copy_scaffold(Path(tmpdir) / "p", scaffold="does-not-exist")
+
+    def test_raises_for_unknown_agent(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with self.assertRaises(ScaffoldError):
+                copy_scaffold(Path(tmpdir) / "p", scaffold="minimal_workspace", agent="bogus")
 
     def test_raises_when_target_is_not_empty(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -64,83 +116,30 @@ class CopyScaffoldTests(unittest.TestCase):
             with self.assertRaises(ScaffoldError):
                 copy_scaffold(project_dir, scaffold="minimal_workspace")
 
-    def test_drops_entries_for_unselected_agents(self) -> None:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            project_dir = Path(tmpdir) / "claude_only"
-            # Seed the scaffold dir with the entries we'd expect to filter,
-            # since the bundled scaffolds may or may not have AI files yet.
-            scaffold_source = SCAFFOLDS_DIR / "minimal_workspace"
-            for entries in AGENT_FILES.values():
-                for entry in entries:
-                    candidate = scaffold_source / entry
-                    if not candidate.exists():
-                        # Skip; we still validate the removal logic on whatever IS present.
-                        continue
 
-            copy_scaffold(project_dir, scaffold="minimal_workspace", agents=("claude",))
+class ValidateAgentTests(unittest.TestCase):
+    def test_passes_for_every_vendored_agent(self) -> None:
+        for scaffold in ("minimal_workspace", "starter_workspace"):
+            for agent in AGENTS:
+                with self.subTest(scaffold=scaffold, agent=agent):
+                    validate_agent(scaffold=scaffold, agent=agent)  # must not raise
 
-            for entry in AGENT_FILES["cursor"]:
-                self.assertFalse((project_dir / entry).exists(), f"{entry} should be removed")
-            for entry in AGENT_FILES["codex"]:
-                self.assertFalse((project_dir / entry).exists(), f"{entry} should be removed")
+    def test_raises_for_unknown_agent(self) -> None:
+        with self.assertRaises(ScaffoldError):
+            validate_agent(scaffold="minimal_workspace", agent="does-not-exist")
 
 
-class DropUnselectedAgentEntriesTests(unittest.TestCase):
-    """The filter that removes agent-specific entries from a copied scaffold."""
+class PerAgentLayoutTests(unittest.TestCase):
+    """Each scaffold must vendor a self-contained tree for every agent."""
 
-    def _seed(self, project_dir: Path) -> None:
-        """Create every file/dir tracked in AGENT_FILES so we can assert deletion."""
-        for entries in AGENT_FILES.values():
-            for entry in entries:
-                target = project_dir / entry
-                # Mix of dirs (.claude, .cursor, .codex) and files (.mcp.json,
-                # AGENTS.md). The function uses is_dir() vs file checks, so
-                # exercise both.
-                if entry.startswith("."):
-                    target.mkdir(parents=True, exist_ok=True)
-                else:
-                    target.touch()
-
-    def test_full_selection_keeps_everything(self) -> None:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            project_dir = Path(tmpdir)
-            self._seed(project_dir)
-
-            _drop_unselected_agent_entries(project_dir, ("claude", "cursor", "codex"))
-
-            for entries in AGENT_FILES.values():
-                for entry in entries:
-                    self.assertTrue((project_dir / entry).exists(), f"{entry} dropped unexpectedly")
-
-    def test_partial_selection_drops_only_unselected_agents(self) -> None:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            project_dir = Path(tmpdir)
-            self._seed(project_dir)
-
-            _drop_unselected_agent_entries(project_dir, ("claude",))
-
-            for entry in AGENT_FILES["claude"]:
-                self.assertTrue((project_dir / entry).exists())
-            for entry in AGENT_FILES["cursor"]:
-                self.assertFalse((project_dir / entry).exists())
-            for entry in AGENT_FILES["codex"]:
-                self.assertFalse((project_dir / entry).exists())
-
-    def test_unknown_agent_in_selection_deletes_every_known_entry(self) -> None:
-        # Wart: a typo like agents=("clade",) matches no key in AGENT_FILES,
-        # so every entry gets removed. Argparse normally guards against this
-        # at the CLI boundary, but programmatic callers can still trigger it.
-        with tempfile.TemporaryDirectory() as tmpdir:
-            project_dir = Path(tmpdir)
-            self._seed(project_dir)
-
-            _drop_unselected_agent_entries(project_dir, ("clade",))
-
-            for entries in AGENT_FILES.values():
-                for entry in entries:
-                    self.assertFalse(
-                        (project_dir / entry).exists(),
-                        f"{entry} survived a typo-selection — filter is non-strict.",
+    def test_every_agent_is_vendored_for_every_scaffold(self) -> None:
+        for scaffold in ("minimal_workspace", "starter_workspace"):
+            agents_dir = SCAFFOLDS_DIR / scaffold / PER_AGENT_DIR
+            for agent in AGENTS:
+                with self.subTest(scaffold=scaffold, agent=agent):
+                    self.assertTrue(
+                        (agents_dir / agent).is_dir(),
+                        f"{scaffold}/{PER_AGENT_DIR}/{agent} missing — run `make generate-ai`.",
                     )
 
 
@@ -219,48 +218,6 @@ class ScaffoldsDirTests(unittest.TestCase):
     def test_bundled_scaffolds_exist(self) -> None:
         self.assertTrue((SCAFFOLDS_DIR / "starter_workspace").is_dir())
         self.assertTrue((SCAFFOLDS_DIR / "minimal_workspace").is_dir())
-
-
-# Hardcoded snapshot of the top-level entries `dlthub ai init --agent <name>`
-# produces on a fresh workspace, captured against dlthub 0.27.0a0. This is an
-# INDEPENDENT source of truth: the other scaffold tests iterate AGENT_FILES to
-# decide what to seed and assert, which means they tautologically prove "the
-# map filters itself correctly." This snapshot proves the map matches reality.
-#
-# If a future dlthub release adds or removes entries, refresh this snapshot
-# (by running `dlthub ai init --agent <name>` in a clean dir and inspecting
-# the project root) and update AGENT_FILES in scaffold.py to match.
-DLTHUB_GENERATED_PER_AGENT: dict[str, frozenset[str]] = {
-    "claude": frozenset({".claude", ".claudeignore", ".mcp.json"}),
-    "cursor": frozenset({".cursor", ".cursorignore"}),
-    "codex": frozenset({".codex", ".codexignore", "AGENTS.md"}),
-}
-
-
-class AgentFilesCoverageTests(unittest.TestCase):
-    """Verifies AGENT_FILES matches the observed dlthub-init output snapshot.
-
-    Catches the class of bug where the map drifts from what dlthub actually
-    generates — orphan files left in the user's workspace under partial
-    agent selections.
-    """
-
-    def test_map_matches_snapshot_for_every_agent(self) -> None:
-        for agent, expected in DLTHUB_GENERATED_PER_AGENT.items():
-            with self.subTest(agent=agent):
-                self.assertEqual(
-                    frozenset(AGENT_FILES[agent]),
-                    expected,
-                    f"AGENT_FILES[{agent!r}] is out of sync with the captured "
-                    "dlthub init output. Refresh by running "
-                    f"`dlthub ai init --agent {agent}` in a clean dir, then "
-                    "update both AGENT_FILES and DLTHUB_GENERATED_PER_AGENT.",
-                )
-
-    def test_map_keys_cover_every_agent(self) -> None:
-        # If AGENTS grows but AGENT_FILES doesn't, partial selections silently
-        # skip filtering for the new agent.
-        self.assertEqual(set(AGENT_FILES.keys()), set(AGENTS))
 
 
 if __name__ == "__main__":

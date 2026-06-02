@@ -88,20 +88,18 @@ class WorkspaceCreationFastTests(unittest.TestCase):
         scaffold_has_ai_files(),
         "AI workbench files not committed yet — run `make generate-ai` first.",
     )
-    def test_yes_default_brings_in_every_agent(self) -> None:
+    def test_yes_default_brings_in_only_the_recommended_agent(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             ws = Path(tmpdir) / "test_ws"
             with silenced():
                 exit_code = main([str(ws), "--yes", "--skip-uv-sync"])
 
             self.assertEqual(exit_code, 0)
-            self.assertTrue((ws / ".agents").is_dir(), "Shared .agents/ must always be present")
-            for entries in EXPECTED_AGENT_ROOT_ENTRIES.values():
-                for entry in entries:
-                    self.assertTrue(
-                        (ws / entry).exists(),
-                        f"--yes should include every agent's {entry!r}",
-                    )
+            # --yes uses the recommended agent (claude) and only that agent.
+            for entry in EXPECTED_AGENT_ROOT_ENTRIES["claude"]:
+                self.assertTrue((ws / entry).exists(), f"recommended agent's {entry!r} should be present")
+            for entry in (*EXPECTED_AGENT_ROOT_ENTRIES["cursor"], *EXPECTED_AGENT_ROOT_ENTRIES["codex"]):
+                self.assertFalse((ws / entry).exists(), f"non-selected agent's {entry!r} should be absent")
 
 
 class WorkspaceCreationSlowTests(unittest.TestCase):

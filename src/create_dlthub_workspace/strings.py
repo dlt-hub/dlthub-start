@@ -23,16 +23,13 @@ from __future__ import annotations
 # Prompts ---------------------------------------------------------------
 PROMPT_PROJECT_NAME = "[bold]What should we call the workspace?[/bold]"
 PROMPT_SCAFFOLD_HEADER = "\n[bold]Choose your onboarding experience[/bold] [dim](↑/↓ to move, enter to confirm)[/dim]"
-PROMPT_AGENTS_HEADER = (
-    "\n[bold]Choose your coding agents[/bold] "
-    "[dim](recommended: keep them all selected; space to toggle, enter to confirm)[/dim]"
-)
+PROMPT_AGENT_HEADER = "\n[bold]Choose your coding agent[/bold] [dim](↑/↓ to move, enter to confirm)[/dim]"
 PROMPT_INSTALL_UV = "uv is required but was not found. Install uv now?"
 PROMPT_RUN_UV_SYNC = "Install workspace dependencies with `uv sync`?"
 
 
 # Errors (call sites use .format() with named placeholders) -------------
-ERROR_NO_AGENTS = "At least one AI workbench must be selected."
+ERROR_UNKNOWN_AGENT = "Unknown agent {agent!r} for scaffold {scaffold!r}. Available: {available}"
 ERROR_UV_REQUIRED = "uv is required. Install uv and run this command again."
 ERROR_UV_NOT_ON_PATH = "uv was installed, but it is not available on PATH yet. Open a new terminal and try again."
 ERROR_UV_COMMAND_FAILED = "Command failed with exit code {returncode}: {cmd}"
@@ -64,7 +61,7 @@ TITLE_RESUME_PANEL = "Almost there"
 
 # Section labels inside panels ------------------------------------------
 LABEL_CREATED = "Created"
-LABEL_AI_WORKBENCHES = "AI workbenches:"
+LABEL_CODING_AGENT = "Coding agent:"
 LABEL_WHAT_TO_TRY = "What to try next"
 LABEL_FINISH_SETUP = "Finish setup"
 LABEL_DOCS = "Docs:"

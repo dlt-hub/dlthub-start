@@ -54,18 +54,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--agent",
-        action="append",
         choices=AGENTS,
-        help=(
-            "AI workbench to initialize. Pass multiple times to initialize several. "
-            "Defaults to all available workbenches in non-interactive mode."
-        ),
+        help=f"Coding agent to set up. Defaults to the recommended {RECOMMENDED.agent!r} in non-interactive mode.",
     )
     parser.add_argument(
         "--yes",
         "-y",
         action="store_true",
-        help="Run the recommended path (minimal scaffold, install uv, uv sync, all AI workbenches).",
+        help=f"Run the recommended path (minimal scaffold, install uv, uv sync, {RECOMMENDED.agent} agent).",
     )
     parser.add_argument(
         "--verbose",
@@ -76,7 +72,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--skip-uv-sync",
         action="store_true",
-        help="Stop before dependency sync. The scaffold and selected AI workbench files are still created.",
+        help="Stop before dependency sync. The scaffold and selected agent's files are still created.",
     )
     return parser
 
@@ -109,7 +105,7 @@ def execute_plan(plan: WorkspacePlan) -> None:
     verbose = plan.verbose
 
     with step(strings.MSG_CREATING_WORKSPACE.format(project_dir=plan.project_dir), verbose=verbose):
-        copy_scaffold(plan.project_dir, scaffold=plan.scaffold, agents=plan.agents)
+        copy_scaffold(plan.project_dir, scaffold=plan.scaffold, agent=plan.agent)
         package_name = apply_workspace_name(plan.project_dir, plan.project_dir.name)
     console.print(strings.MSG_CREATED.format(project_dir=plan.project_dir))
     console.print(strings.MSG_PACKAGE_NAME.format(package_name=package_name))
@@ -135,7 +131,7 @@ def execute_plan(plan: WorkspacePlan) -> None:
     console.print(strings.MSG_INSTALLED_DEPS)
 
     console.print()
-    print_next_steps(plan.project_dir, scaffold=plan.scaffold, agents=plan.agents)
+    print_next_steps(plan.project_dir, scaffold=plan.scaffold, agent=plan.agent)
 
 
 if __name__ == "__main__":

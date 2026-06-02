@@ -16,9 +16,8 @@ from pathlib import Path
 
 from . import strings
 from .config import DEFAULT_PROJECT_NAME, RECOMMENDED
-from .errors import WorkspaceError
-from .prompts import choose_agents, choose_project_name, choose_scaffold, confirm
-from .scaffold import validate_scaffold_name, validate_target_dir
+from .prompts import choose_agent, choose_project_name, choose_scaffold, confirm
+from .scaffold import validate_agent, validate_scaffold_name, validate_target_dir
 from .uv import find_uv
 
 
@@ -35,7 +34,7 @@ class WorkspacePlan:
     project_dir: Path
     scaffold: str
     stage: WorkspaceStage
-    agents: tuple[str, ...]
+    agent: str
     uv_executable: str | None
     install_uv: bool
     verbose: bool
@@ -56,9 +55,8 @@ def build_plan(args: argparse.Namespace) -> WorkspacePlan:
     scaffold = args.scaffold or (RECOMMENDED.scaffold if args.yes else choose_scaffold())
     validate_scaffold_name(scaffold)
 
-    agents = tuple(args.agent or (RECOMMENDED.agents if args.yes else choose_agents()))
-    if not agents:
-        raise WorkspaceError(strings.ERROR_NO_AGENTS)
+    agent = args.agent or (RECOMMENDED.agent if args.yes else choose_agent())
+    validate_agent(scaffold=scaffold, agent=agent)
 
     uv_executable = find_uv()
     install_uv = False
@@ -87,7 +85,7 @@ def build_plan(args: argparse.Namespace) -> WorkspacePlan:
         project_dir=project_dir,
         scaffold=scaffold,
         stage=stage,
-        agents=agents,
+        agent=agent,
         uv_executable=uv_executable,
         install_uv=install_uv,
         verbose=args.verbose,

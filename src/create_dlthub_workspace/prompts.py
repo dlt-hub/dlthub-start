@@ -68,29 +68,25 @@ def choose_scaffold(default: str = RECOMMENDED.scaffold) -> str:
     return keys[index]
 
 
-def choose_agents() -> list[str]:
-    """Multi-select for AI workbenches.
-
-    All agents are pre-ticked because the recommended path installs every
-    available workbench. A `minimal_count=1` floor makes it structurally
-    impossible to confirm with zero selections.
-    """
+def choose_agent(default: str = RECOMMENDED.agent) -> str:
+    """Arrow-key select for the coding agent. Exactly one is chosen."""
     agents = list(AGENTS)
+    options = [f"[bold]{agent}[/bold]{RECOMMENDED_SUFFIX if agent == RECOMMENDED.agent else ''}" for agent in agents]
+    default_index = agents.index(default) if default in agents else 0
 
-    console.print(strings.PROMPT_AGENTS_HEADER)
-    selected = cast(
-        list[str],
-        beaupy.select_multiple(
-            agents,
+    console.print(strings.PROMPT_AGENT_HEADER)
+    index = cast(
+        int,
+        beaupy.select(
+            options,
+            cursor=CURSOR,
             cursor_style=CURSOR_STYLE,
-            tick_character=TICK_CHAR,
-            tick_style=CURSOR_STYLE,
-            ticked_indices=list(range(len(agents))),
-            minimal_count=1,
+            cursor_index=default_index,
+            return_index=True,
         ),
     )
-    _echo_selection(", ".join(selected))
-    return selected
+    _echo_selection(agents[index])
+    return agents[index]
 
 
 def confirm(message: str, *, default: bool = True, recommended: bool | None = None) -> bool:

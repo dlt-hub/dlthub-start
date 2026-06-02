@@ -1,0 +1,124 @@
+init:
+  version: 0.1.0
+  description: Shared rules, secrets handling, and workspace MCP for dlt
+  tags:
+  - dlt
+  - init
+  - rules
+  - secrets
+  - mcp
+  installed_at: '1970-01-01T00:00:00+00:00'
+  agent: claude
+  files:
+    .claude/skills/improve-skills/SKILL.md:
+      sha3_256: c52b222d82d101eaacbbf19d271d3f24b20d8e2bc70d49919d56144d448cd5c4
+    .claude/skills/setup-secrets/SKILL.md:
+      sha3_256: cec0417ff73959818936a113da042f923e99a0ae6ea4d47bca0d79fef0e783e5
+    .claude/skills/setup-secrets/cli-reference.md:
+      sha3_256: 75c153cbac239add05e8b986ed347326d9bf1b161a01cc0e072908d93073cce9
+    .claude/skills/toolkit-dispatch/SKILL.md:
+      sha3_256: 9041db92850ec0d0f62ec14158f51e7bcf5c7a832d0230de08910d72f5788f0a
+    .claudeignore:
+      sha3_256: 1aa4dc9286dd219dcb55399f388c5ee1f940ab5e399a42b644d488cba57a9ec0
+    .claude/rules/init-dlthub-workspace.md:
+      sha3_256: ba9d5e7636ff594f65d11c83eee7bcd34a3d2cd16fc49aa99096227eb240d1d2
+  mcp_servers:
+  - dlt-workspace-mcp
+  name: init
+data-exploration:
+  version: 0.1.0
+  description: Quick insights from dlt pipeline data. Connect to a pipeline, profile
+    tables, plan charts, and assemble marimo dashboards.
+  tags:
+  - dlt
+  - marimo
+  - ibis
+  - data-exploration
+  - dashboards
+  - altair
+  dependencies:
+  - init
+  workflow_entry_skill: explore-data
+  installed_at: '1970-01-01T00:00:00+00:00'
+  agent: claude
+  files:
+    .claude/skills/build-notebook/SKILL.md:
+      sha3_256: f853f8ef20abcf409953760ef560f5842ef2792a9d2a561925b0bcc4f311ca2c
+    .claude/skills/build-notebook/references/notebook-patterns.md:
+      sha3_256: 96d80469820be9e1beddd10961b0a588da526c7678a0d12561e24f30e91037d3
+    .claude/skills/explore-data/SKILL.md:
+      sha3_256: bff422bf09e9f6cadc31cea2618232920e048f963ff5d5e9c9b96859c1ad5dda
+    .claude/skills/explore-data/references/analysis-plan-format.md:
+      sha3_256: 8fcb5223200f4e566432fda35be8b555b8a88274b9f1dc42c41a21c4d6ddbab5
+    .claude/skills/explore-data/references/dlt-relation-api.md:
+      sha3_256: 4145d283ab6c0bf87e5289460f0a951aa2163d6ae118dfdca69eef824f2d91ee
+    .claude/rules/data-exploration-workflow.md:
+      sha3_256: e54bef43a8dfe9a2586f753c0a991791e1bea5cd3cf5cad4a1867ab24106122a
+  name: data-exploration
+dlthub-platform:
+  version: 0.1.2
+  description: Deploy dlt workspace and pipelines to the dltHub Platform
+  tags:
+  - dlt
+  - deploy
+  - dlthub
+  - platform
+  dependencies:
+  - init
+  workflow_entry_skill: setup-runtime
+  installed_at: '1970-01-01T00:00:00+00:00'
+  agent: claude
+  files:
+    .claude/skills/debug-deployment/SKILL.md:
+      sha3_256: abe021c4291ff456a57feee9b54c3e6b07c43fca82388384d80697e21459689b
+    .claude/skills/deploy-workspace/SKILL.md:
+      sha3_256: 6cf3bcf03fc9aac389e4f71171e47c50884e4c598b5926cdd77352386d5ac9c1
+    .claude/skills/deploy-workspace/advanced-patterns.md:
+      sha3_256: 6ae7f2d23c83cc074c50902688b2253c429cd89c39b692568f9f2f5f40243db8
+    .claude/skills/deploy-workspace/scheduling-triggers.md:
+      sha3_256: 2dd11cd588d5b3972dcad8d4b2901f6513c2034c46ec86e9b25df61cb8b0e0fd
+    .claude/skills/prepare-deployment/SKILL.md:
+      sha3_256: 297720f0d7f08cc7e01d1bc87204f9d446e4da48bf3e109b6d4530b11b1525b3
+    .claude/skills/prepare-deployment/check_destination.py:
+      sha3_256: 34ff49ae54a875f34f7900612d76b31d7aaf00926cc80c40d689474af4d447ec
+    .claude/skills/prepare-deployment/deployment-module.md:
+      sha3_256: 7febda25e999ddd05551036eeff285758fef41c7a25ec7dedd41dfc2f1151d24
+    .claude/skills/setup-runtime/SKILL.md:
+      sha3_256: 098cd5c4ab2cef4c8da001cd4a36a5236340a48441e224cfe0f900c46119618e
+    .claude/rules/dlthub-platform-profiles.md:
+      sha3_256: 4c91903751a1f4cf19fd0b650e35208f68c875187ba3abcd74d03069a5195d3d
+    .claude/rules/dlthub-platform-workflow.md:
+      sha3_256: 3cc14a3f82461b515e625b36ac733630a2dd308f36511de1af665d7932abc058
+  name: dlthub-platform
+rest-api-pipeline:
+  version: 0.1.0
+  description: 'Build REST API pipelines with dlt: scope, debug and validate data'
+  tags:
+  - dlt
+  - etl
+  - data-pipeline
+  - python
+  dependencies:
+  - init
+  workflow_entry_skill: find-source
+  installed_at: '1970-01-01T00:00:00+00:00'
+  agent: claude
+  files:
+    .claude/skills/adjust-endpoint/SKILL.md:
+      sha3_256: 63cbea6020ec72f67d07ffde8673ce44982b794e9fd54b47611b0724f119613f
+    .claude/skills/create-rest-api-pipeline/SKILL.md:
+      sha3_256: 8b336513d35fad6eef1141cf3b6a952a3ff150f32583e6ce4f9db2ba28d49e80
+    .claude/skills/debug-pipeline/SKILL.md:
+      sha3_256: 265abc6293d4a484959ddccfb38c148623fd3b89dbd897aa432ea47bb677ce63
+    .claude/skills/find-source/SKILL.md:
+      sha3_256: 4e442ad1bf4b555c3eb53e550ee46a84f9b969c67d4335ef8f8e73123506c6e7
+    .claude/skills/new-endpoint/SKILL.md:
+      sha3_256: 6562b4ef49d0934550904b8b1b0e29c0ed5cb3d6ab9caa453cad68f9c8bb209e
+    .claude/skills/validate-data/SKILL.md:
+      sha3_256: f05396405ad5981a912246e0747a5de51d70f69f840bf42a20d4ae9cc466a4ca
+    .claude/skills/view-data/SKILL.md:
+      sha3_256: 02d15c32d6acdd1f20b87e2a673e0c836481ef49f1681cca32a6d151e5d0a2e6
+    .claude/rules/rest-api-pipeline-workflow.md:
+      sha3_256: 9b469200a17eb2bb31208cbe39c773b4a8c54b8cc182a065f89c43627637bc8d
+  mcp_servers:
+  - dlt-workspace-mcp
