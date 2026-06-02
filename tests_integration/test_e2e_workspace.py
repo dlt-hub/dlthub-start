@@ -37,23 +37,23 @@ class WorkspaceCreationFastTests(unittest.TestCase):
             self.assertEqual(exit_code, 0)
             self.assertTrue(ws.is_dir())
             self.assertTrue((ws / "pyproject.toml").exists())
-            self.assertTrue((ws / "starter_pipeline.py").exists())
+            self.assertTrue((ws / "pipeline.py").exists())
             self.assertFalse(
                 (ws / ".venv").exists(),
                 "--skip-uv-sync should prevent .venv creation",
             )
 
-    def test_minimal_scaffold_swaps_pipeline_layout(self) -> None:
+    def test_starter_scaffold_swaps_pipeline_layout(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             ws = Path(tmpdir) / "test_ws"
             with silenced():
                 exit_code = main(
-                    [str(ws), "--yes", "--skip-uv-sync", "--scaffold", "minimal_workspace"],
+                    [str(ws), "--yes", "--skip-uv-sync", "--scaffold", "starter_workspace"],
                 )
 
             self.assertEqual(exit_code, 0)
-            self.assertTrue((ws / "pipeline.py").exists())
-            self.assertFalse((ws / "starter_pipeline.py").exists())
+            self.assertTrue((ws / "starter_pipeline.py").exists())
+            self.assertFalse((ws / "pipeline.py").exists())
 
     @unittest.skipUnless(
         scaffold_has_ai_files(),
