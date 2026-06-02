@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- The minimal workspace is now a complete, runnable "Hello World" example: `pipeline.py` ingests a public sample online-shop REST API (`sample_shop`), a new `report_notebook.py` (Marimo) charts the loaded data, and a new `README.md` walks through the ingest → load → visualise → deploy loop. Next-steps copy and the "Created" panel updated accordingly; `pyproject.toml` gains `marimo` and `altair`.
 - The recommended default scaffold is now `minimal_workspace`: `--yes` and the interactive picker default to the minimal single-pipeline workspace, which is also listed first in the scaffold options.
 - Bumped `WORKBENCH_REF` to `c4250057` and refreshed the bundled AI workbench scaffold.
 
