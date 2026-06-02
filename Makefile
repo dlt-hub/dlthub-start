@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help dev test test-integration compile build ci workspace lint lint-fix format format-check fl lint-ci generate-ai check-ai
+.PHONY: help dev test test-integration compile build clean-dist publish-library ci workspace lint lint-fix format format-check fl lint-ci generate-ai check-ai
 
 PYTHONPYCACHEPREFIX ?= /tmp/create-dlthub-pyc
 PACKAGE_MODULES := $(wildcard src/create_dlthub_workspace/*.py)
@@ -53,8 +53,16 @@ test-integration: ## Run e2e integration tests (slow; invokes real CLI + uv sync
 compile: ## Byte-compile package and tests
 	PYTHONPYCACHEPREFIX=$(PYTHONPYCACHEPREFIX) uv run python -m compileall $(PACKAGE_MODULES) tests
 
-build: ## Build the package wheel
+build: dev ## Build the package wheel
 	uv build
+
+clean-dist: ## Remove dist/ directory
+	-@rm -r dist/
+
+publish: clean-dist build ## Build and publish dlthub-start to PyPI
+	ls -l dist/
+	@bash -c 'read -s -p "Enter PyPI API token: " PYPI_API_TOKEN; echo; \
+	uv publish --token "$$PYPI_API_TOKEN"'
 
 REMOVE_PREV_WORKSPACE ?= examples/my-workspace
 

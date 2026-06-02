@@ -179,3 +179,9 @@ The package exposes a single console command:
 dlthub-start
 ```
 
+Then build and publish to PyPI (prompts for a PyPI API token):
+
+```bash
+make publish-library
+```
+
