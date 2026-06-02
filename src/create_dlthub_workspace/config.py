@@ -50,12 +50,12 @@ class RecommendedPath:
     scaffold: str
     install_uv: bool
     run_uv_sync: bool
-    agents: tuple[str, ...]
+    agent: str
 
 
 RECOMMENDED = RecommendedPath(
     scaffold="minimal_workspace",
     install_uv=True,
     run_uv_sync=True,
-    agents=AGENTS,
+    agent="claude",
 )

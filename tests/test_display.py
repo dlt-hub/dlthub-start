@@ -36,7 +36,6 @@ class PrintNextStepsTests(unittest.TestCase):
         self.assertIn("Created", output)
         self.assertIn("starter_pipeline.py", output)
         self.assertIn("starter_transformations.py", output)
-        self.assertIn(".agents/", output)
         self.assertIn("prod.secrets.toml", output)
         self.assertIn("database name and token", output)
         self.assertIn("uv run dlthub run load_breweries", output)
@@ -53,13 +52,13 @@ class PrintNextStepsTests(unittest.TestCase):
         # Minimal scaffold has an instruction-only step with no command.
         self.assertIn("Edit pipeline.py", output)
 
-    def test_renders_selected_ai_workbenches(self) -> None:
+    def test_renders_selected_agent(self) -> None:
         with console.capture() as cap:
-            print_next_steps(Path("/tmp/my_workspace"), scaffold="starter_workspace", agents=("claude", "codex"))
+            print_next_steps(Path("/tmp/my_workspace"), scaffold="starter_workspace", agent="claude")
         output = cap.get()
 
-        self.assertIn("AI workbenches", output)
-        self.assertIn("claude, codex", output)
+        self.assertIn("Coding agent", output)
+        self.assertIn("claude", output)
 
     def test_unknown_scaffold_raises_key_error(self) -> None:
         with self.assertRaises(KeyError):

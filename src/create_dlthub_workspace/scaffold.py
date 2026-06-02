@@ -11,15 +11,10 @@ from .errors import ScaffoldError
 
 SCAFFOLDS_DIR = Path(__file__).parent / "scaffolds"
 
-# Top-level entries (relative to the scaffold root) that belong to each agent.
-# Used by copy_scaffold to drop entries for agents the user did not select.
-# `.agents/` is intentionally not listed here — codex reads it as its skill
-# source AND it holds the shared toolkit pool that all agents reference.
-AGENT_FILES: dict[str, tuple[str, ...]] = {
-    "claude": (".claude", ".claudeignore", ".mcp.json"),
-    "cursor": (".cursor", ".cursorignore"),
-    "codex": (".codex", ".codexignore", "AGENTS.md"),
-}
+# Subdirectory under each scaffold that holds the per-agent vendored AI files
+# (`_agents/<agent>/...`). `generate_ai.py` writes them; copy_scaffold lays
+# down the selected agent's tree at scaffold time.
+PER_AGENT_DIR = "_agents"
 
 # The vendored `.dlt/.toolkits` manifest stores an `installed_at` ISO timestamp
 # per toolkit. We commit it with this sentinel so `check-ai` diffs stay clean
@@ -54,41 +49,50 @@ def validate_scaffold_target(project_dir: Path, *, scaffold: str) -> None:
     validate_target_dir(project_dir)
 
 
-def copy_scaffold(project_dir: Path, *, scaffold: str, agents: tuple[str, ...] = ()) -> None:
+def validate_agent(*, scaffold: str, agent: str) -> None:
+    """Refuse to assemble an agent the scaffold doesn't vendor. No filesystem writes."""
+    agents_dir = SCAFFOLDS_DIR / scaffold / PER_AGENT_DIR
+    if not (agents_dir / agent).is_dir():
+        available = (
+            ", ".join(sorted(p.name for p in agents_dir.iterdir() if p.is_dir()))
+            if agents_dir.is_dir()
+            else ""
+        )
+        raise ScaffoldError(
+            strings.ERROR_UNKNOWN_AGENT.format(
+                agent=agent,
+                scaffold=scaffold,
+                available=available or strings.HINT_NONE,
+            )
+        )
+
+
+def copy_scaffold(project_dir: Path, *, scaffold: str, agent: str | None = None) -> None:
     """Copy the bundled scaffold into ``project_dir``.
 
-    If ``agents`` is non-empty, top-level entries belonging to agents NOT in
-    the selection are removed after the copy. Pass ``()`` to keep everything
-    that's bundled (useful for tests that just want to verify the layout).
+    Lays down the scaffold's shared source, then overlays the selected agent's
+    vendored AI files from ``_agents/<agent>/``. Pass ``agent=None`` to copy
+    only the shared source (useful for tests that just want the base layout).
     """
     validate_scaffold_target(project_dir, scaffold=scaffold)
     source = SCAFFOLDS_DIR / scaffold
-    project_dir.mkdir(parents=True, exist_ok=True)
-    shutil.copytree(source, project_dir, ignore=_ignore_runtime, dirs_exist_ok=True)
+    if agent is not None:
+        validate_agent(scaffold=scaffold, agent=agent)
 
-    if agents:
-        _drop_unselected_agent_entries(project_dir, agents)
+    def _ignore_shared(src: str, names: list[str]) -> set[str]:
+        # The per-agent trees are overlaid selectively below, never copied wholesale.
+        skip = _ignore_runtime(src, names)
+        if Path(src) == source and PER_AGENT_DIR in names:
+            skip.add(PER_AGENT_DIR)
+        return skip
+
+    project_dir.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(source, project_dir, ignore=_ignore_shared, dirs_exist_ok=True)
+
+    if agent is not None:
+        shutil.copytree(source / PER_AGENT_DIR / agent, project_dir, dirs_exist_ok=True)
 
     _stamp_install_time(project_dir)
-
-
-def _drop_unselected_agent_entries(project_dir: Path, agents: tuple[str, ...]) -> None:
-    """Remove top-level entries for agents not in the selection.
-
-    NB: passes through AGENT_FILES.items(), so an agents tuple containing
-    names that aren't in AGENT_FILES (typos, unknown agents) match nothing
-    and every entry gets removed. Argparse normally guards this via
-    `choices=AGENTS`, but programmatic callers should pass validated values.
-    """
-    for agent, entries in AGENT_FILES.items():
-        if agent in agents:
-            continue
-        for entry in entries:
-            target = project_dir / entry
-            if target.is_dir():
-                shutil.rmtree(target)
-            elif target.exists():
-                target.unlink()
 
 
 def _stamp_install_time(project_dir: Path) -> None:

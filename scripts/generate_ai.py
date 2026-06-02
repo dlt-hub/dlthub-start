@@ -1,16 +1,20 @@
-"""Regenerate bundled AI workbench files in every scaffold.
+"""Regenerate bundled AI workbench files in every scaffold, one agent at a time.
 
-Run via `make generate-ai`. For each scaffold:
+Run via `make generate-ai`. For each scaffold, for each agent:
 
-1. Copy the scaffold (minus runtime artifacts and existing AI files) to a
-   throwaway tmp dir.
+1. Copy the scaffold's shared source (minus runtime artifacts and any existing
+   AI files) to a throwaway tmp dir.
 2. `uv sync` so `dlthub` is on PATH inside that workspace.
-3. Run `dlthub ai init` for each AGENT and `dlthub ai toolkit install` for
+3. Run `dlthub ai init --agent <agent>` and `dlthub ai toolkit install` for
    each TOOLKIT, pinning to `WORKBENCH_REF` from config.py.
-4. Replace the AI-generated entries in the source scaffold with the freshly
-   produced ones.
+4. Mirror the toolkit skills into the agent's own skill dir (claude/cursor).
+5. Capture that agent's AI-generated entries into
+   `scaffolds/<scaffold>/_agents/<agent>/` — each agent gets its OWN
+   self-contained set, including its own `.dlt/.toolkits` manifest.
 
-Commit the resulting diff alongside any `WORKBENCH_REF` bump.
+`copy_scaffold` then lays down the shared source plus exactly one agent's
+`_agents/<agent>/` tree at scaffold time. Commit the resulting diff alongside
+any `WORKBENCH_REF` bump.
 """
 
 from __future__ import annotations
@@ -29,16 +33,17 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 from create_dlthub_workspace.config import AGENTS, TOOLKITS, WORKBENCH_REF  # noqa: E402
 from create_dlthub_workspace.scaffold import (  # noqa: E402
     INSTALL_TIME_SENTINEL,
+    PER_AGENT_DIR,
     SCAFFOLDS_DIR,
     TOOLKITS_MANIFEST,
 )
 
 _INSTALLED_AT_RE = re.compile(r"installed_at: '[^']*'")
 
-# Top-level entries (relative to the scaffold root) that `dlthub ai init` /
-# `toolkit install` produce. These are wiped before regeneration and replaced
-# with freshly generated copies. Anything not in this set is scaffold source
-# code (pipelines, pyproject.toml, .dlt/config.toml, etc.) and is left alone.
+# Top-level entries (relative to the workspace root) that `dlthub ai init` /
+# `toolkit install` produce. Captured per agent into `_agents/<agent>/`.
+# Anything not in this set is scaffold source code (pipelines, pyproject.toml,
+# .dlt/config.toml, etc.) and stays shared at the scaffold root.
 AI_GENERATED_ENTRIES: tuple[str, ...] = (
     ".agents",
     ".claude",
@@ -95,6 +100,9 @@ def _mirror_agent_skills(work: Path) -> None:
     own dirs, so toolkit skills become invisible to them. Mirror them so both
     agents see the full set. Skip-if-exists preserves the core skills already
     placed there by `dlthub ai init`.
+
+    Per-agent runs only have one of .claude/.cursor present, so this naturally
+    targets just the agent being generated.
     """
     source = work / ".agents" / "skills"
     if not source.is_dir():
@@ -116,23 +124,43 @@ def _branch_args() -> list[str]:
     return ["--branch", WORKBENCH_REF] if WORKBENCH_REF else []
 
 
+def _capture_ai_entries(work: Path, dest_root: Path) -> None:
+    """Copy the AI-generated entries from a generated workspace into dest_root."""
+    for entry in AI_GENERATED_ENTRIES:
+        source = work / entry
+        if not source.exists():
+            continue
+        target = dest_root / entry
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if source.is_dir():
+            shutil.copytree(source, target)
+        else:
+            shutil.copy2(source, target)
+
+
 def regenerate(scaffold_dir: Path) -> None:
     print(f"\n=== {scaffold_dir.name} ===")
-    with tempfile.TemporaryDirectory(prefix=f"gen-ai-{scaffold_dir.name}-") as tmp:
-        work = Path(tmp) / "workspace"
-        shutil.copytree(scaffold_dir, work, ignore=_ignore_runtime)
 
-        # Start with a clean slate inside the throwaway copy.
-        for entry in AI_GENERATED_ENTRIES:
-            _remove(work / entry)
+    # Clear any previously generated AI output: the old merged root entries
+    # (pre per-agent layout) and the per-agent tree itself.
+    for entry in AI_GENERATED_ENTRIES:
+        _remove(scaffold_dir / entry)
+    _remove(scaffold_dir / PER_AGENT_DIR)
 
-        print("  uv sync")
-        _run(["uv", "sync"], cwd=work)
+    ref_label = WORKBENCH_REF or "<upstream default>"
 
-        ref_label = WORKBENCH_REF or "<upstream default>"
+    for agent in AGENTS:
+        print(f"  --- agent: {agent} ---")
+        with tempfile.TemporaryDirectory(prefix=f"gen-ai-{scaffold_dir.name}-{agent}-") as tmp:
+            work = Path(tmp) / "workspace"
+            shutil.copytree(scaffold_dir, work, ignore=_ignore_runtime)
+            # Never carry a previously-generated agent's output into this run.
+            _remove(work / PER_AGENT_DIR)
 
-        for agent in AGENTS:
-            print(f"  dlthub ai init --agent {agent}  (ref={ref_label})")
+            print("    uv sync")
+            _run(["uv", "sync"], cwd=work)
+
+            print(f"    dlthub ai init --agent {agent}  (ref={ref_label})")
             _run(
                 [
                     "uv",
@@ -149,41 +177,30 @@ def regenerate(scaffold_dir: Path) -> None:
                 cwd=work,
             )
 
-        for toolkit in TOOLKITS:
-            print(f"  dlthub ai toolkit install {toolkit}  (ref={ref_label})")
-            _run(
-                [
-                    "uv",
-                    "run",
-                    "dlthub",
-                    "--non-interactive",
-                    "ai",
-                    "toolkit",
-                    "install",
-                    toolkit,
-                    *_branch_args(),
-                    "--overwrite",
-                ],
-                cwd=work,
-            )
+            for toolkit in TOOLKITS:
+                print(f"    dlthub ai toolkit install {toolkit}  (ref={ref_label})")
+                _run(
+                    [
+                        "uv",
+                        "run",
+                        "dlthub",
+                        "--non-interactive",
+                        "ai",
+                        "toolkit",
+                        "install",
+                        toolkit,
+                        *_branch_args(),
+                        "--overwrite",
+                    ],
+                    cwd=work,
+                )
 
-        print("  mirror .agents/skills -> .claude/skills, .cursor/skills")
-        _mirror_agent_skills(work)
+            print("    mirror .agents/skills -> .claude/skills, .cursor/skills")
+            _mirror_agent_skills(work)
 
-        # Swap the freshly generated AI entries into the source scaffold.
-        for entry in AI_GENERATED_ENTRIES:
-            target = scaffold_dir / entry
-            _remove(target)
-            source = work / entry
-            if not source.exists():
-                continue
-            target.parent.mkdir(parents=True, exist_ok=True)
-            if source.is_dir():
-                shutil.copytree(source, target)
-            else:
-                shutil.copy2(source, target)
-
-        _normalize_install_time(scaffold_dir / TOOLKITS_MANIFEST)
+            dest_root = scaffold_dir / PER_AGENT_DIR / agent
+            _capture_ai_entries(work, dest_root)
+            _normalize_install_time(dest_root / TOOLKITS_MANIFEST)
 
     print("  done")
 
@@ -202,7 +219,7 @@ def _normalize_install_time(manifest: Path) -> None:
 
 
 def main() -> int:
-    print(f"Regenerating AI workbench files (WORKBENCH_REF={WORKBENCH_REF})")
+    print(f"Regenerating AI workbench files per agent (WORKBENCH_REF={WORKBENCH_REF})")
     for scaffold_dir in sorted(p for p in SCAFFOLDS_DIR.iterdir() if p.is_dir()):
         regenerate(scaffold_dir)
     print("\nAll scaffolds refreshed. Review with `git diff src/create_dlthub_workspace/scaffolds/`.")

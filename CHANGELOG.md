@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.5.0] - 2026-06-02
 
 ### Changed
+- Agent selection is now single-select: you choose exactly one coding agent (claude, cursor, or codex) instead of several. `--agent` takes a single value and `--yes` uses the recommended `claude`. AI files are vendored per-agent under `_agents/<agent>/` (each with its own `.dlt/.toolkits`), and only the selected agent's files are written to the new workspace — fixing the bug where one selection still shipped the other agents' toolkits (notably codex's `.agents/`). `generate_ai.py` now generates each agent in isolation.
 - The minimal workspace is now a complete, runnable "Hello World" example: `pipeline.py` ingests a public sample online-shop REST API (`sample_shop`), a new `report_notebook.py` (Marimo) charts the loaded data, and a new `README.md` walks through the ingest → load → visualise → deploy loop. Next-steps copy and the "Created" panel updated accordingly; `pyproject.toml` gains `marimo` and `altair`.
 - The recommended default scaffold is now `minimal_workspace`: `--yes` and the interactive picker default to the minimal single-pipeline workspace, which is also listed first in the scaffold options.
 - Bumped `WORKBENCH_REF` to `c4250057` and refreshed the bundled AI workbench scaffold.

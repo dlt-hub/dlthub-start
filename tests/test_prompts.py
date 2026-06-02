@@ -10,7 +10,7 @@ from create_dlthub_workspace.display import console
 from create_dlthub_workspace.prompts import (
     RECOMMENDED_SUFFIX,
     _echo_selection,
-    choose_agents,
+    choose_agent,
     choose_project_name,
     choose_scaffold,
     confirm,
@@ -53,22 +53,37 @@ class ChooseScaffoldTests(unittest.TestCase):
         self.assertIn(RECOMMENDED_SUFFIX, recommended_option)
 
 
-class ChooseAgentsTests(unittest.TestCase):
+class ChooseAgentTests(unittest.TestCase):
     @patch("create_dlthub_workspace.prompts.console.print")
-    @patch("create_dlthub_workspace.prompts.beaupy.select_multiple")
-    def test_defaults_to_all_agents_ticked_with_minimum_one(
+    @patch("create_dlthub_workspace.prompts.beaupy.select", return_value=0)
+    def test_returns_selected_agent(
         self,
-        select_multiple: MagicMock,
+        _select: MagicMock,
         _console_print: MagicMock,
     ) -> None:
-        select_multiple.return_value = list(AGENTS)
+        self.assertEqual(choose_agent(), AGENTS[0])
 
-        result = choose_agents()
+    @patch("create_dlthub_workspace.prompts.console.print")
+    @patch("create_dlthub_workspace.prompts.beaupy.select", return_value=0)
+    def test_recommended_agent_gets_badge(
+        self,
+        select: MagicMock,
+        _console_print: MagicMock,
+    ) -> None:
+        choose_agent()
+        options = select.call_args.args[0]
+        recommended_option = next(opt for opt in options if RECOMMENDED.agent in opt)
+        self.assertIn(RECOMMENDED_SUFFIX, recommended_option)
 
-        self.assertEqual(result, list(AGENTS))
-        kwargs = select_multiple.call_args.kwargs
-        self.assertEqual(kwargs["ticked_indices"], list(range(len(AGENTS))))
-        self.assertEqual(kwargs["minimal_count"], 1)
+    @patch("create_dlthub_workspace.prompts.console.print")
+    @patch("create_dlthub_workspace.prompts.beaupy.select", return_value=0)
+    def test_defaults_cursor_to_recommended_agent(
+        self,
+        select: MagicMock,
+        _console_print: MagicMock,
+    ) -> None:
+        choose_agent()
+        self.assertEqual(select.call_args.kwargs["cursor_index"], list(AGENTS).index(RECOMMENDED.agent))
 
 
 class ConfirmTests(unittest.TestCase):

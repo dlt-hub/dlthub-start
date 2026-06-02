@@ -58,10 +58,10 @@ class BuildParserTests(unittest.TestCase):
         args = parser.parse_args(["my_workspace", "--skip-uv-sync"])
         self.assertTrue(args.skip_uv_sync)
 
-    def test_agent_action_appends_multiple_values(self) -> None:
+    def test_agent_parses_single_value(self) -> None:
         parser = build_parser()
-        args = parser.parse_args(["my_workspace", "--agent", "claude", "--agent", "cursor"])
-        self.assertEqual(args.agent, ["claude", "cursor"])
+        args = parser.parse_args(["my_workspace", "--agent", "claude"])
+        self.assertEqual(args.agent, "claude")
 
     def test_agent_defaults_to_none(self) -> None:
         parser = build_parser()
@@ -99,7 +99,7 @@ def _make_plan(**overrides: object) -> WorkspacePlan:
         "project_dir": Path("/tmp/test_workspace"),
         "scaffold": "starter_workspace",
         "stage": WorkspaceStage.FULL,
-        "agents": ("claude",),
+        "agent": "claude",
         "uv_executable": "/usr/local/bin/uv",
         "install_uv": False,
         "verbose": False,
@@ -154,7 +154,7 @@ class ExecutePlanFlowTests(unittest.TestCase):
             execute_plan(
                 _make_plan(
                     stage=WorkspaceStage.SCAFFOLD_ONLY,
-                    agents=(),
+                    agent="claude",
                     uv_executable=None,
                 ),
             )
@@ -184,7 +184,7 @@ class ExecutePlanFlowTests(unittest.TestCase):
             execute_plan(
                 _make_plan(
                     stage=WorkspaceStage.THROUGH_UV_INSTALL,
-                    agents=(),
+                    agent="claude",
                     uv_executable=None,
                     install_uv=True,
                 ),

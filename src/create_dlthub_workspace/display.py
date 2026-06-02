@@ -38,7 +38,6 @@ CREATED_TREE: dict[str, tuple[str, ...]] = {
         "starter_data_quality.py",
         "notebooks/",
         ".dlt/",
-        ".agents/",
     ),
     "minimal_workspace": (
         "pyproject.toml",
@@ -46,7 +45,6 @@ CREATED_TREE: dict[str, tuple[str, ...]] = {
         "report_notebook.py",
         "__deployment__.py",
         ".dlt/",
-        ".agents/",
         "README.md",
     ),
 }
@@ -249,7 +247,7 @@ def _cd_target(project_dir: Path) -> str:
     return str(relative)
 
 
-def print_next_steps(project_dir: Path, *, scaffold: str, agents: tuple[str, ...] = ()) -> None:
+def print_next_steps(project_dir: Path, *, scaffold: str, agent: str | None = None) -> None:
     """Post-setup tips panel. Steps are tailored to the chosen scaffold."""
     created_tree = CREATED_TREE[scaffold]
     # Every panel starts the user at "go to the directory" so the rest of the
@@ -264,9 +262,9 @@ def print_next_steps(project_dir: Path, *, scaffold: str, agents: tuple[str, ...
     for index, entry in enumerate(created_tree):
         branch = "`-- " if index == len(created_tree) - 1 else "|-- "
         body.append(f"  {branch}{entry}\n", style="dim")
-    if agents:
-        body.append(f"  {strings.LABEL_AI_WORKBENCHES} ", style="dim")
-        body.append(", ".join(agents), style="bold #59C1D5")
+    if agent:
+        body.append(f"  {strings.LABEL_CODING_AGENT} ", style="dim")
+        body.append(agent, style="bold #59C1D5")
         body.append("\n")
     body.append("\n")
     body.append(f"{strings.LABEL_WHAT_TO_TRY}\n\n", style="bold #C6D300")
