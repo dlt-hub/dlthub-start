@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help dev test test-integration compile build clean-dist publish-library ci workspace lint lint-fix format format-check fl lint-ci generate-ai check-ai
+.PHONY: help dev test test-integration compile build clean-dist publish-library ci workspace lint lint-fix format format-check fl lint-ci generate-ai update-ai check-ai
 
 PYTHONPYCACHEPREFIX ?= /tmp/create-dlthub-pyc
 PACKAGE_MODULES := $(wildcard src/create_dlthub_workspace/*.py)
@@ -79,6 +79,9 @@ ci: compile lint-ci test test-integration check-ai build ## Run all CI checks lo
 
 generate-ai: ## Refresh bundled AI workbench files in scaffolds (run after bumping WORKBENCH_REF)
 	uv run python scripts/generate_ai.py
+
+update-ai: ## Bump WORKBENCH_REF to latest workbench commit (or REF=<sha>) and regenerate scaffolds
+	uv run python scripts/update_ai.py $(REF)
 
 check-ai: ## CI guard: fail if generate-ai would produce a diff
 	$(MAKE) generate-ai

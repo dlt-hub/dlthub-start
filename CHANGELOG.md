@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `make update-ai` (`scripts/update_ai.py`): bumps `WORKBENCH_REF` to the latest workbench commit (or `REF=<sha>`) and regenerates all scaffolds in one step.
+
+### Changed
+- Bumped `WORKBENCH_REF` to `34b410d0` and refreshed the bundled AI workbench scaffolds.
+
 ## [0.5.0] - 2026-06-02
 
 ### Changed
