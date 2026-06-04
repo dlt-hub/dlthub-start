@@ -136,14 +136,17 @@ downloaded during normal CLI execution.
 The source ref is pinned in `WORKBENCH_REF` in
 `src/create_dlthub_workspace/config.py`. To refresh the vendored AI files:
 
-1. Update `WORKBENCH_REF` to the desired `dlt-hub/dlthub-ai-workbench` commit.
-2. Run `make generate-ai`.
-3. Review the scaffold diff carefully.
-4. Run `make check-ai`.
-5. Commit the `WORKBENCH_REF` change and regenerated scaffold files together.
+1. Run `make update-ai` to bump `WORKBENCH_REF` to the latest
+   `dlt-hub/dlthub-ai-workbench` commit and regenerate the scaffolds. Pass
+   `make update-ai REF=<sha>` to pin a specific commit instead.
+2. Review the scaffold diff carefully.
+3. Run `make check-ai`.
+4. Commit the `WORKBENCH_REF` change and regenerated scaffold files together.
 
-`make check-ai` reruns generation and fails if the committed scaffolds drift
-from the pinned workbench ref.
+`make update-ai` rewrites `WORKBENCH_REF` and then runs `make generate-ai`; if
+you only need to regenerate against the already-pinned ref, run `make
+generate-ai` directly. `make check-ai` reruns generation and fails if the
+committed scaffolds drift from the pinned workbench ref.
 
 ## Scaffold templates that are gitignored
 
