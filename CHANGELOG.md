@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Bumped `WORKBENCH_REF` to `34b410d0` and refreshed the bundled AI workbench scaffolds.
+- Documented `make update-ai` in CONTRIBUTING.md and fixed README's stale multi-select `--agent` wording to reflect single-agent selection.
 
 ## [0.5.0] - 2026-06-02
 
