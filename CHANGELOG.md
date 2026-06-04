@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.3] - 2026-06-04
+
+### Added
+- `make update-ai` (`scripts/update_ai.py`): bumps `WORKBENCH_REF` to the latest workbench commit (or `REF=<sha>`) and regenerates all scaffolds in one step.
+
+### Changed
+- Bumped `WORKBENCH_REF` to `34b410d0` and refreshed the bundled AI workbench scaffolds.
+- Documented `make update-ai` in CONTRIBUTING.md and fixed README's stale multi-select `--agent` wording to reflect single-agent selection.
+
+## [0.5.2] - 2026-06-02
+
+### Added
+- `make publish` (and `make clean-dist`) target to build and publish `dlthub-start` to PyPI, with accompanying README and CONTRIBUTING docs.
+
 ## [0.5.0] - 2026-06-02
 
 ### Changed

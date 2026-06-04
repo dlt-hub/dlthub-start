@@ -38,7 +38,7 @@ install `uv` yourself, use the official
 
 - A Python dltHub workspace with project metadata customized to your directory name.
 - A bundled scaffold copied from this package, not downloaded at create time.
-- dltHub AI workbench files for Claude, Cursor, and/or Codex.
+- dltHub AI workbench files for your chosen coding agent (Claude, Cursor, or Codex).
 - Shared dltHub AI toolkit files for data exploration, runtime deployment, REST API pipeline work, and transformations.
 - A local DuckDB-backed warehouse configuration for quick first runs.
 
@@ -52,12 +52,12 @@ Common options:
 
 | Option | Description |
 | --- | --- |
-| `--yes`, `-y` | Use the recommended path: starter scaffold, all AI workbenches, install `uv` if missing, and run `uv sync`. |
+| `--yes`, `-y` | Use the recommended path: the recommended scaffold, the Claude workbench, install `uv` if missing, and run `uv sync`. |
 | `--scaffold starter_workspace` | Create the full starter workspace. This is the default recommended scaffold. |
 | `--scaffold minimal_workspace` | Create a small workspace with one placeholder pipeline. |
-| `--agent claude` | Include Claude workbench files. Pass `--agent` more than once to include multiple workbenches. |
-| `--agent cursor` | Include Cursor workbench files. |
-| `--agent codex` | Include Codex workbench files. |
+| `--agent claude` | Use the Claude workbench files. Choose exactly one agent (`claude`, `cursor`, or `codex`); defaults to `claude`. |
+| `--agent cursor` | Use the Cursor workbench files. |
+| `--agent codex` | Use the Codex workbench files. |
 | `--skip-uv-sync` | Create the scaffold and selected AI files, but stop before installing workspace dependencies. |
 | `--verbose`, `-v` | Stream output from underlying subprocesses. |
 

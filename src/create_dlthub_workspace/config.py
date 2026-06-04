@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-VERSION = "0.5.0"
+VERSION = "0.5.3"
 
 SCAFFOLDS = (
     (
@@ -31,6 +31,9 @@ TOOLKITS = (
     "rest-api-pipeline",
 )
 
+# The dltHub AI workbench repo that `make generate-ai` / `make update-ai` pull from.
+WORKBENCH_REPO = "https://github.com/dlt-hub/dlthub-ai-workbench.git"
+
 # Pinned commit of dlt-hub/dlthub-ai-workbench that `make generate-ai` fetches.
 # Setting a SHA keeps generation reproducible across machines and over time:
 # CI's `check-ai` step compares the committed scaffold against whatever this
@@ -40,7 +43,7 @@ TOOLKITS = (
 # To bump: pick a new SHA (the workbench repo has no tags today), update the
 # constant below, run `make generate-ai`, commit the resulting scaffold diff
 # alongside this change.
-WORKBENCH_REF: str | None = "c42500573e979fa85e274502edd2cb0d2019ecaf"
+WORKBENCH_REF: str | None = "34b410d023a988f058aab676e7c8e72a87b78416"
 
 
 @dataclass(frozen=True)
