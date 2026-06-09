@@ -42,7 +42,6 @@ CREATED_TREE: dict[str, tuple[str, ...]] = {
     "minimal_workspace": (
         "pyproject.toml",
         "pipeline.py",
-        "report_notebook.py",
         "__deployment__.py",
         ".dlt/",
         "README.md",
