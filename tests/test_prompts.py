@@ -5,13 +5,12 @@ from __future__ import annotations
 import unittest
 from unittest.mock import MagicMock, patch
 
-from create_dlthub_workspace.config import AGENTS, DEFAULT_PROJECT_NAME, RECOMMENDED, SCAFFOLDS
+from create_dlthub_workspace.config import AGENTS, RECOMMENDED, SCAFFOLDS
 from create_dlthub_workspace.display import console
 from create_dlthub_workspace.prompts import (
     RECOMMENDED_SUFFIX,
     _echo_selection,
     choose_agent,
-    choose_project_name,
     choose_scaffold,
     confirm,
 )
@@ -122,63 +121,6 @@ class ConfirmTests(unittest.TestCase):
         confirm("Install?")
         options = select.call_args.args[0]
         self.assertEqual(options, ["Yes", "No"])
-
-
-class ChooseProjectNameTests(unittest.TestCase):
-    """Directly exercises the rich.Prompt-backed name prompt.
-
-    The build_plan tests only assert that choose_project_name is or isn't
-    *called* — they mock its return value. These tests cover the function's
-    own contract: default-fallback, whitespace handling, custom default.
-    """
-
-    @patch("create_dlthub_workspace.prompts.console.print")
-    @patch("create_dlthub_workspace.prompts.Prompt.ask", return_value="my-workspace")
-    def test_returns_user_input(self, _ask: MagicMock, _console_print: MagicMock) -> None:
-        self.assertEqual(choose_project_name(), "my-workspace")
-
-    @patch("create_dlthub_workspace.prompts.console.print")
-    @patch("create_dlthub_workspace.prompts.Prompt.ask", return_value="")
-    def test_empty_input_returns_default(self, _ask: MagicMock, _console_print: MagicMock) -> None:
-        self.assertEqual(choose_project_name(), DEFAULT_PROJECT_NAME)
-
-    @patch("create_dlthub_workspace.prompts.console.print")
-    @patch("create_dlthub_workspace.prompts.Prompt.ask", return_value="   ")
-    def test_whitespace_only_input_returns_default(
-        self,
-        _ask: MagicMock,
-        _console_print: MagicMock,
-    ) -> None:
-        self.assertEqual(choose_project_name(), DEFAULT_PROJECT_NAME)
-
-    @patch("create_dlthub_workspace.prompts.console.print")
-    @patch("create_dlthub_workspace.prompts.Prompt.ask", return_value="  spaced  ")
-    def test_strips_surrounding_whitespace(
-        self,
-        _ask: MagicMock,
-        _console_print: MagicMock,
-    ) -> None:
-        self.assertEqual(choose_project_name(), "spaced")
-
-    @patch("create_dlthub_workspace.prompts.console.print")
-    @patch("create_dlthub_workspace.prompts.Prompt.ask", return_value="my-workspace")
-    def test_passes_default_to_prompt(
-        self,
-        ask: MagicMock,
-        _console_print: MagicMock,
-    ) -> None:
-        choose_project_name()
-        self.assertEqual(ask.call_args.kwargs["default"], DEFAULT_PROJECT_NAME)
-
-    @patch("create_dlthub_workspace.prompts.console.print")
-    @patch("create_dlthub_workspace.prompts.Prompt.ask", return_value="my-workspace")
-    def test_custom_default_is_honored(
-        self,
-        ask: MagicMock,
-        _console_print: MagicMock,
-    ) -> None:
-        choose_project_name(default="custom-default")
-        self.assertEqual(ask.call_args.kwargs["default"], "custom-default")
 
 
 if __name__ == "__main__":

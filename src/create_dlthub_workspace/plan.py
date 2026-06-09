@@ -15,8 +15,8 @@ from enum import Enum
 from pathlib import Path
 
 from . import strings
-from .config import DEFAULT_PROJECT_NAME, RECOMMENDED
-from .prompts import choose_agent, choose_project_name, choose_scaffold, confirm
+from .config import RECOMMENDED
+from .prompts import choose_agent, choose_scaffold, confirm
 from .scaffold import validate_agent, validate_scaffold_name, validate_target_dir
 from .uv import find_uv
 
@@ -43,13 +43,14 @@ class WorkspacePlan:
 def build_plan(args: argparse.Namespace) -> WorkspacePlan:
     """Gather every answer needed to scaffold the workspace. No filesystem writes.
 
-    Order: name -> scaffold -> agents (content questions), then uv install
-    + sync (setup questions). The target-directory check fires as soon as
-    the name is resolved so a name conflict fails fast — before the user
-    answers any other questions.
+    Order: target -> scaffold -> agents (content questions), then uv install
+    + sync (setup questions). The target-directory check fires first so an
+    occupied directory fails fast — before the user answers any other questions.
+
+    The workspace is initialized in place: the current directory by default, or
+    an explicit ``project_dir`` if given. Either way the target must be empty.
     """
-    raw_name = args.project_dir or (DEFAULT_PROJECT_NAME if args.yes else choose_project_name())
-    project_dir = Path(raw_name).expanduser().resolve()
+    project_dir = (Path(args.project_dir).expanduser() if args.project_dir else Path.cwd()).resolve()
     validate_target_dir(project_dir)
 
     scaffold = args.scaffold or (RECOMMENDED.scaffold if args.yes else choose_scaffold())

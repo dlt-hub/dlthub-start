@@ -45,8 +45,13 @@ install `uv` yourself, use the official
 ## Usage
 
 ```bash
-uvx dlthub-start@latest <project-dir> [options]
+uvx dlthub-start@latest [project-dir] [options]
 ```
+
+Initializes a workspace **in place**: the current directory by default, or
+`project-dir` if given. Either way the target directory must be **empty**
+(hidden entries like `.git` and `.gitignore` count) — otherwise the command
+stops with guidance and does nothing.
 
 Common options:
 
@@ -64,9 +69,10 @@ Common options:
 Examples:
 
 ```bash
-uvx dlthub-start@latest my-workspace --yes
+uvx dlthub-start@latest --yes                            # initialize in the current (empty) directory
+uvx dlthub-start@latest my-workspace --yes               # create and initialize ./my-workspace
 uvx dlthub-start@latest my-workspace --scaffold minimal_workspace
-uvx dlthub-start@latest my-workspace --agent claude --agent codex
+uvx dlthub-start@latest my-workspace --agent codex
 uvx dlthub-start@latest my-workspace --yes --skip-uv-sync
 ```
 

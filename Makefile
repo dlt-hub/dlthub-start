@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help dev test test-integration compile build clean-dist publish-library ci workspace lint lint-fix format format-check fl lint-ci generate-ai update-ai check-ai
+.PHONY: help dev test test-integration compile build clean-dist publish-library ci workspace workspace-here lint lint-fix format format-check fl lint-ci generate-ai update-ai check-ai
 
 PYTHONPYCACHEPREFIX ?= /tmp/create-dlthub-pyc
 PACKAGE_MODULES := $(wildcard src/create_dlthub_workspace/*.py)
@@ -70,6 +70,14 @@ workspace: ## Run dlthub-start at ./$(REMOVE_PREV_WORKSPACE) for a clean test wo
 	@case "$(REMOVE_PREV_WORKSPACE)" in *..*|"") echo "invalid REMOVE_PREV_WORKSPACE: $(REMOVE_PREV_WORKSPACE)"; exit 1;; esac
 	rm -rf -- "$(REMOVE_PREV_WORKSPACE)"
 	uv run dlthub-start "$(REMOVE_PREV_WORKSPACE)"
+
+WORKSPACE_HERE_DIR ?= examples/here-workspace
+
+workspace-here: dev ## Init in place: make empty ./$(WORKSPACE_HERE_DIR), cd in, run the local CLI with no positional (pass ARGS="--yes --skip-uv-sync")
+	@case "$(WORKSPACE_HERE_DIR)" in *..*|"") echo "invalid WORKSPACE_HERE_DIR: $(WORKSPACE_HERE_DIR)"; exit 1;; esac
+	rm -rf -- "$(WORKSPACE_HERE_DIR)"
+	mkdir -p -- "$(WORKSPACE_HERE_DIR)"
+	cd "$(WORKSPACE_HERE_DIR)" && "$(CURDIR)/.venv/bin/dlthub-start" $(ARGS)
 
 ci: compile lint-ci test test-integration check-ai build ## Run all CI checks locally
 

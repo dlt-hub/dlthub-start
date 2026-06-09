@@ -21,10 +21,6 @@ SCAFFOLDS = (
 
 AGENTS = ("claude", "cursor", "codex")
 
-# Fallback workspace name when a user runs `dlthub-start --yes` (or accepts
-# the project-name prompt without typing anything).
-DEFAULT_PROJECT_NAME = "my-workspace"
-
 TOOLKITS = (
     "data-exploration",
     "dlthub-platform",

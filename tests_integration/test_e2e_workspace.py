@@ -137,8 +137,8 @@ class WorkspaceCollisionTests(unittest.TestCase):
                 second_exit = main([str(ws), "--yes", "--skip-uv-sync"])
             self.assertEqual(
                 second_exit,
-                1,
-                "Second run against the same non-empty path should fail with WorkspaceError",
+                2,
+                "Second run against the same non-empty path should fail with the dedicated dir-not-empty exit code",
             )
 
 
@@ -171,6 +171,35 @@ class InstalledEntryPointTests(unittest.TestCase):
             )
             self.assertTrue(ws.is_dir())
             self.assertTrue((ws / "pyproject.toml").exists())
+
+    def test_subprocess_propagates_dir_not_empty_exit_code(self) -> None:
+        # Guards the module entry point (`python -m`) *and* the dir-not-empty
+        # exit-code contract: a non-empty target must surface as exit 2 from the
+        # real process, not just from an in-process main() call. Regression for
+        # __main__.py dropping main()'s return value (always exited 0).
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ws = Path(tmpdir) / "occupied"
+            ws.mkdir()
+            (ws / "README.md").write_text("not empty\n", encoding="utf-8")
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "create_dlthub_workspace",
+                    str(ws),
+                    "--yes",
+                    "--skip-uv-sync",
+                ],
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertEqual(
+                result.returncode,
+                2,
+                f"Expected exit 2 for non-empty target; stderr={result.stderr.decode()!r}",
+            )
 
 
 if __name__ == "__main__":

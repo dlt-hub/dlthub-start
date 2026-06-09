@@ -5,10 +5,9 @@ from __future__ import annotations
 from typing import cast
 
 import beaupy
-from rich.prompt import Prompt
 
 from . import strings
-from .config import AGENTS, DEFAULT_PROJECT_NAME, RECOMMENDED, SCAFFOLDS
+from .config import AGENTS, RECOMMENDED, SCAFFOLDS
 from .display import console
 
 CURSOR = "❯"
@@ -21,24 +20,6 @@ RECOMMENDED_SUFFIX = strings.HINT_RECOMMENDED_SUFFIX
 def _echo_selection(value: str) -> None:
     """Persist the user's choice after beaupy clears its widget."""
     console.print(f"  [{CURSOR_STYLE}]{TICK_CHAR}[/{CURSOR_STYLE}] [bold]{value}[/bold]")
-
-
-def choose_project_name(default: str = DEFAULT_PROJECT_NAME) -> str:
-    """Free-form text prompt for the workspace name.
-
-    Rich shows the default in dim style at the input position; the user can
-    press Enter to accept it or type a different name.
-    """
-    console.print()  # spacer to match the visual rhythm of the other prompts
-    name = Prompt.ask(
-        strings.PROMPT_PROJECT_NAME,
-        default=default,
-        console=console,
-        show_default=True,
-    ).strip()
-    chosen = name or default
-    _echo_selection(chosen)
-    return chosen
 
 
 def choose_scaffold(default: str = RECOMMENDED.scaffold) -> str:

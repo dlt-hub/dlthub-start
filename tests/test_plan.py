@@ -1,18 +1,19 @@
 """Tests for build_plan — the decision tree that resolves CLI args + prompts
 into a frozen WorkspacePlan.
 
-Mocks every external dependency (find_uv, choose_project_name, choose_scaffold,
-choose_agent, confirm, validate_target_dir, validate_scaffold_name) so each
-test is fast and deterministic.
+Mocks every external dependency (find_uv, choose_scaffold, choose_agent,
+confirm, validate_target_dir, validate_scaffold_name) so each test is fast
+and deterministic.
 """
 
 from __future__ import annotations
 
 import argparse
 import unittest
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from create_dlthub_workspace.config import DEFAULT_PROJECT_NAME, RECOMMENDED
+from create_dlthub_workspace.config import RECOMMENDED
 from create_dlthub_workspace.errors import ScaffoldError
 from create_dlthub_workspace.plan import WorkspaceStage, build_plan
 
@@ -320,58 +321,30 @@ class BuildPlanValidationTests(unittest.TestCase):
             build_plan(_make_args(agent="does-not-exist"))
 
 
-class BuildPlanProjectNameTests(unittest.TestCase):
-    """Project name resolution: explicit arg vs --yes default vs interactive prompt."""
+class BuildPlanTargetDirTests(unittest.TestCase):
+    """Target dir resolution: explicit arg vs the current-directory default."""
 
-    @patch("create_dlthub_workspace.plan.choose_project_name")
     @patch("create_dlthub_workspace.plan.validate_target_dir")
     @patch("create_dlthub_workspace.plan.find_uv", return_value="/usr/local/bin/uv")
-    def test_yes_without_project_dir_uses_default_name(
+    def test_no_project_dir_uses_cwd(
         self,
         _find_uv: MagicMock,
         _validate: MagicMock,
-        choose_project_name: MagicMock,
     ) -> None:
+        # No name prompt anymore: omitting the positional initializes in place.
         plan = build_plan(_make_args(project_dir=None, yes=True))
 
-        # The default is used silently — no prompt fires.
-        choose_project_name.assert_not_called()
-        self.assertEqual(plan.project_dir.name, DEFAULT_PROJECT_NAME)
+        self.assertEqual(plan.project_dir, Path.cwd().resolve())
 
-    @patch("create_dlthub_workspace.plan.choose_agent", return_value="claude")
-    @patch("create_dlthub_workspace.plan.choose_scaffold", return_value="starter_workspace")
-    @patch("create_dlthub_workspace.plan.choose_project_name", return_value="my-custom-workspace")
-    @patch("create_dlthub_workspace.plan.confirm", return_value=True)
     @patch("create_dlthub_workspace.plan.validate_target_dir")
     @patch("create_dlthub_workspace.plan.find_uv", return_value="/usr/local/bin/uv")
-    def test_interactive_without_project_dir_prompts_for_name(
+    def test_explicit_project_dir_is_used(
         self,
         _find_uv: MagicMock,
         _validate: MagicMock,
-        _confirm: MagicMock,
-        choose_project_name: MagicMock,
-        _choose_scaffold: MagicMock,
-        _choose_agent: MagicMock,
     ) -> None:
-        plan = build_plan(_make_args(project_dir=None))
-
-        choose_project_name.assert_called_once()
-        self.assertEqual(plan.project_dir.name, "my-custom-workspace")
-
-    @patch("create_dlthub_workspace.plan.choose_project_name")
-    @patch("create_dlthub_workspace.plan.validate_target_dir")
-    @patch("create_dlthub_workspace.plan.find_uv", return_value="/usr/local/bin/uv")
-    def test_explicit_project_dir_skips_prompt_and_default(
-        self,
-        _find_uv: MagicMock,
-        _validate: MagicMock,
-        choose_project_name: MagicMock,
-    ) -> None:
-        # `--yes` short-circuits scaffold/agent prompts so we don't have to
-        # mock them; the assertion is about the name path specifically.
         plan = build_plan(_make_args(project_dir="explicit-name", yes=True))
 
-        choose_project_name.assert_not_called()
         self.assertEqual(plan.project_dir.name, "explicit-name")
 
 

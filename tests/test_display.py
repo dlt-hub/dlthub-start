@@ -75,6 +75,28 @@ class PrintNextStepsTests(unittest.TestCase):
         self.assertIn("cd hello-world", output)
         self.assertNotIn(f"cd {project_dir}", output)
 
+    def test_cd_step_omitted_when_target_is_cwd(self) -> None:
+        # Init-in-place: the workspace is the current directory, so there's
+        # nothing to cd into and the step should not render.
+        with console.capture() as cap:
+            print_next_steps(Path.cwd(), scaffold="minimal_workspace")
+        output = cap.get()
+
+        self.assertNotIn("cd ", output)
+        # The actual first step (the pipeline run) is still present.
+        self.assertIn("uv run dlthub run load_sample_shop", output)
+
+    def test_agent_workspace_note_shown_only_for_subdir(self) -> None:
+        # Subdir → note reminds AI agents to work from the workspace root.
+        with console.capture() as cap:
+            print_next_steps(Path.cwd() / "hello-world", scaffold="minimal_workspace")
+        self.assertIn("Note for AI agents", cap.get())
+
+        # Init-in-place (cwd) → no note; the agent is already at the root.
+        with console.capture() as cap:
+            print_next_steps(Path.cwd(), scaffold="minimal_workspace")
+        self.assertNotIn("Note for AI agents", cap.get())
+
 
 class CdTargetTests(unittest.TestCase):
     def test_relative_when_directly_under_cwd(self) -> None:

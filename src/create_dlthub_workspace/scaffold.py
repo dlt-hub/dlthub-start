@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from . import strings
-from .errors import ScaffoldError
+from .errors import ScaffoldError, WorkspaceDirectoryNotEmptyError
 
 SCAFFOLDS_DIR = Path(__file__).parent / "scaffolds"
 
@@ -25,9 +25,14 @@ INSTALL_TIME_SENTINEL = "1970-01-01T00:00:00+00:00"
 
 
 def validate_target_dir(project_dir: Path) -> None:
-    """Refuse to write into a non-empty existing directory. No filesystem writes."""
+    """Refuse to write into a non-empty existing directory. No filesystem writes.
+
+    The target must be completely empty; hidden entries (.git, .dlt, ...) count.
+    Raises ``WorkspaceDirectoryNotEmptyError`` so the CLI can render a dedicated
+    response rather than the generic error line.
+    """
     if project_dir.exists() and any(project_dir.iterdir()):
-        raise ScaffoldError(strings.ERROR_TARGET_NOT_EMPTY.format(project_dir=project_dir))
+        raise WorkspaceDirectoryNotEmptyError(project_dir)
 
 
 def validate_scaffold_name(scaffold: str) -> None:
