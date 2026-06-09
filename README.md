@@ -5,16 +5,21 @@ dependency setup, and bundled dltHub AI workbench files.
 
 ## Quickstart
 
-`uvx` is the recommended way to run the CLI:
+`uvx` is the recommended way to run the CLI. Run it from inside an empty
+project directory so the AI workbench files (skills + MCP server) land at the
+**project root**, where your coding agent runs:
 
 ```bash
-uvx dlthub-start@latest my-workspace
+mkdir my-workspace && cd my-workspace
+uvx dlthub-start@latest
 ```
 
-If `uvx` is not available yet, use `pipx run` instead:
+No `uv`? Install the CLI with pip (into your current Python environment) and
+run it directly:
 
 ```bash
-pipx run dlthub-start my-workspace
+pip install dlthub-start
+dlthub-start
 ```
 
 The CLI prompts for a scaffold and AI workbench files, checks for `uv`, offers
@@ -23,23 +28,24 @@ to install it if needed, offers to run `uv sync`, and prints next steps.
 For a non-interactive setup with the recommended defaults:
 
 ```bash
-uvx dlthub-start@latest my-workspace --yes
-cd my-workspace
-uv run dlthub run load_breweries
+mkdir my-workspace && cd my-workspace
+uvx dlthub-start@latest --yes
+uv run dlthub run load_sample_shop
 uv run dlthub show
 ```
 
-Both `uvx` and `pipx run` work. If the generated workspace needs `uv` and it is
-not installed yet, the CLI will offer to install it for you. If you prefer to
-install `uv` yourself, use the official
-[`uv` installation guide](https://docs.astral.sh/uv/getting-started/installation/).
+You can also pass a target directory (`uvx dlthub-start@latest my-workspace`),
+but then the AI files live one level down — so launch your coding agent from
+*inside* that directory. If the generated workspace needs `uv` and it is not
+installed yet, the CLI offers to install it; or install it yourself via the
+official [`uv` installation guide](https://docs.astral.sh/uv/getting-started/installation/).
 
 ## What You Get
 
 - A Python dltHub workspace with project metadata customized to your directory name.
 - A bundled scaffold copied from this package, not downloaded at create time.
 - dltHub AI workbench files for your chosen coding agent (Claude, Cursor, or Codex).
-- Shared dltHub AI toolkit files for data exploration, runtime deployment, REST API pipeline work, and transformations.
+- Shared dltHub AI toolkit files for data exploration, dltHub platform deployment, and REST API pipeline work.
 - A local DuckDB-backed warehouse configuration for quick first runs.
 
 ## Usage
@@ -58,8 +64,8 @@ Common options:
 | Option | Description |
 | --- | --- |
 | `--yes`, `-y` | Use the recommended path: the recommended scaffold, the Claude workbench, install `uv` if missing, and run `uv sync`. |
-| `--scaffold starter_workspace` | Create the full starter workspace. This is the default recommended scaffold. |
-| `--scaffold minimal_workspace` | Create a small workspace with one placeholder pipeline. |
+| `--scaffold minimal_workspace` | The "Hello World" workspace: a runnable sample pipeline + report notebook. **Recommended default.** |
+| `--scaffold starter_workspace` | The full workflow: ingestion, transformations, data quality, notebooks, and deployment. |
 | `--agent claude` | Use the Claude workbench files. Choose exactly one agent (`claude`, `cursor`, or `codex`); defaults to `claude`. |
 | `--agent cursor` | Use the Cursor workbench files. |
 | `--agent codex` | Use the Codex workbench files. |
@@ -69,78 +75,73 @@ Common options:
 Examples:
 
 ```bash
-uvx dlthub-start@latest --yes                            # initialize in the current (empty) directory
-uvx dlthub-start@latest my-workspace --yes               # create and initialize ./my-workspace
-uvx dlthub-start@latest my-workspace --scaffold minimal_workspace
-uvx dlthub-start@latest my-workspace --agent codex
-uvx dlthub-start@latest my-workspace --yes --skip-uv-sync
+uvx dlthub-start@latest --yes                  # initialize in the current (empty) directory — recommended
+uvx dlthub-start@latest --scaffold starter_workspace
+uvx dlthub-start@latest --agent codex
+uvx dlthub-start@latest --yes --skip-uv-sync
+uvx dlthub-start@latest my-workspace --yes     # alternative: create + initialize a subdirectory
 ```
 
 ## Scaffolds
 
 | Scaffold | Best For | Contents |
 | --- | --- | --- |
-| `starter_workspace` | Exploring the full dltHub workflow quickly. | Open Brewery DB ingestion, Ibis transformations, scheduled data quality checks, marimo notebooks, and a generated deployment module. |
-| `minimal_workspace` | Starting from a clean, small project. | One placeholder dlt pipeline, local warehouse config, and generated deployment module. |
+| `minimal_workspace` (default) | A quick, runnable first look. | A sample online-shop pipeline, a marimo report notebook, local warehouse config, and a generated deployment module. |
+| `starter_workspace` | Exploring the full dltHub workflow. | Open Brewery DB ingestion, Ibis transformations, scheduled data quality checks, marimo notebooks, and a generated deployment module. |
 
 ## Generated Workspace
 
-The starter scaffold creates a workspace shaped roughly like this:
+The default (minimal) scaffold initializes the workspace at the project root,
+shaped roughly like this:
 
 ```text
-my-workspace/
+.
 |-- pyproject.toml
-|-- uv.lock
-|-- starter_pipeline.py
-|-- starter_transformations.py
-|-- starter_data_quality.py
+|-- pipeline.py
+|-- report_notebook.py
 |-- __deployment__.py
-|-- notebooks/
+|-- README.md
 |-- .dlt/
-|-- .agents/
-|-- .claude/        # when Claude is selected
-|-- .cursor/        # when Cursor is selected
-`-- .codex/         # when Codex is selected
+|-- .mcp.json
+`-- .claude/        # your selected agent (or .cursor/ / .codex/)
 ```
 
-The minimal scaffold uses `pipeline.py` instead of the starter example modules.
+The starter scaffold replaces `pipeline.py` with the example modules
+(`starter_pipeline.py`, `starter_transformations.py`, `starter_data_quality.py`)
+and adds a `notebooks/` directory.
 
 ## Next Steps
+
+From the workspace root, for the default (minimal) scaffold:
+
+```bash
+uv run dlthub run load_sample_shop
+uv run dlthub show
+```
 
 For the starter scaffold:
 
 ```bash
-cd my-workspace
 uv run dlthub run load_breweries
 uv run dlthub show
 ```
 
-For the minimal scaffold:
-
-```bash
-cd my-workspace
-uv run dlthub run load_data
-uv run dlthub show
-```
-
-If you created the workspace with `--skip-uv-sync`, finish setup first:
-
-```bash
-cd my-workspace
-uv sync
-```
+If you created the workspace with `--skip-uv-sync`, finish setup first with
+`uv sync`. (If you scaffolded into a subdirectory, `cd` into it first.)
 
 ## Troubleshooting
 
 `uvx: command not found`
 
-Use `pipx run dlthub-start my-workspace` instead. The CLI will still
-offer to install `uv` before syncing the generated workspace dependencies.
+Install the CLI with `pip install dlthub-start` (into your current Python
+environment) and run `dlthub-start` instead. The CLI will still offer to
+install `uv` before syncing the generated workspace dependencies.
 
-`Target directory already exists and is not empty`
+`Directory not empty`
 
-Choose a new directory or empty the existing one. The CLI will not overwrite a
-non-empty workspace directory.
+Run `dlthub-start` from an empty directory (hidden entries like `.git` and
+`.gitignore` count), or pass a new target directory name. The CLI never writes
+into a non-empty directory.
 
 `uv sync` fails
 
@@ -163,7 +164,7 @@ scaffold regeneration, see [CONTRIBUTING.md](CONTRIBUTING.md).
 To build and publish a release to PyPI:
 
 ```bash
-make publish-library
+make publish
 ```
 
 This removes any previous `dist/` artifacts, builds the package with
