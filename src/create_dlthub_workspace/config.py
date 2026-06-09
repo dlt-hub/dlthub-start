@@ -6,19 +6,6 @@ from dataclasses import dataclass
 
 VERSION = "0.5.3"
 
-SCAFFOLDS = (
-    (
-        "minimal_workspace",
-        "Hello World",
-        "a local dltHub workspace with a single dlt pipeline: for a quick look how dltHub Pro works.",
-    ),
-    (
-        "starter_workspace",
-        "Starter",
-        "the full local dltHub workspace experience: agentic ingestion, transformations, data quality, and notebooks.",
-    ),
-)
-
 AGENTS = ("claude", "cursor", "codex")
 
 TOOLKITS = (

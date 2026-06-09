@@ -18,11 +18,6 @@ from .config import VERSION
 console = Console()
 
 NEXT_STEPS: dict[str, tuple[tuple[str, str | None], ...]] = {
-    "starter_workspace": (
-        (strings.STEPS_LABEL_ADD_MOTHERDUCK_CREDENTIALS, None),
-        (strings.STEPS_LABEL_RUN_BREWERIES, strings.CMD_DLTHUB_RUN_BREWERIES),
-        (strings.STEPS_LABEL_VIEW_JOB_RUNS, strings.CMD_DLTHUB_JOB_RUNS_SHOW_BREWERIES),
-    ),
     "minimal_workspace": (
         (strings.STEPS_LABEL_RUN_SAMPLE_SHOP, strings.CMD_DLTHUB_RUN_SAMPLE_SHOP),
         (strings.STEPS_LABEL_VIEW_SAMPLE_SHOP_RUNS, strings.CMD_DLTHUB_JOB_RUNS_SHOW_SAMPLE_SHOP),
@@ -31,14 +26,6 @@ NEXT_STEPS: dict[str, tuple[tuple[str, str | None], ...]] = {
 }
 
 CREATED_TREE: dict[str, tuple[str, ...]] = {
-    "starter_workspace": (
-        "pyproject.toml",
-        "starter_pipeline.py",
-        "starter_transformations.py",
-        "starter_data_quality.py",
-        "notebooks/",
-        ".dlt/",
-    ),
     "minimal_workspace": (
         "pyproject.toml",
         "pipeline.py",

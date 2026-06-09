@@ -24,22 +24,6 @@ from create_dlthub_workspace.scaffold import SCAFFOLDS_DIR
 
 
 class PrintNextStepsTests(unittest.TestCase):
-    def test_starter_scaffold_renders_and_includes_cd_hint(self) -> None:
-        project_dir = Path("/tmp/my_workspace")
-        with console.capture() as cap:
-            print_next_steps(project_dir, scaffold="starter_workspace")
-        output = cap.get()
-
-        # str(path) so the assertion matches the platform's separator
-        # (Windows renders backslashes, POSIX renders forward slashes).
-        self.assertIn(str(project_dir), output)
-        self.assertIn("Created", output)
-        self.assertIn("starter_pipeline.py", output)
-        self.assertIn("starter_transformations.py", output)
-        self.assertIn("prod.secrets.toml", output)
-        self.assertIn("database name and token", output)
-        self.assertIn("uv run dlthub run load_breweries", output)
-
     def test_minimal_scaffold_renders_with_its_pipeline_command(self) -> None:
         with console.capture() as cap:
             print_next_steps(Path("/tmp/my_workspace"), scaffold="minimal_workspace")
@@ -54,7 +38,7 @@ class PrintNextStepsTests(unittest.TestCase):
 
     def test_renders_selected_agent(self) -> None:
         with console.capture() as cap:
-            print_next_steps(Path("/tmp/my_workspace"), scaffold="starter_workspace", agent="claude")
+            print_next_steps(Path("/tmp/my_workspace"), scaffold="minimal_workspace", agent="claude")
         output = cap.get()
 
         self.assertIn("Coding agent", output)

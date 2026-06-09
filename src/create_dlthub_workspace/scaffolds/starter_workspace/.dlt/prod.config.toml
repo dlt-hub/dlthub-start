@@ -1,4 +1,0 @@
-# Production environment -- data lives in MotherDuck (cloud DuckDB).
-# Add your token to .dlt/prod.secrets.toml (see instructions there).
-[destination.warehouse]
-destination_type = "motherduck"

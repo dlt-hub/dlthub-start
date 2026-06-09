@@ -28,11 +28,6 @@ class BuildParserTests(unittest.TestCase):
         args = parser.parse_args([])
         self.assertIsNone(args.project_dir)
 
-    def test_rejects_unknown_scaffold(self) -> None:
-        parser = build_parser()
-        with _silenced(), self.assertRaises(SystemExit):
-            parser.parse_args(["my_workspace", "--scaffold", "does-not-exist"])
-
     def test_rejects_unknown_agent(self) -> None:
         parser = build_parser()
         with _silenced(), self.assertRaises(SystemExit):
@@ -67,11 +62,6 @@ class BuildParserTests(unittest.TestCase):
         parser = build_parser()
         args = parser.parse_args(["my_workspace"])
         self.assertIsNone(args.agent)
-
-    def test_scaffold_defaults_to_none(self) -> None:
-        parser = build_parser()
-        args = parser.parse_args(["my_workspace"])
-        self.assertIsNone(args.scaffold)
 
 
 class MainExitCodeTests(unittest.TestCase):
@@ -109,7 +99,7 @@ def _make_plan(**overrides: object) -> WorkspacePlan:
     """Construct a WorkspacePlan with sensible defaults; tests override fields."""
     defaults: dict[str, object] = {
         "project_dir": Path("/tmp/test_workspace"),
-        "scaffold": "starter_workspace",
+        "scaffold": "minimal_workspace",
         "stage": WorkspaceStage.FULL,
         "agent": "claude",
         "uv_executable": "/usr/local/bin/uv",

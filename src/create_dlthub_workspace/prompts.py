@@ -7,7 +7,7 @@ from typing import cast
 import beaupy
 
 from . import strings
-from .config import AGENTS, RECOMMENDED, SCAFFOLDS
+from .config import AGENTS, RECOMMENDED
 from .display import console
 
 CURSOR = "❯"
@@ -20,33 +20,6 @@ RECOMMENDED_SUFFIX = strings.HINT_RECOMMENDED_SUFFIX
 def _echo_selection(value: str) -> None:
     """Persist the user's choice after beaupy clears its widget."""
     console.print(f"  [{CURSOR_STYLE}]{TICK_CHAR}[/{CURSOR_STYLE}] [bold]{value}[/bold]")
-
-
-def choose_scaffold(default: str = RECOMMENDED.scaffold) -> str:
-    """Arrow-key select for the bundled scaffold."""
-    keys = [key for key, _, _ in SCAFFOLDS]
-    labels = [label for _, label, _ in SCAFFOLDS]
-    options = [
-        f"[bold]{label}[/bold]{RECOMMENDED_SUFFIX if key == RECOMMENDED.scaffold else ''}   [dim]{description}[/dim]"
-        for key, label, description in SCAFFOLDS
-    ]
-    default_index = keys.index(default) if default in keys else 0
-
-    console.print(strings.PROMPT_SCAFFOLD_HEADER)
-    # beaupy ships no type stubs, so mypy sees the result as Any; cast narrows it
-    # to the concrete branch we're using (return_index=True yields an int).
-    index = cast(
-        int,
-        beaupy.select(
-            options,
-            cursor=CURSOR,
-            cursor_style=CURSOR_STYLE,
-            cursor_index=default_index,
-            return_index=True,
-        ),
-    )
-    _echo_selection(labels[index])
-    return keys[index]
 
 
 def choose_agent(default: str = RECOMMENDED.agent) -> str:

@@ -1,9 +1,9 @@
 """Tests for build_plan — the decision tree that resolves CLI args + prompts
 into a frozen WorkspacePlan.
 
-Mocks every external dependency (find_uv, choose_scaffold, choose_agent,
-confirm, validate_target_dir, validate_scaffold_name) so each test is fast
-and deterministic.
+Mocks every external dependency (find_uv, choose_agent, confirm,
+validate_target_dir) so each test is fast and deterministic. There is a single
+bundled scaffold, so no scaffold prompt is involved.
 """
 
 from __future__ import annotations
@@ -22,7 +22,6 @@ def _make_args(**overrides: object) -> argparse.Namespace:
     """Mirror what argparse would produce; tests override individual fields."""
     defaults: dict[str, object] = {
         "project_dir": "/tmp/test_workspace",
-        "scaffold": None,
         "agent": None,
         "yes": False,
         "verbose": False,
@@ -36,7 +35,6 @@ class BuildPlanYesModeTests(unittest.TestCase):
     """`--yes` runs the recommended path with no prompts fired."""
 
     @patch("create_dlthub_workspace.plan.choose_agent")
-    @patch("create_dlthub_workspace.plan.choose_scaffold")
     @patch("create_dlthub_workspace.plan.confirm")
     @patch("create_dlthub_workspace.plan.validate_target_dir")
     @patch("create_dlthub_workspace.plan.find_uv", return_value="/usr/local/bin/uv")
@@ -45,7 +43,6 @@ class BuildPlanYesModeTests(unittest.TestCase):
         _find_uv: MagicMock,
         _validate: MagicMock,
         confirm: MagicMock,
-        choose_scaffold: MagicMock,
         choose_agent: MagicMock,
     ) -> None:
         plan = build_plan(_make_args(yes=True))
@@ -56,7 +53,6 @@ class BuildPlanYesModeTests(unittest.TestCase):
         self.assertFalse(plan.install_uv)
         self.assertEqual(plan.uv_executable, "/usr/local/bin/uv")
         confirm.assert_not_called()
-        choose_scaffold.assert_not_called()
         choose_agent.assert_not_called()
 
     @patch("create_dlthub_workspace.plan.confirm")
@@ -94,10 +90,6 @@ class BuildPlanInteractiveTests(unittest.TestCase):
     """Interactive mode: prompts fire and shape the plan."""
 
     @patch("create_dlthub_workspace.plan.choose_agent", return_value="cursor")
-    @patch(
-        "create_dlthub_workspace.plan.choose_scaffold",
-        return_value="starter_workspace",
-    )
     @patch("create_dlthub_workspace.plan.confirm", return_value=True)
     @patch("create_dlthub_workspace.plan.validate_target_dir")
     @patch("create_dlthub_workspace.plan.find_uv", return_value="/usr/local/bin/uv")
@@ -106,24 +98,19 @@ class BuildPlanInteractiveTests(unittest.TestCase):
         _find_uv: MagicMock,
         _validate: MagicMock,
         confirm: MagicMock,
-        choose_scaffold: MagicMock,
         choose_agent: MagicMock,
     ) -> None:
         plan = build_plan(_make_args())
 
         self.assertEqual(plan.stage, WorkspaceStage.FULL)
-        self.assertEqual(plan.scaffold, "starter_workspace")
+        # Single bundled scaffold: always the recommended one, no prompt.
+        self.assertEqual(plan.scaffold, RECOMMENDED.scaffold)
         self.assertEqual(plan.agent, "cursor")
-        choose_scaffold.assert_called_once()
         choose_agent.assert_called_once()
         # Only the uv-sync prompt fires when uv is already present.
         self.assertEqual(confirm.call_count, 1)
 
     @patch("create_dlthub_workspace.plan.choose_agent", return_value="claude")
-    @patch(
-        "create_dlthub_workspace.plan.choose_scaffold",
-        return_value="starter_workspace",
-    )
     @patch("create_dlthub_workspace.plan.confirm", return_value=False)
     @patch("create_dlthub_workspace.plan.validate_target_dir")
     @patch("create_dlthub_workspace.plan.find_uv", return_value=None)
@@ -132,7 +119,6 @@ class BuildPlanInteractiveTests(unittest.TestCase):
         _find_uv: MagicMock,
         _validate: MagicMock,
         _confirm: MagicMock,
-        _choose_scaffold: MagicMock,
         choose_agent: MagicMock,
     ) -> None:
         plan = build_plan(_make_args())
@@ -145,10 +131,6 @@ class BuildPlanInteractiveTests(unittest.TestCase):
         choose_agent.assert_called_once()
 
     @patch("create_dlthub_workspace.plan.choose_agent", return_value="codex")
-    @patch(
-        "create_dlthub_workspace.plan.choose_scaffold",
-        return_value="starter_workspace",
-    )
     @patch("create_dlthub_workspace.plan.confirm")
     @patch("create_dlthub_workspace.plan.validate_target_dir")
     @patch("create_dlthub_workspace.plan.find_uv", return_value="/usr/local/bin/uv")
@@ -157,7 +139,6 @@ class BuildPlanInteractiveTests(unittest.TestCase):
         _find_uv: MagicMock,
         _validate: MagicMock,
         confirm: MagicMock,
-        _choose_scaffold: MagicMock,
         choose_agent: MagicMock,
     ) -> None:
         # Only the uv-sync prompt fires (uv was already present), so a single
@@ -173,10 +154,6 @@ class BuildPlanInteractiveTests(unittest.TestCase):
         choose_agent.assert_called_once()
 
     @patch("create_dlthub_workspace.plan.choose_agent", return_value="claude")
-    @patch(
-        "create_dlthub_workspace.plan.choose_scaffold",
-        return_value="starter_workspace",
-    )
     @patch("create_dlthub_workspace.plan.confirm", return_value=True)
     @patch("create_dlthub_workspace.plan.validate_target_dir")
     @patch("create_dlthub_workspace.plan.find_uv", return_value=None)
@@ -185,7 +162,6 @@ class BuildPlanInteractiveTests(unittest.TestCase):
         _find_uv: MagicMock,
         _validate: MagicMock,
         confirm: MagicMock,
-        _choose_scaffold: MagicMock,
         _choose_agent: MagicMock,
     ) -> None:
         plan = build_plan(_make_args())
@@ -199,26 +175,7 @@ class BuildPlanInteractiveTests(unittest.TestCase):
 class BuildPlanArgOverrideTests(unittest.TestCase):
     """Explicit CLI flags bypass the corresponding prompts."""
 
-    @patch("create_dlthub_workspace.plan.choose_agent", return_value="claude")
-    @patch("create_dlthub_workspace.plan.choose_scaffold")
-    @patch("create_dlthub_workspace.plan.confirm", return_value=True)
-    @patch("create_dlthub_workspace.plan.validate_target_dir")
-    @patch("create_dlthub_workspace.plan.find_uv", return_value="/usr/local/bin/uv")
-    def test_scaffold_arg_skips_scaffold_prompt(
-        self,
-        _find_uv: MagicMock,
-        _validate: MagicMock,
-        _confirm: MagicMock,
-        choose_scaffold: MagicMock,
-        _choose_agent: MagicMock,
-    ) -> None:
-        plan = build_plan(_make_args(scaffold="minimal_workspace"))
-
-        self.assertEqual(plan.scaffold, "minimal_workspace")
-        choose_scaffold.assert_not_called()
-
     @patch("create_dlthub_workspace.plan.choose_agent")
-    @patch("create_dlthub_workspace.plan.choose_scaffold", return_value="starter_workspace")
     @patch("create_dlthub_workspace.plan.confirm", return_value=True)
     @patch("create_dlthub_workspace.plan.validate_target_dir")
     @patch("create_dlthub_workspace.plan.find_uv", return_value="/usr/local/bin/uv")
@@ -227,7 +184,6 @@ class BuildPlanArgOverrideTests(unittest.TestCase):
         _find_uv: MagicMock,
         _validate: MagicMock,
         _confirm: MagicMock,
-        _choose_scaffold: MagicMock,
         choose_agent: MagicMock,
     ) -> None:
         plan = build_plan(_make_args(agent="codex"))
@@ -245,7 +201,6 @@ class BuildPlanFlagInteractionTests(unittest.TestCase):
     """
 
     @patch("create_dlthub_workspace.plan.choose_agent", return_value="claude")
-    @patch("create_dlthub_workspace.plan.choose_scaffold", return_value="starter_workspace")
     @patch("create_dlthub_workspace.plan.confirm")
     @patch("create_dlthub_workspace.plan.validate_target_dir")
     @patch("create_dlthub_workspace.plan.find_uv", return_value="/usr/local/bin/uv")
@@ -254,7 +209,6 @@ class BuildPlanFlagInteractionTests(unittest.TestCase):
         _find_uv: MagicMock,
         _validate: MagicMock,
         confirm: MagicMock,
-        _choose_scaffold: MagicMock,
         _choose_agent: MagicMock,
     ) -> None:
         # Interactive mode, but --skip-uv-sync should win without asking.
@@ -282,7 +236,6 @@ class BuildPlanFlagInteractionTests(unittest.TestCase):
 class BuildPlanValidationTests(unittest.TestCase):
     """Failures and edge cases."""
 
-    @patch("create_dlthub_workspace.plan.choose_scaffold")
     @patch("create_dlthub_workspace.plan.find_uv")
     @patch(
         "create_dlthub_workspace.plan.validate_target_dir",
@@ -292,19 +245,16 @@ class BuildPlanValidationTests(unittest.TestCase):
         self,
         _validate: MagicMock,
         find_uv: MagicMock,
-        choose_scaffold: MagicMock,
     ) -> None:
         # Target-dir validation runs first now; a name conflict short-circuits
-        # the rest of planning before the user is asked to choose scaffold or
-        # agent, and before uv detection runs.
+        # the rest of planning before the user is asked anything, and before uv
+        # detection runs.
         with self.assertRaises(ScaffoldError):
             build_plan(_make_args(yes=True))
 
         find_uv.assert_not_called()
-        choose_scaffold.assert_not_called()
 
     @patch("create_dlthub_workspace.plan.choose_agent", return_value="claude")
-    @patch("create_dlthub_workspace.plan.choose_scaffold", return_value="starter_workspace")
     @patch("create_dlthub_workspace.plan.confirm", return_value=True)
     @patch("create_dlthub_workspace.plan.validate_target_dir")
     @patch("create_dlthub_workspace.plan.find_uv", return_value="/usr/local/bin/uv")
@@ -313,7 +263,6 @@ class BuildPlanValidationTests(unittest.TestCase):
         _find_uv: MagicMock,
         _validate: MagicMock,
         _confirm: MagicMock,
-        _choose_scaffold: MagicMock,
         _choose_agent: MagicMock,
     ) -> None:
         # validate_agent runs against the scaffold's vendored agents.

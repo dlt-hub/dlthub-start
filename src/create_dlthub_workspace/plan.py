@@ -16,7 +16,7 @@ from pathlib import Path
 
 from . import strings
 from .config import RECOMMENDED
-from .prompts import choose_agent, choose_scaffold, confirm
+from .prompts import choose_agent, confirm
 from .scaffold import validate_agent, validate_scaffold_name, validate_target_dir
 from .uv import find_uv
 
@@ -43,9 +43,10 @@ class WorkspacePlan:
 def build_plan(args: argparse.Namespace) -> WorkspacePlan:
     """Gather every answer needed to scaffold the workspace. No filesystem writes.
 
-    Order: target -> scaffold -> agents (content questions), then uv install
-    + sync (setup questions). The target-directory check fires first so an
-    occupied directory fails fast — before the user answers any other questions.
+    Order: target -> agent (content question), then uv install + sync (setup
+    questions). The target-directory check fires first so an occupied directory
+    fails fast — before the user answers any other questions. There is a single
+    bundled scaffold, so no scaffold prompt is asked.
 
     The workspace is initialized in place: the current directory by default, or
     an explicit ``project_dir`` if given. Either way the target must be empty.
@@ -53,7 +54,7 @@ def build_plan(args: argparse.Namespace) -> WorkspacePlan:
     project_dir = (Path(args.project_dir).expanduser() if args.project_dir else Path.cwd()).resolve()
     validate_target_dir(project_dir)
 
-    scaffold = args.scaffold or (RECOMMENDED.scaffold if args.yes else choose_scaffold())
+    scaffold = RECOMMENDED.scaffold
     validate_scaffold_name(scaffold)
 
     agent = args.agent or (RECOMMENDED.agent if args.yes else choose_agent())
