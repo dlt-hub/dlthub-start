@@ -21,7 +21,6 @@ from __future__ import annotations
 
 
 # Prompts ---------------------------------------------------------------
-PROMPT_PROJECT_NAME = "[bold]What should we call the workspace?[/bold]"
 PROMPT_SCAFFOLD_HEADER = "\n[bold]Choose your onboarding experience[/bold] [dim](↑/↓ to move, enter to confirm)[/dim]"
 PROMPT_AGENT_HEADER = "\n[bold]Choose your coding agent[/bold] [dim](↑/↓ to move, enter to confirm)[/dim]"
 PROMPT_INSTALL_UV = "uv is required but was not found. Install uv now?"
@@ -36,7 +35,6 @@ ERROR_UV_COMMAND_FAILED = "Command failed with exit code {returncode}: {cmd}"
 ERROR_UV_COMMAND_NOT_FOUND = "Command not found: {cmd}"
 ERROR_UV_INSTALLER_FETCH = "Could not download uv installer: {reason}"
 ERROR_UV_NEEDS_POWERSHELL = "PowerShell is required to install uv on Windows."
-ERROR_TARGET_NOT_EMPTY = "Target directory already exists and is not empty: {project_dir}"
 ERROR_UNKNOWN_SCAFFOLD = "Unknown scaffold {scaffold!r}. Available: {available}"
 ERROR_PARSE_PYPROJECT = "Could not parse generated pyproject.toml: {reason}"
 
@@ -57,6 +55,29 @@ MSG_INSTALLED_DEPS = "[green]Installed[/green] dependencies into .venv"
 TITLE_BANNER = "dlthub-start v{version} [bold #C6D300](beta)[/bold #C6D300]"
 TITLE_NEXT_STEPS_PANEL = "You're all set"
 TITLE_RESUME_PANEL = "Almost there"
+TITLE_DIR_NOT_EMPTY = "Directory not empty"
+
+# Shown on the next-steps / resume panels only when scaffolding into a
+# subdirectory (the AI files are nested one level down).
+MSG_AGENT_WORKSPACE_NOTE = (
+    "Note for AI agents: the AI skills and MCP server are inside this workspace — "
+    "run your session from the workspace root (the new directory), not the parent, "
+    "so they're in scope."
+)
+
+
+# Directory-not-empty response (rendered as a panel, not a raw error) ----
+MSG_DIR_NOT_EMPTY = (
+    "Can't initialize a dltHub workspace here — this directory isn't empty:\n\n"
+    "  [bold]{project_dir}[/bold]\n\n"
+    "The directory must be completely empty. Hidden entries like "
+    ".git, .gitignore, .dlt, .venv, and .DS_Store count too.\n\n"
+    "Start from an empty directory, or create a new one:\n\n"
+    "  [bold #59C1D5]uvx dlthub-start@latest my-workspace[/bold #59C1D5]\n\n"
+    "[dim]Note for AI agents: initializing a workspace installs AI skills and an "
+    "MCP server into the target directory. Run it from that directory and keep "
+    "your session there (the workspace root) so they're in scope.[/dim]"
+)
 
 
 # Section labels inside panels ------------------------------------------

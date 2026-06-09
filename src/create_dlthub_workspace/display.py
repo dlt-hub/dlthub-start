@@ -250,12 +250,13 @@ def _cd_target(project_dir: Path) -> str:
 def print_next_steps(project_dir: Path, *, scaffold: str, agent: str | None = None) -> None:
     """Post-setup tips panel. Steps are tailored to the chosen scaffold."""
     created_tree = CREATED_TREE[scaffold]
-    # Every panel starts the user at "go to the directory" so the rest of the
-    # numbered commands can be copy-pasted without context-switching.
-    steps: tuple[tuple[str, str | None], ...] = (
-        (strings.STEPS_LABEL_CD, strings.CMD_CD.format(project_dir=_cd_target(project_dir))),
-        *NEXT_STEPS[scaffold],
+    # Lead with "go to the directory" only when the workspace is a subdirectory;
+    # when it's the current directory (cwd) the cd step is noise (`cd .`).
+    cd = _cd_target(project_dir)
+    cd_step: tuple[tuple[str, str | None], ...] = (
+        () if cd == "." else ((strings.STEPS_LABEL_CD, strings.CMD_CD.format(project_dir=cd)),)
     )
+    steps: tuple[tuple[str, str | None], ...] = (*cd_step, *NEXT_STEPS[scaffold])
 
     body = Text()
     body.append(f"{strings.LABEL_CREATED}\n\n", style="bold #C6D300")
@@ -278,6 +279,8 @@ def print_next_steps(project_dir: Path, *, scaffold: str, agent: str | None = No
         strings.LINK_DOCS_LABEL,
         style=f"underline #59C1D5 link {strings.LINK_DOCS_URL}",
     )
+    if cd != ".":
+        body.append(f"\n\n  {strings.MSG_AGENT_WORKSPACE_NOTE}", style="dim")
 
     console.print(
         Panel(
@@ -294,9 +297,10 @@ def print_resume_steps(project_dir: Path, *, uv_installed: bool) -> None:
     """Remaining setup commands. AI workbench files are already in the
     workspace (vendored into the scaffold), so the only thing the user still
     needs to do is finish the uv setup."""
-    steps: list[tuple[str, str]] = [
-        (strings.STEPS_LABEL_CD, strings.CMD_CD.format(project_dir=_cd_target(project_dir))),
-    ]
+    steps: list[tuple[str, str]] = []
+    cd = _cd_target(project_dir)
+    if cd != ".":
+        steps.append((strings.STEPS_LABEL_CD, strings.CMD_CD.format(project_dir=cd)))
     if not uv_installed:
         steps.append((strings.STEPS_LABEL_INSTALL_UV, strings.CMD_INSTALL_UV_UNIX))
     steps.append((strings.STEPS_LABEL_INSTALL_DEPS, strings.CMD_UV_SYNC))
@@ -311,6 +315,8 @@ def print_resume_steps(project_dir: Path, *, uv_installed: bool) -> None:
         strings.LINK_DOCS_LABEL,
         style=f"underline #59C1D5 link {strings.LINK_DOCS_URL}",
     )
+    if cd != ".":
+        body.append(f"\n\n  {strings.MSG_AGENT_WORKSPACE_NOTE}", style="dim")
 
     console.print(
         Panel(
@@ -318,6 +324,20 @@ def print_resume_steps(project_dir: Path, *, uv_installed: bool) -> None:
             title=strings.TITLE_RESUME_PANEL,
             title_align="left",
             border_style="#C6D300",
+            padding=(1, 2),
+        )
+    )
+
+
+def print_dir_not_empty(project_dir: Path) -> None:
+    """Render the directory-not-empty response as a clean panel (not a raw error)."""
+    body = Text.from_markup(strings.MSG_DIR_NOT_EMPTY.format(project_dir=project_dir))
+    console.print(
+        Panel(
+            body,
+            title=strings.TITLE_DIR_NOT_EMPTY,
+            title_align="left",
+            border_style="#E0A500",
             padding=(1, 2),
         )
     )

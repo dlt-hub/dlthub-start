@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 from pathlib import Path
 
 from create_dlthub_workspace.cli import build_parser, execute_plan, main
-from create_dlthub_workspace.errors import WorkspaceError
+from create_dlthub_workspace.errors import WorkspaceDirectoryNotEmptyError, WorkspaceError
 from create_dlthub_workspace.plan import WorkspacePlan, WorkspaceStage
 
 
@@ -91,6 +91,18 @@ class MainExitCodeTests(unittest.TestCase):
         run.side_effect = KeyboardInterrupt
         with _silenced():
             self.assertEqual(main(["my_workspace"]), 130)
+
+    @patch("create_dlthub_workspace.cli.print_dir_not_empty")
+    @patch("create_dlthub_workspace.cli.run")
+    def test_returns_two_and_renders_panel_on_dir_not_empty(
+        self, run: MagicMock, print_dir_not_empty: MagicMock
+    ) -> None:
+        target = Path("/tmp/occupied")
+        run.side_effect = WorkspaceDirectoryNotEmptyError(target)
+        with _silenced():
+            self.assertEqual(main(["my_workspace"]), 2)
+        # Routed to the clean response, not the generic error line.
+        print_dir_not_empty.assert_called_once_with(target)
 
 
 def _make_plan(**overrides: object) -> WorkspacePlan:

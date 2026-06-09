@@ -7,8 +7,15 @@ import sys
 
 from . import strings
 from .config import AGENTS, RECOMMENDED, SCAFFOLDS
-from .display import console, print_banner, print_next_steps, print_resume_steps, step
-from .errors import WorkspaceError
+from .display import (
+    console,
+    print_banner,
+    print_dir_not_empty,
+    print_next_steps,
+    print_resume_steps,
+    step,
+)
+from .errors import WorkspaceDirectoryNotEmptyError, WorkspaceError
 from .plan import WorkspacePlan, WorkspaceStage, build_plan
 from .project_metadata import apply_workspace_name
 from .scaffold import copy_scaffold
@@ -45,7 +52,7 @@ def build_parser() -> argparse.ArgumentParser:
         "project_dir",
         nargs="?",
         default=None,
-        help="Directory to create for the new workspace. Prompts if omitted.",
+        help="Directory to scaffold into (must be empty). Defaults to the current directory.",
     )
     parser.add_argument(
         "--scaffold",
@@ -87,6 +94,9 @@ def main(argv: list[str] | None = None) -> int:
     except KeyboardInterrupt:
         console.print(strings.MSG_CANCELLED)
         return 130
+    except WorkspaceDirectoryNotEmptyError as exc:
+        print_dir_not_empty(exc.project_dir)
+        return 2
     except WorkspaceError as exc:
         console.print(strings.MSG_ERROR_PREFIX.format(message=exc))
         return 1
