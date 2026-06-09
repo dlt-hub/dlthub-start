@@ -25,6 +25,7 @@ dependencies = [
 Homepage = "https://github.com/dlt-hub/dlthub-start"
 Repository = "https://github.com/dlt-hub/dlthub-start"
 Issues = "https://github.com/dlt-hub/dlthub-start/issues"
+Changelog = "https://github.com/dlt-hub/dlthub-start/releases"
 
 [project.optional-dependencies]
 dev = [
