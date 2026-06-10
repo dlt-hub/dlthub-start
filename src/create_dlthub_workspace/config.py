@@ -9,7 +9,8 @@ VERSION = "0.5.3"
 AGENTS = ("claude", "cursor", "codex")
 
 TOOLKITS = (
-    "one-shot-pipeline"
+    "one-shot-pipeline",
+    "dlthub-platform"
 )
 
 # The dltHub AI workbench repo that `make generate-ai` / `make update-ai` pull from.
