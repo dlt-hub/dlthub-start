@@ -18,10 +18,10 @@ from create_dlthub_workspace.prompts import (
 class EchoSelectionTests(unittest.TestCase):
     def test_prints_value_with_tick_and_bold_markup(self) -> None:
         with console.capture() as cap:
-            _echo_selection("Starter")
+            _echo_selection("claude")
         output = cap.get()
 
-        self.assertIn("Starter", output)
+        self.assertIn("claude", output)
         # The tick character is rendered through rich markup; just verify it
         # made it to the output stream.
         self.assertIn("●", output)

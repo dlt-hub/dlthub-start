@@ -63,9 +63,7 @@ Common options:
 
 | Option | Description |
 | --- | --- |
-| `--yes`, `-y` | Use the recommended path: the recommended scaffold, the Claude workbench, install `uv` if missing, and run `uv sync`. |
-| `--scaffold minimal_workspace` | The "Hello World" workspace: a runnable sample pipeline. **Recommended default.** |
-| `--scaffold starter_workspace` | The full workflow: ingestion, transformations, data quality, notebooks, and deployment. |
+| `--yes`, `-y` | Use the recommended path: the Claude workbench, install `uv` if missing, and run `uv sync`. |
 | `--agent claude` | Use the Claude workbench files. Choose exactly one agent (`claude`, `cursor`, or `codex`); defaults to `claude`. |
 | `--agent cursor` | Use the Cursor workbench files. |
 | `--agent codex` | Use the Codex workbench files. |
@@ -76,23 +74,19 @@ Examples:
 
 ```bash
 uvx dlthub-start@latest --yes                  # initialize in the current (empty) directory — recommended
-uvx dlthub-start@latest --scaffold starter_workspace
 uvx dlthub-start@latest --agent codex
 uvx dlthub-start@latest --yes --skip-uv-sync
 uvx dlthub-start@latest my-workspace --yes     # alternative: create + initialize a subdirectory
 ```
 
-## Scaffolds
+## Workspace contents
 
-| Scaffold | Best For | Contents |
-| --- | --- | --- |
-| `minimal_workspace` (default) | A quick, runnable first look. | A sample online-shop pipeline, local warehouse config, and a generated deployment module. |
-| `starter_workspace` | Exploring the full dltHub workflow. | Open Brewery DB ingestion, Ibis transformations, scheduled data quality checks, marimo notebooks, and a generated deployment module. |
+The bundled workspace is a quick, runnable first look: a sample online-shop
+pipeline, local warehouse config, and a generated deployment module.
 
 ## Generated Workspace
 
-The default (minimal) scaffold initializes the workspace at the project root,
-shaped roughly like this:
+The workspace is initialized at the project root, shaped roughly like this:
 
 ```text
 .
@@ -105,23 +99,12 @@ shaped roughly like this:
 `-- .claude/        # your selected agent (or .cursor/ / .codex/)
 ```
 
-The starter scaffold replaces `pipeline.py` with the example modules
-(`starter_pipeline.py`, `starter_transformations.py`, `starter_data_quality.py`)
-and adds a `notebooks/` directory.
-
 ## Next Steps
 
-From the workspace root, for the default (minimal) scaffold:
+From the workspace root:
 
 ```bash
 uv run dlthub run load_sample_shop
-uv run dlthub show
-```
-
-For the starter scaffold:
-
-```bash
-uv run dlthub run load_breweries
 uv run dlthub show
 ```
 

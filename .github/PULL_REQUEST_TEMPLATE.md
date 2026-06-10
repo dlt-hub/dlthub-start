@@ -1,7 +1,7 @@
 <!--
 Title: use Conventional Commits — type(scope): description
   types: feat | fix | chore | bug | improvement
-  scope (optional, kebab-case): ai, scaffold, starter-workspace, minimal-workspace, ...
+  scope (optional, kebab-case): ai, scaffold, minimal-workspace, cli, ...
   e.g. feat(ai): add make update-ai, bump workbench, and clean up docs
 -->
 
