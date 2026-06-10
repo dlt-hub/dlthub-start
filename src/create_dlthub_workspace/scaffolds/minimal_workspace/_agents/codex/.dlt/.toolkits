@@ -25,36 +25,27 @@ init:
   mcp_servers:
   - dlt-workspace-mcp
   name: init
-data-exploration:
-  version: 0.1.1
-  description: Quick insights from dlt pipeline data. Connect to a pipeline, profile
-    tables, plan charts, and assemble marimo dashboards.
+one-shot-pipeline:
+  version: 0.1.0
+  description: Build and run a minimal REST API pipeline locally against DuckDB in
+    one shot
   tags:
   - dlthub
-  - marimo
-  - ibis
-  - data-exploration
-  - dashboards
-  - altair
+  - pipeline
+  - one-shot
+  - data-pipeline
+  - python
   dependencies:
   - init
-  workflow_entry_skill: explore-data
+  workflow_entry_skill: one-shot-pipeline
   installed_at: '1970-01-01T00:00:00+00:00'
   agent: codex
   files:
-    .agents\skills\build-notebook\references\notebook-patterns.md:
-      sha3_256: 16da08c55d5bdde289e54dbb7c378e3906b4b20d1874f0bc4194f786e43c7bfc
-    .agents\skills\build-notebook\SKILL.md:
-      sha3_256: 8052fcd5e330644b6f704699385bc0f9329254bd302256f09254458c64db2780
-    .agents\skills\explore-data\references\analysis-plan-format.md:
-      sha3_256: e5ddff73aeb064a672dc915dd9b2725ca624d495a4311cac8bd0152eaad6c498
-    .agents\skills\explore-data\references\dlt-relation-api.md:
-      sha3_256: 12164f5e87759d420352bd6c8851c4daf3677a189e7a28ff8d77287128824b4d
-    .agents\skills\explore-data\SKILL.md:
-      sha3_256: f6b5438543e0d3082bc8e6db6183f3323bdad8b3ef52fda31aca40d7f0889c3e
-    .agents\skills\data-exploration-workflow\SKILL.md:
-      sha3_256: 5a8408184e0518cb3ea389dfe2049d823a79ef253a5bcf5d434b312e5a6eeaa2
-  name: data-exploration
+    .agents\skills\one-shot-pipeline\SKILL.md:
+      sha3_256: 6c514a3d3669f9eec70982183784bdcf665c1b41324e461b9f705e2d7f45821c
+    .agents\skills\one-shot-pipeline-workflow\SKILL.md:
+      sha3_256: 0da5ca5797bba2fdfa795bc8907e7a4e3979b2ffa8c19a7e1a136d92b9c3d1de
+  name: one-shot-pipeline
 dlthub-platform:
   version: 0.1.3
   description: Deploy dlthub workspace and pipelines to the dltHub Platform
@@ -88,36 +79,3 @@ dlthub-platform:
       sha3_256: 4559a4b3325b6972557f717e7b3cbe837a293dbdd3c8a3be4f465f60f4e811a1
     .agents\skills\dlthub-platform-workflow\SKILL.md:
       sha3_256: 75a5816f72bd6b89888a933af80104517ba5324353dbd3d008b75dc039111118
-  name: dlthub-platform
-rest-api-pipeline:
-  version: 0.1.1
-  description: 'Build REST API pipelines with dlt: scope, debug and validate data'
-  tags:
-  - dlthub
-  - etl
-  - data-pipeline
-  - python
-  dependencies:
-  - init
-  workflow_entry_skill: find-source
-  installed_at: '1970-01-01T00:00:00+00:00'
-  agent: codex
-  files:
-    .agents\skills\adjust-endpoint\SKILL.md:
-      sha3_256: be844e658df7227e8a91d3579c77129227d12617e95983edc48ab41d2b2d6bcc
-    .agents\skills\create-rest-api-pipeline\SKILL.md:
-      sha3_256: fcee99785e7e3e9966d976da18a178bb6624833d3df265b35931d9bd9a69cce5
-    .agents\skills\debug-pipeline\SKILL.md:
-      sha3_256: 3c0b1781984f9db4f9f5aae435ab9df66fd311313d54dd1c83db65b50bf5f82c
-    .agents\skills\find-source\SKILL.md:
-      sha3_256: 445d98d1b649158b40bc08c3a8a7f7a5c0027f73ebd3cb5ea5b8bdac71107d5a
-    .agents\skills\new-endpoint\SKILL.md:
-      sha3_256: 125b48bea1609e1c92ccbb14623c04f831c3af9601cc88ac6ad1113db93ef1e5
-    .agents\skills\validate-data\SKILL.md:
-      sha3_256: d7162793c323038d439e6d65f10ffcab14d0616200883fbec23038e9c765c24e
-    .agents\skills\view-data\SKILL.md:
-      sha3_256: 8976b3723960e4e6623af81dcb752f76e8eb36902b59412281fd13e80fe5a4de
-    .agents\skills\rest-api-pipeline-workflow\SKILL.md:
-      sha3_256: 11f9610f48ddd9a8da5f69fb358038c4f9d441b7e9c1190dedea66dab7c26074
-  mcp_servers:
-  - dlt-workspace-mcp
