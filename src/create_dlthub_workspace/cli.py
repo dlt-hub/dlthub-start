@@ -11,6 +11,7 @@ from . import strings
 from .config import AGENTS, PLAYGROUND_WORKSPACE, RECOMMENDED
 from .display import (
     console,
+    copy_to_clipboard,
     print_banner,
     print_dir_not_empty,
     print_next_steps,
@@ -214,11 +215,15 @@ def execute_plan(plan: WorkspacePlan) -> None:
         run_uv_command(uv_executable, plan.project_dir, ["run", "dlthub", "show"], verbose=verbose)
 
     console.print()
+    # When we ran the first pipeline, the next-steps panel shows a prompt to
+    # paste into the agent — copy it to the clipboard so it's one paste away.
+    prompt_copied = plan.run_first_pipeline and copy_to_clipboard(strings.CMD_BUILD_OWN_SOURCE_PROMPT)
     print_next_steps(
         plan.project_dir,
         scaffold=plan.scaffold,
         agent=plan.agent,
         first_pipeline_ran=plan.run_first_pipeline,
+        prompt_copied=prompt_copied,
     )
 
 

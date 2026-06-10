@@ -112,9 +112,9 @@ STEPS_LABEL_RUN_SAMPLE_SHOP = "Run the sample shop pipeline in dltHub (you'll be
 STEPS_LABEL_VIEW_SAMPLE_SHOP_RUNS = "View runs for the sample shop pipeline:"
 STEPS_LABEL_EDIT_PIPELINE = "Edit pipeline.py to swap in your own source, then re-run."
 STEPS_LABEL_BUILD_OWN_SOURCE = (
-    "Build a pipeline for your own data: ask your coding agent to ingest from your source "
-    '(e.g. "load my Stripe data") — it finds the right dlt source and wires it up.'
+    "Ready for your own data? Copy this prompt to your {agent} agent (swap in your API and the data you want):"
 )
+STEPS_LABEL_BUILD_OWN_SOURCE_COPIED = "Ready for your own data? This prompt is on your clipboard — paste it into your {agent} agent (swap in your API and the data you want):"
 STEPS_LABEL_INSTALL_UV = "Install uv:"
 STEPS_LABEL_INSTALL_DEPS = "Install workspace dependencies:"
 
@@ -125,3 +125,7 @@ CMD_UV_SYNC = "uv sync"
 CMD_DLTHUB_RUN_SAMPLE_SHOP = "uv run dlthub run load_sample_shop"
 CMD_DLTHUB_JOB_RUNS_SHOW_SAMPLE_SHOP = "uv run dlthub job runs show pipeline.load_sample_shop"
 CMD_CD = "cd {project_dir}"
+# Verbatim copy-paste prompt for the user's coding agent — shown in the command
+# slot of the post-run next-steps panel. Used as-is (never .format()'d), so the
+# {API name} / {endpoint/data} braces are literal blanks for the user to fill.
+CMD_BUILD_OWN_SOURCE_PROMPT = "Build a dlt pipeline for the {API name} API and load {endpoint/data} into DuckDB."

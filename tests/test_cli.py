@@ -157,6 +157,7 @@ class ExecutePlanFlowTests(unittest.TestCase):
 
         run_uv_command.assert_not_called()
 
+    @patch("create_dlthub_workspace.cli.copy_to_clipboard", return_value=True)
     @patch("create_dlthub_workspace.cli.capture_uv_command", return_value="Name\n----\nMy Workspace\n")
     @patch("create_dlthub_workspace.cli.run_uv_command")
     @patch("create_dlthub_workspace.cli.print_next_steps")
@@ -171,6 +172,7 @@ class ExecutePlanFlowTests(unittest.TestCase):
         print_next_steps: MagicMock,
         run_uv_command: MagicMock,
         _capture_uv_command: MagicMock,
+        _copy_to_clipboard: MagicMock,
     ) -> None:
         with _silenced():
             execute_plan(_make_plan(stage=WorkspaceStage.FULL, run_first_pipeline=True))
@@ -192,6 +194,7 @@ class ExecutePlanFlowTests(unittest.TestCase):
         print_next_steps.assert_called_once()
         self.assertTrue(print_next_steps.call_args.kwargs["first_pipeline_ran"])
 
+    @patch("create_dlthub_workspace.cli.copy_to_clipboard", return_value=True)
     @patch(
         "create_dlthub_workspace.cli.capture_uv_command",
         return_value=f"Name        Organization\n----------  ------------\n{PLAYGROUND_WORKSPACE}  Personal\n",
@@ -209,6 +212,7 @@ class ExecutePlanFlowTests(unittest.TestCase):
         _print_next_steps: MagicMock,
         run_uv_command: MagicMock,
         _capture_uv_command: MagicMock,
+        _copy_to_clipboard: MagicMock,
     ) -> None:
         with _silenced():
             execute_plan(_make_plan(stage=WorkspaceStage.FULL, run_first_pipeline=True))

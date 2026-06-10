@@ -9,14 +9,15 @@ from __future__ import annotations
 import os
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from create_dlthub_workspace.config import VERSION
 from create_dlthub_workspace.display import (
     CREATED_TREE,
     NEXT_STEPS,
-    NEXT_STEPS_AFTER_RUN,
     _cd_target,
     console,
+    copy_to_clipboard,
     print_banner,
     print_next_steps,
     print_resume_steps,
@@ -39,15 +40,36 @@ class PrintNextStepsTests(unittest.TestCase):
 
     def test_first_pipeline_ran_shows_build_own_source_step(self) -> None:
         # When the first pipeline was already run during setup, the panel drops
-        # the run / view-runs steps (they just happened) and points the user at
-        # building a pipeline for their own source.
+        # the run / view-runs steps (they just happened) and shows a copy-paste
+        # prompt addressed to the chosen agent.
         with console.capture() as cap:
-            print_next_steps(Path.cwd(), scaffold="minimal_workspace", first_pipeline_ran=True)
+            print_next_steps(Path.cwd(), scaffold="minimal_workspace", agent="cursor", first_pipeline_ran=True)
         output = cap.get()
 
         self.assertNotIn("uv run dlthub run load_sample_shop", output)
         self.assertNotIn("job runs show", output)
-        self.assertIn("Build a pipeline", output)
+        # The verbatim prompt copy and the chosen agent both appear.
+        self.assertIn("Build a dlt pipeline for the", output)
+        self.assertIn("DuckDB", output)
+        self.assertIn("cursor", output)
+        # Not copied → wording asks the user to copy it.
+        self.assertIn("Copy this prompt", output)
+
+    def test_prompt_copied_changes_wording_to_clipboard(self) -> None:
+        with console.capture() as cap:
+            print_next_steps(
+                Path.cwd(),
+                scaffold="minimal_workspace",
+                agent="claude",
+                first_pipeline_ran=True,
+                prompt_copied=True,
+            )
+        output = cap.get()
+
+        # The verbatim prompt is unchanged; the wording says it's on the clipboard.
+        self.assertIn("Build a dlt pipeline for the", output)
+        self.assertIn("clipboard", output)
+        self.assertNotIn("Copy this prompt", output)
 
     def test_renders_selected_agent(self) -> None:
         with console.capture() as cap:
@@ -125,10 +147,8 @@ class CreatedTreeTests(unittest.TestCase):
 
     def test_created_tree_covers_every_next_steps_scaffold(self) -> None:
         # If a scaffold can render next steps, it should also render a matching
-        # "Created" tree and a post-run step list (used when the first pipeline
-        # was run during setup).
+        # "Created" tree.
         self.assertEqual(set(CREATED_TREE), set(NEXT_STEPS))
-        self.assertEqual(set(NEXT_STEPS_AFTER_RUN), set(NEXT_STEPS))
 
 
 class PrintResumeStepsTests(unittest.TestCase):
@@ -164,6 +184,17 @@ class PrintBannerTests(unittest.TestCase):
         output = cap.get()
 
         self.assertIn("(beta)", output)
+
+
+class CopyToClipboardTests(unittest.TestCase):
+    @patch("create_dlthub_workspace.display.subprocess.run")
+    @patch("create_dlthub_workspace.display.shutil.which", return_value="/usr/bin/pbcopy")
+    def test_returns_true_when_clipboard_tool_succeeds(self, _which: object, run: object) -> None:
+        self.assertTrue(copy_to_clipboard("hello"))
+
+    @patch("create_dlthub_workspace.display.shutil.which", return_value=None)
+    def test_returns_false_when_no_clipboard_tool(self, _which: object) -> None:
+        self.assertFalse(copy_to_clipboard("hello"))
 
 
 if __name__ == "__main__":
