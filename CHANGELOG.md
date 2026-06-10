@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - `uv sync` and the first pipeline run now happen automatically instead of being prompted. `--skip-uv-sync` still opts out of dependency sync (and, with it, the first run).
 - `dlthub-start` now initializes a workspace **in place** — the current directory by default (the workspace-name prompt is gone). An explicit positional argument still targets a named subdirectory. Either way the target must be empty; a non-empty target stops with a dedicated "Directory not empty" message and exit code `2` instead of a generic error. Next-steps guidance adapts: the `cd` step is omitted when initializing in place, and a note reminds AI agents to run from the workspace root when a subdirectory is used.
+- Bundled AI toolkits are now `one-shot-pipeline` and `dlthub-platform` (previously `data-exploration`, `dlthub-platform`, and `rest-api-pipeline`).
+- The minimal workspace now also depends on `pyarrow` and `ibis-framework[duckdb]` for local data access.
+- Bumped `WORKBENCH_REF` to `21b9bba4` and refreshed the bundled AI workbench scaffolds.
+- `make check-ai` is clearer: it confirms when the bundled scaffolds are up to date, lists exactly which files differ (including untracked additions) when they're not, and hides the noisy `generate-ai` output unless it fails.
 
 ### Removed
 - Removed the `starter_workspace` scaffold along with the `--scaffold` flag and the interactive scaffold picker. `minimal_workspace` is now the only bundled scaffold.
