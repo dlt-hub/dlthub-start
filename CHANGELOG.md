@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- After setup, `dlthub-start` automatically runs your first pipeline on dltHub: it logs in, binds the project to a `playground` workspace (creating it only if it doesn't already exist), runs `load_sample_shop` with `--follow` (waiting for the run to finish), and opens the workspace overview with `dlthub show`. The post-run next-steps panel then points you at building a pipeline for your own source. Skipped under `--yes`, since the login is interactive.
+- After setup, `dlthub-start` automatically runs your first pipeline on dltHub: it logs in, binds the project to a `playground` workspace (creating it only if it doesn't already exist), runs `load_sample_shop` with `--follow` (waiting for the run to finish), and opens the workspace overview with `dlthub show`. The post-run next-steps panel then shows a ready-to-paste prompt addressed to your chosen coding agent (`claude`/`cursor`/`codex`) for building a pipeline against your own source — and copies it to your clipboard so it's one paste away. Skipped under `--yes`, since the login is interactive.
 
 ### Changed
 - `uv sync` and the first pipeline run now happen automatically instead of being prompted. `--skip-uv-sync` still opts out of dependency sync (and, with it, the first run).
