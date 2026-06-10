@@ -10,18 +10,18 @@ init:
   installed_at: '1970-01-01T00:00:00+00:00'
   agent: cursor
   files:
-    .cursor\skills\improve-skills\SKILL.md:
-      sha3_256: bf41f86f63b0bc8e7209a96c4ba38fb5d954f43ee9800855d4ff675acbaed861
-    .cursor\skills\setup-secrets\cli-reference.md:
-      sha3_256: 8b972813409b5609aa6fbaaa7a060def42ad9da9a10a4ca18ca4ce801518fd11
-    .cursor\skills\setup-secrets\SKILL.md:
-      sha3_256: 3dfee343aa9a421867634ef2c36956987421bc30474d9d6c8fe3e14198d294b8
-    .cursor\skills\toolkit-dispatch\SKILL.md:
-      sha3_256: 42c8e675a1f17ce698bfb5c9c16ddcc6989b46cb31a6e42633ce59d204443058
+    .cursor/skills/improve-skills/SKILL.md:
+      sha3_256: c52b222d82d101eaacbbf19d271d3f24b20d8e2bc70d49919d56144d448cd5c4
+    .cursor/skills/setup-secrets/SKILL.md:
+      sha3_256: 83fb6e1af003c065ce3bb26042f0e2de24a22df14353db23ad4f6192d90e7785
+    .cursor/skills/setup-secrets/cli-reference.md:
+      sha3_256: b3aed4466ecb84770e11176b5b07b109093c72808c44b73d02c5cd789af86c97
+    .cursor/skills/toolkit-dispatch/SKILL.md:
+      sha3_256: de66960f9e0f46a11adbb6c203dafdd61d94f4768e2c36465efb66f7f7573577
     .cursorignore:
-      sha3_256: 57cef6343d5f0f1c8a8659fcfb909f7eedfdb2d8c6fdd054014327ef4568b3f6
-    .cursor\rules\init-dlthub-workspace.mdc:
-      sha3_256: 3056579b4c301bb5a63cf4fae73f77d6e8926ed8a502a852f32b58fbfd10734a
+      sha3_256: 1aa4dc9286dd219dcb55399f388c5ee1f940ab5e399a42b644d488cba57a9ec0
+    .cursor/rules/init-dlthub-workspace.mdc:
+      sha3_256: 87df16ab76af4f884d018b3a2f7523036b465ae7bd0c2e54c1a76a020dde9233
   mcp_servers:
   - dlt-workspace-mcp
   name: init
@@ -41,10 +41,10 @@ one-shot-pipeline:
   installed_at: '1970-01-01T00:00:00+00:00'
   agent: cursor
   files:
-    .cursor\skills\one-shot-pipeline\SKILL.md:
-      sha3_256: 6c514a3d3669f9eec70982183784bdcf665c1b41324e461b9f705e2d7f45821c
-    .cursor\rules\one-shot-pipeline-workflow.mdc:
-      sha3_256: 588ff00f2625bd591ba4c12a2553359bf61a8f6bac231f9449d6147e611761e4
+    .cursor/skills/one-shot-pipeline/SKILL.md:
+      sha3_256: 1aa0a43b5408cfed72ade665259191d7ae49fe8b99ffc43a87e21f3266ab4a84
+    .cursor/rules/one-shot-pipeline-workflow.mdc:
+      sha3_256: a662f890089c34e18a6e1a3015f0dbefe712e08669a357f594fab6b52b65b15e
   name: one-shot-pipeline
 dlthub-platform:
   version: 0.1.3
@@ -59,23 +59,23 @@ dlthub-platform:
   installed_at: '1970-01-01T00:00:00+00:00'
   agent: cursor
   files:
-    .cursor\skills\debug-deployment\SKILL.md:
-      sha3_256: 1d1c0b222cbd9f0a8321d594cf77f1ef0ad03eb0542052a3bef0676ce3950dcc
-    .cursor\skills\deploy-workspace\advanced-patterns.md:
-      sha3_256: f2ecd3d8f54cf49326a75fa4483a0cf7d632e55e1bdeb7cf8fc7c7aa0edbc5ee
-    .cursor\skills\deploy-workspace\scheduling-triggers.md:
-      sha3_256: 4f1d8af1d0ccdcf25df8f941147b60c6535486f5b0979e745deee7d98aee1e21
-    .cursor\skills\deploy-workspace\SKILL.md:
-      sha3_256: c7040bd99e83106a000dc34dc75c2cad9547fc9e7b8cc9d8c33b5888ec2e4376
-    .cursor\skills\prepare-deployment\check_destination.py:
-      sha3_256: 105137641d33d288dc87821b54f04612040bcc52d3ab9ff37545bdebc4e49a6f
-    .cursor\skills\prepare-deployment\deployment-module.md:
-      sha3_256: 1b7643a719a4e8cf1dd610ef702f3667c983f109e79dca415574a9267ef65f3f
-    .cursor\skills\prepare-deployment\SKILL.md:
-      sha3_256: b3f981bf56e055d838b476b23483c7ca8c8f68fef6fa0344e47f13755ee30d3b
-    .cursor\skills\setup-runtime\SKILL.md:
-      sha3_256: c70cdb21b3815b440ce79b95bf14fe36d6d1660c9776c2d21228dcaef1a01c21
-    .cursor\rules\dlthub-platform-profiles.mdc:
-      sha3_256: 3cc6c098239992e3ab228ee740a00a56e059d205c095787425e9c45f95809217
-    .cursor\rules\dlthub-platform-workflow.mdc:
-      sha3_256: 499f19347bb31d09a75b638dd115118c641cc75bbf0ebbaa0e48b74a9ba8686b
+    .cursor/skills/debug-deployment/SKILL.md:
+      sha3_256: 5b563de07842c361187e11729c58a7132633b086782bc14a5759dc2895322320
+    .cursor/skills/deploy-workspace/SKILL.md:
+      sha3_256: f4388d846c21f0e76309c07f91d365d6c02b0c13d15d5c8910b1592d1f655f83
+    .cursor/skills/deploy-workspace/advanced-patterns.md:
+      sha3_256: 6ae7f2d23c83cc074c50902688b2253c429cd89c39b692568f9f2f5f40243db8
+    .cursor/skills/deploy-workspace/scheduling-triggers.md:
+      sha3_256: 2c67e4c1a8012d75f1943d7e874df69d8898219973eb295b42c5c706f7274f8f
+    .cursor/skills/prepare-deployment/SKILL.md:
+      sha3_256: 161646d939986d76364188b6ee375a5e2d61754b570926c52ce96ee3438c26ef
+    .cursor/skills/prepare-deployment/check_destination.py:
+      sha3_256: 34ff49ae54a875f34f7900612d76b31d7aaf00926cc80c40d689474af4d447ec
+    .cursor/skills/prepare-deployment/deployment-module.md:
+      sha3_256: 7febda25e999ddd05551036eeff285758fef41c7a25ec7dedd41dfc2f1151d24
+    .cursor/skills/setup-runtime/SKILL.md:
+      sha3_256: ee6888e0cbefde7907599cb0ecd9907ab6a5edd789c6119a406ccf7fc1180ace
+    .cursor/rules/dlthub-platform-profiles.mdc:
+      sha3_256: 490730ea9501e78315587e5add76f29cbf87f0d71198fb21b92c566d6365adbc
+    .cursor/rules/dlthub-platform-workflow.mdc:
+      sha3_256: 8f5b1b4a9be3b0e741aac21bf448c27c2f4317465e657a40b64339ef3cc26177

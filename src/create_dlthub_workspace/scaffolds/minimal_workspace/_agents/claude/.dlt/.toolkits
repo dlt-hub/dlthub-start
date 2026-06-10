@@ -10,18 +10,18 @@ init:
   installed_at: '1970-01-01T00:00:00+00:00'
   agent: claude
   files:
-    .claude\skills\improve-skills\SKILL.md:
-      sha3_256: bf41f86f63b0bc8e7209a96c4ba38fb5d954f43ee9800855d4ff675acbaed861
-    .claude\skills\setup-secrets\cli-reference.md:
-      sha3_256: 8b972813409b5609aa6fbaaa7a060def42ad9da9a10a4ca18ca4ce801518fd11
-    .claude\skills\setup-secrets\SKILL.md:
-      sha3_256: 3dfee343aa9a421867634ef2c36956987421bc30474d9d6c8fe3e14198d294b8
-    .claude\skills\toolkit-dispatch\SKILL.md:
-      sha3_256: 42c8e675a1f17ce698bfb5c9c16ddcc6989b46cb31a6e42633ce59d204443058
+    .claude/skills/improve-skills/SKILL.md:
+      sha3_256: c52b222d82d101eaacbbf19d271d3f24b20d8e2bc70d49919d56144d448cd5c4
+    .claude/skills/setup-secrets/SKILL.md:
+      sha3_256: 83fb6e1af003c065ce3bb26042f0e2de24a22df14353db23ad4f6192d90e7785
+    .claude/skills/setup-secrets/cli-reference.md:
+      sha3_256: b3aed4466ecb84770e11176b5b07b109093c72808c44b73d02c5cd789af86c97
+    .claude/skills/toolkit-dispatch/SKILL.md:
+      sha3_256: de66960f9e0f46a11adbb6c203dafdd61d94f4768e2c36465efb66f7f7573577
     .claudeignore:
-      sha3_256: 57cef6343d5f0f1c8a8659fcfb909f7eedfdb2d8c6fdd054014327ef4568b3f6
-    .claude\rules\init-dlthub-workspace.md:
-      sha3_256: 9b0de632609cba25a1c50d054d0268239bdc5078b120d6205398d2a6629d2d90
+      sha3_256: 1aa4dc9286dd219dcb55399f388c5ee1f940ab5e399a42b644d488cba57a9ec0
+    .claude/rules/init-dlthub-workspace.md:
+      sha3_256: 64ae0d072a1c8f48d702fffc5cbd0fb4f9b6a98b24cb4380874ad9013a21cb78
   mcp_servers:
   - dlt-workspace-mcp
   name: init
@@ -41,10 +41,10 @@ one-shot-pipeline:
   installed_at: '1970-01-01T00:00:00+00:00'
   agent: claude
   files:
-    .claude\skills\one-shot-pipeline\SKILL.md:
-      sha3_256: 6c514a3d3669f9eec70982183784bdcf665c1b41324e461b9f705e2d7f45821c
-    .claude\rules\one-shot-pipeline-workflow.md:
-      sha3_256: 582e9bcf51b0584346d8486b7650276468da21b9af21ca8f356fb5eaece28bf3
+    .claude/skills/one-shot-pipeline/SKILL.md:
+      sha3_256: 1aa0a43b5408cfed72ade665259191d7ae49fe8b99ffc43a87e21f3266ab4a84
+    .claude/rules/one-shot-pipeline-workflow.md:
+      sha3_256: 37df6e27606ea32ef0adf483be84e90bf2787260a90fc8332e9e34968d31ae0c
   name: one-shot-pipeline
 dlthub-platform:
   version: 0.1.3
@@ -59,23 +59,23 @@ dlthub-platform:
   installed_at: '1970-01-01T00:00:00+00:00'
   agent: claude
   files:
-    .claude\skills\debug-deployment\SKILL.md:
-      sha3_256: 1d1c0b222cbd9f0a8321d594cf77f1ef0ad03eb0542052a3bef0676ce3950dcc
-    .claude\skills\deploy-workspace\advanced-patterns.md:
-      sha3_256: f2ecd3d8f54cf49326a75fa4483a0cf7d632e55e1bdeb7cf8fc7c7aa0edbc5ee
-    .claude\skills\deploy-workspace\scheduling-triggers.md:
-      sha3_256: 4f1d8af1d0ccdcf25df8f941147b60c6535486f5b0979e745deee7d98aee1e21
-    .claude\skills\deploy-workspace\SKILL.md:
-      sha3_256: c7040bd99e83106a000dc34dc75c2cad9547fc9e7b8cc9d8c33b5888ec2e4376
-    .claude\skills\prepare-deployment\check_destination.py:
-      sha3_256: 105137641d33d288dc87821b54f04612040bcc52d3ab9ff37545bdebc4e49a6f
-    .claude\skills\prepare-deployment\deployment-module.md:
-      sha3_256: 1b7643a719a4e8cf1dd610ef702f3667c983f109e79dca415574a9267ef65f3f
-    .claude\skills\prepare-deployment\SKILL.md:
-      sha3_256: b3f981bf56e055d838b476b23483c7ca8c8f68fef6fa0344e47f13755ee30d3b
-    .claude\skills\setup-runtime\SKILL.md:
-      sha3_256: c70cdb21b3815b440ce79b95bf14fe36d6d1660c9776c2d21228dcaef1a01c21
-    .claude\rules\dlthub-platform-profiles.md:
-      sha3_256: 94f22f3adb844011fd3e95e45d596f518b11208a8b70d8341e89a019f476af6b
-    .claude\rules\dlthub-platform-workflow.md:
-      sha3_256: aaa1b1b19dd95b4f15b45b34f00cb038b9457b41c1b7a73f76b7bdf41f6b0465
+    .claude/skills/debug-deployment/SKILL.md:
+      sha3_256: 5b563de07842c361187e11729c58a7132633b086782bc14a5759dc2895322320
+    .claude/skills/deploy-workspace/SKILL.md:
+      sha3_256: f4388d846c21f0e76309c07f91d365d6c02b0c13d15d5c8910b1592d1f655f83
+    .claude/skills/deploy-workspace/advanced-patterns.md:
+      sha3_256: 6ae7f2d23c83cc074c50902688b2253c429cd89c39b692568f9f2f5f40243db8
+    .claude/skills/deploy-workspace/scheduling-triggers.md:
+      sha3_256: 2c67e4c1a8012d75f1943d7e874df69d8898219973eb295b42c5c706f7274f8f
+    .claude/skills/prepare-deployment/SKILL.md:
+      sha3_256: 161646d939986d76364188b6ee375a5e2d61754b570926c52ce96ee3438c26ef
+    .claude/skills/prepare-deployment/check_destination.py:
+      sha3_256: 34ff49ae54a875f34f7900612d76b31d7aaf00926cc80c40d689474af4d447ec
+    .claude/skills/prepare-deployment/deployment-module.md:
+      sha3_256: 7febda25e999ddd05551036eeff285758fef41c7a25ec7dedd41dfc2f1151d24
+    .claude/skills/setup-runtime/SKILL.md:
+      sha3_256: ee6888e0cbefde7907599cb0ecd9907ab6a5edd789c6119a406ccf7fc1180ace
+    .claude/rules/dlthub-platform-profiles.md:
+      sha3_256: 385a4352a5a42c3ab9028b0892af7f7f7339b80a4d8ae5c6950845666f8729a6
+    .claude/rules/dlthub-platform-workflow.md:
+      sha3_256: 1962afaf268e69ec9734e2d9b62648d28e34e00f07e2e29ceedeb614877aa8d1
