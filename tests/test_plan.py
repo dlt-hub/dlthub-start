@@ -52,6 +52,8 @@ class BuildPlanYesModeTests(unittest.TestCase):
         self.assertEqual(plan.agent, RECOMMENDED.agent)
         self.assertFalse(plan.install_uv)
         self.assertEqual(plan.uv_executable, "/usr/local/bin/uv")
+        # --yes never runs the first pipeline (its login is interactive).
+        self.assertFalse(plan.run_first_pipeline)
         confirm.assert_not_called()
         choose_agent.assert_not_called()
 
@@ -87,13 +89,16 @@ class BuildPlanYesModeTests(unittest.TestCase):
 
 
 class BuildPlanInteractiveTests(unittest.TestCase):
-    """Interactive mode: prompts fire and shape the plan."""
+    """Interactive mode: uv sync and the first pipeline run happen automatically.
+
+    The only question prompted is install-uv (and only when uv is missing).
+    """
 
     @patch("create_dlthub_workspace.plan.choose_agent", return_value="cursor")
-    @patch("create_dlthub_workspace.plan.confirm", return_value=True)
+    @patch("create_dlthub_workspace.plan.confirm")
     @patch("create_dlthub_workspace.plan.validate_target_dir")
     @patch("create_dlthub_workspace.plan.find_uv", return_value="/usr/local/bin/uv")
-    def test_uv_present_sync_confirmed_runs_full(
+    def test_uv_present_runs_full_with_first_pipeline(
         self,
         _find_uv: MagicMock,
         _validate: MagicMock,
@@ -106,9 +111,11 @@ class BuildPlanInteractiveTests(unittest.TestCase):
         # Single bundled scaffold: always the recommended one, no prompt.
         self.assertEqual(plan.scaffold, RECOMMENDED.scaffold)
         self.assertEqual(plan.agent, "cursor")
+        # Sync and the first pipeline run are automatic — no prompts.
+        self.assertTrue(plan.run_first_pipeline)
         choose_agent.assert_called_once()
-        # Only the uv-sync prompt fires when uv is already present.
-        self.assertEqual(confirm.call_count, 1)
+        # uv is already present, so nothing is confirmed at all.
+        confirm.assert_not_called()
 
     @patch("create_dlthub_workspace.plan.choose_agent", return_value="claude")
     @patch("create_dlthub_workspace.plan.confirm", return_value=False)
@@ -118,46 +125,26 @@ class BuildPlanInteractiveTests(unittest.TestCase):
         self,
         _find_uv: MagicMock,
         _validate: MagicMock,
-        _confirm: MagicMock,
+        confirm: MagicMock,
         choose_agent: MagicMock,
     ) -> None:
         plan = build_plan(_make_args())
 
         self.assertEqual(plan.stage, WorkspaceStage.SCAFFOLD_ONLY)
         self.assertFalse(plan.install_uv)
-        # The agent is asked before the uv prompts, so a SCAFFOLD_ONLY plan
-        # still carries the user's actual selection (vendored into the copy).
+        self.assertFalse(plan.run_first_pipeline)
+        # The agent is asked before the uv prompt, so a SCAFFOLD_ONLY plan still
+        # carries the user's actual selection (vendored into the copy).
         self.assertEqual(plan.agent, "claude")
         choose_agent.assert_called_once()
-
-    @patch("create_dlthub_workspace.plan.choose_agent", return_value="codex")
-    @patch("create_dlthub_workspace.plan.confirm")
-    @patch("create_dlthub_workspace.plan.validate_target_dir")
-    @patch("create_dlthub_workspace.plan.find_uv", return_value="/usr/local/bin/uv")
-    def test_sync_declined_stops_at_through_uv_install(
-        self,
-        _find_uv: MagicMock,
-        _validate: MagicMock,
-        confirm: MagicMock,
-        choose_agent: MagicMock,
-    ) -> None:
-        # Only the uv-sync prompt fires (uv was already present), so a single
-        # `False` return is enough to drive the path.
-        confirm.return_value = False
-
-        plan = build_plan(_make_args())
-
-        self.assertEqual(plan.stage, WorkspaceStage.THROUGH_UV_INSTALL)
-        # The agent is asked before the uv-sync prompt, so the user's selection
-        # is carried into the plan regardless of the sync decision.
-        self.assertEqual(plan.agent, "codex")
-        choose_agent.assert_called_once()
+        # Only the uv-install question fires.
+        confirm.assert_called_once()
 
     @patch("create_dlthub_workspace.plan.choose_agent", return_value="claude")
     @patch("create_dlthub_workspace.plan.confirm", return_value=True)
     @patch("create_dlthub_workspace.plan.validate_target_dir")
     @patch("create_dlthub_workspace.plan.find_uv", return_value=None)
-    def test_uv_install_accepted_then_sync_accepted_runs_full(
+    def test_uv_install_accepted_runs_full(
         self,
         _find_uv: MagicMock,
         _validate: MagicMock,
@@ -168,8 +155,9 @@ class BuildPlanInteractiveTests(unittest.TestCase):
 
         self.assertEqual(plan.stage, WorkspaceStage.FULL)
         self.assertTrue(plan.install_uv)
-        # Two confirm prompts fire: install-uv? and run-uv-sync?
-        self.assertEqual(confirm.call_count, 2)
+        self.assertTrue(plan.run_first_pipeline)
+        # Only the uv-install question fires; sync + first run are automatic.
+        confirm.assert_called_once()
 
 
 class BuildPlanArgOverrideTests(unittest.TestCase):
@@ -204,17 +192,19 @@ class BuildPlanFlagInteractionTests(unittest.TestCase):
     @patch("create_dlthub_workspace.plan.confirm")
     @patch("create_dlthub_workspace.plan.validate_target_dir")
     @patch("create_dlthub_workspace.plan.find_uv", return_value="/usr/local/bin/uv")
-    def test_skip_uv_sync_short_circuits_the_sync_prompt(
+    def test_skip_uv_sync_stops_at_through_uv_install(
         self,
         _find_uv: MagicMock,
         _validate: MagicMock,
         confirm: MagicMock,
         _choose_agent: MagicMock,
     ) -> None:
-        # Interactive mode, but --skip-uv-sync should win without asking.
+        # Sync is automatic, but --skip-uv-sync opts out and caps the stage.
         plan = build_plan(_make_args(skip_uv_sync=True))
 
         self.assertEqual(plan.stage, WorkspaceStage.THROUGH_UV_INSTALL)
+        # No sync → no venv → the first-pipeline step doesn't run either.
+        self.assertFalse(plan.run_first_pipeline)
         confirm.assert_not_called()
 
     @patch("create_dlthub_workspace.plan.validate_target_dir")

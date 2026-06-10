@@ -63,6 +63,25 @@ def run_uv_command(
     _run([uv_executable, *args], cwd=project_dir, isolated_project=True, verbose=verbose)
 
 
+def capture_uv_command(uv_executable: str, project_dir: Path, args: list[str]) -> str:
+    """Run a uv command in the generated workspace and return its captured stdout."""
+    try:
+        result = subprocess.run(
+            [uv_executable, *args],
+            cwd=project_dir,
+            env=_isolated_project_env(),
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except FileNotFoundError as exc:
+        raise UvError(strings.ERROR_UV_COMMAND_NOT_FOUND.format(cmd=uv_executable)) from exc
+    except subprocess.CalledProcessError as exc:
+        joined = " ".join([uv_executable, *args])
+        raise UvError(strings.ERROR_UV_COMMAND_FAILED.format(returncode=exc.returncode, cmd=joined)) from exc
+    return result.stdout
+
+
 def _run_unix_installer(*, verbose: bool = False) -> None:
     try:
         with urllib.request.urlopen(UV_UNIX_INSTALLER, timeout=30) as response:
