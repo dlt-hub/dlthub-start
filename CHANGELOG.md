@@ -7,12 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- After setup, `dlthub-start` automatically runs your first pipeline on dltHub: it logs in, binds the project to a `playground` workspace (creating it only if it doesn't already exist), runs `load_sample_shop` with `--follow` (waiting for the run to finish), and opens the workspace overview with `dlthub show`. The post-run next-steps panel then points you at building a pipeline for your own source. Skipped under `--yes`, since the login is interactive.
+
+### Changed
+- `uv sync` and the first pipeline run now happen automatically instead of being prompted. `--skip-uv-sync` still opts out of dependency sync (and, with it, the first run).
+- `dlthub-start` now initializes a workspace **in place** — the current directory by default (the workspace-name prompt is gone). An explicit positional argument still targets a named subdirectory. Either way the target must be empty; a non-empty target stops with a dedicated "Directory not empty" message and exit code `2` instead of a generic error. Next-steps guidance adapts: the `cd` step is omitted when initializing in place, and a note reminds AI agents to run from the workspace root when a subdirectory is used.
+
 ### Removed
 - Removed the `starter_workspace` scaffold along with the `--scaffold` flag and the interactive scaffold picker. `minimal_workspace` is now the only bundled scaffold.
 - The minimal workspace no longer ships `report_notebook.py`. On dltHub Platform the notebook had to re-run the whole pipeline to repopulate the worker-local DuckDB before charting, which made it slow and undercut the first-run experience. It's removed temporarily until shared workspace storage lands and the notebook speed issue is fixed; agents can still build notebooks on demand via the `data-exploration` toolkit.
-
-### Changed
-- `dlthub-start` now initializes a workspace **in place** — the current directory by default (the workspace-name prompt is gone). An explicit positional argument still targets a named subdirectory. Either way the target must be empty; a non-empty target stops with a dedicated "Directory not empty" message and exit code `2` instead of a generic error. Next-steps guidance adapts: the `cd` step is omitted when initializing in place, and a note reminds AI agents to run from the workspace root when a subdirectory is used.
 
 ### Fixed
 - `python -m create_dlthub_workspace` now propagates the CLI exit code (it previously always exited `0` because `__main__` ignored `main()`'s return value).

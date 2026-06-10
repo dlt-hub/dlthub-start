@@ -25,6 +25,15 @@ NEXT_STEPS: dict[str, tuple[tuple[str, str | None], ...]] = {
     ),
 }
 
+# Shown instead of NEXT_STEPS when the first pipeline was already run (and its
+# logs shown) during setup: the run / view-runs steps just happened, so point
+# the user at the real next move — building a pipeline for their own source.
+NEXT_STEPS_AFTER_RUN: dict[str, tuple[tuple[str, str | None], ...]] = {
+    "minimal_workspace": (
+        (strings.STEPS_LABEL_BUILD_OWN_SOURCE, None),
+    ),
+}
+
 CREATED_TREE: dict[str, tuple[str, ...]] = {
     "minimal_workspace": (
         "pyproject.toml",
@@ -233,8 +242,18 @@ def _cd_target(project_dir: Path) -> str:
     return str(relative)
 
 
-def print_next_steps(project_dir: Path, *, scaffold: str, agent: str | None = None) -> None:
-    """Post-setup tips panel. Steps are tailored to the chosen scaffold."""
+def print_next_steps(
+    project_dir: Path,
+    *,
+    scaffold: str,
+    agent: str | None = None,
+    first_pipeline_ran: bool = False,
+) -> None:
+    """Post-setup tips panel. Steps are tailored to the chosen scaffold.
+
+    When ``first_pipeline_ran`` is True, the run / view-runs steps already
+    happened during setup, so the panel shows the post-run step list instead.
+    """
     created_tree = CREATED_TREE[scaffold]
     # Lead with "go to the directory" only when the workspace is a subdirectory;
     # when it's the current directory (cwd) the cd step is noise (`cd .`).
@@ -242,7 +261,8 @@ def print_next_steps(project_dir: Path, *, scaffold: str, agent: str | None = No
     cd_step: tuple[tuple[str, str | None], ...] = (
         () if cd == "." else ((strings.STEPS_LABEL_CD, strings.CMD_CD.format(project_dir=cd)),)
     )
-    steps: tuple[tuple[str, str | None], ...] = (*cd_step, *NEXT_STEPS[scaffold])
+    next_steps = NEXT_STEPS_AFTER_RUN[scaffold] if first_pipeline_ran else NEXT_STEPS[scaffold]
+    steps: tuple[tuple[str, str | None], ...] = (*cd_step, *next_steps)
 
     body = Text()
     body.append(f"{strings.LABEL_CREATED}\n\n", style="bold #C6D300")

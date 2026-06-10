@@ -8,6 +8,11 @@ VERSION = "0.5.3"
 
 AGENTS = ("claude", "cursor", "codex")
 
+# Name of the platform workspace the first pipeline run binds the project to.
+# A binding only (no destination) — the warehouse still comes from the profile.
+# Adjust here to rename it everywhere (CLI command + user-facing messages).
+PLAYGROUND_WORKSPACE = "playground-2"  # TEMPORARY: testing with a fresh workspace; revert to "playground"
+
 TOOLKITS = (
     "data-exploration",
     "dlthub-platform",
@@ -35,13 +40,11 @@ class RecommendedPath:
 
     scaffold: str
     install_uv: bool
-    run_uv_sync: bool
     agent: str
 
 
 RECOMMENDED = RecommendedPath(
     scaffold="minimal_workspace",
     install_uv=True,
-    run_uv_sync=True,
     agent="claude",
 )

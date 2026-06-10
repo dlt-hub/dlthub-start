@@ -10,7 +10,8 @@ from unittest.mock import MagicMock, patch
 
 from pathlib import Path
 
-from create_dlthub_workspace.cli import build_parser, execute_plan, main
+from create_dlthub_workspace.cli import _workspace_in_list, build_parser, execute_plan, main
+from create_dlthub_workspace.config import PLAYGROUND_WORKSPACE
 from create_dlthub_workspace.errors import WorkspaceDirectoryNotEmptyError, WorkspaceError
 from create_dlthub_workspace.plan import WorkspacePlan, WorkspaceStage
 
@@ -104,6 +105,7 @@ def _make_plan(**overrides: object) -> WorkspacePlan:
         "agent": "claude",
         "uv_executable": "/usr/local/bin/uv",
         "install_uv": False,
+        "run_first_pipeline": False,
         "verbose": False,
     }
     defaults.update(overrides)
@@ -136,6 +138,86 @@ class ExecutePlanFlowTests(unittest.TestCase):
         print_next_steps.assert_called_once()
         execute_uv_install.assert_not_called()  # uv was already present in the plan
         print_resume_steps.assert_not_called()
+
+    @patch("create_dlthub_workspace.cli.run_uv_command")
+    @patch("create_dlthub_workspace.cli.print_next_steps")
+    @patch("create_dlthub_workspace.cli.run_uv_sync")
+    @patch("create_dlthub_workspace.cli.apply_workspace_name", return_value="test-workspace")
+    @patch("create_dlthub_workspace.cli.copy_scaffold")
+    def test_full_stage_without_first_pipeline_does_not_run_it(
+        self,
+        _copy_scaffold: MagicMock,
+        _apply_name: MagicMock,
+        _run_uv_sync: MagicMock,
+        _print_next_steps: MagicMock,
+        run_uv_command: MagicMock,
+    ) -> None:
+        with _silenced():
+            execute_plan(_make_plan(stage=WorkspaceStage.FULL, run_first_pipeline=False))
+
+        run_uv_command.assert_not_called()
+
+    @patch("create_dlthub_workspace.cli.capture_uv_command", return_value="Name\n----\nMy Workspace\n")
+    @patch("create_dlthub_workspace.cli.run_uv_command")
+    @patch("create_dlthub_workspace.cli.print_next_steps")
+    @patch("create_dlthub_workspace.cli.run_uv_sync")
+    @patch("create_dlthub_workspace.cli.apply_workspace_name", return_value="test-workspace")
+    @patch("create_dlthub_workspace.cli.copy_scaffold")
+    def test_first_pipeline_creates_playground_when_absent_then_runs_and_opens_overview(
+        self,
+        _copy_scaffold: MagicMock,
+        _apply_name: MagicMock,
+        _run_uv_sync: MagicMock,
+        print_next_steps: MagicMock,
+        run_uv_command: MagicMock,
+        _capture_uv_command: MagicMock,
+    ) -> None:
+        with _silenced():
+            execute_plan(_make_plan(stage=WorkspaceStage.FULL, run_first_pipeline=True))
+
+        # Order: log in, connect (--create since absent), run, then open the overview.
+        self.assertEqual(run_uv_command.call_count, 4)
+        login_args = run_uv_command.call_args_list[0].args[2]
+        connect_args = run_uv_command.call_args_list[1].args[2]
+        run_args = run_uv_command.call_args_list[2].args[2]
+        show_args = run_uv_command.call_args_list[3].args[2]
+        self.assertEqual(login_args, ["run", "dlthub", "login"])
+        self.assertEqual(connect_args, ["run", "dlthub", "workspace", "connect", PLAYGROUND_WORKSPACE, "--create"])
+        self.assertEqual(run_args, ["run", "dlthub", "run", "--follow", "load_sample_shop"])
+        self.assertEqual(show_args, ["run", "dlthub", "show"])
+        # Only login streams (it's the lone interactive step); the rest run under a spinner.
+        self.assertTrue(run_uv_command.call_args_list[0].kwargs["verbose"])
+        self.assertFalse(any(call.kwargs["verbose"] for call in run_uv_command.call_args_list[1:]))
+        # The panel is told the run already happened, so it shows post-run steps.
+        print_next_steps.assert_called_once()
+        self.assertTrue(print_next_steps.call_args.kwargs["first_pipeline_ran"])
+
+    @patch(
+        "create_dlthub_workspace.cli.capture_uv_command",
+        return_value=f"Name        Organization\n----------  ------------\n{PLAYGROUND_WORKSPACE}  Personal\n",
+    )
+    @patch("create_dlthub_workspace.cli.run_uv_command")
+    @patch("create_dlthub_workspace.cli.print_next_steps")
+    @patch("create_dlthub_workspace.cli.run_uv_sync")
+    @patch("create_dlthub_workspace.cli.apply_workspace_name", return_value="test-workspace")
+    @patch("create_dlthub_workspace.cli.copy_scaffold")
+    def test_first_pipeline_connects_without_create_when_playground_exists(
+        self,
+        _copy_scaffold: MagicMock,
+        _apply_name: MagicMock,
+        _run_uv_sync: MagicMock,
+        _print_next_steps: MagicMock,
+        run_uv_command: MagicMock,
+        _capture_uv_command: MagicMock,
+    ) -> None:
+        with _silenced():
+            execute_plan(_make_plan(stage=WorkspaceStage.FULL, run_first_pipeline=True))
+
+        # Playground already exists → connect WITHOUT --create (it would error).
+        # call_args_list[0] is the login step; connect is next.
+        connect_args = run_uv_command.call_args_list[1].args[2]
+        self.assertEqual(connect_args, ["run", "dlthub", "workspace", "connect", PLAYGROUND_WORKSPACE])
+        self.assertNotIn("--create", connect_args)
 
     @patch("create_dlthub_workspace.cli.print_next_steps")
     @patch("create_dlthub_workspace.cli.print_resume_steps")
@@ -197,6 +279,34 @@ class ExecutePlanFlowTests(unittest.TestCase):
         run_uv_sync.assert_not_called()
         print_next_steps.assert_not_called()
         print_resume_steps.assert_called_once_with(Path("/tmp/test_workspace"), uv_installed=True)
+
+
+class WorkspaceInListTests(unittest.TestCase):
+    """Parsing of `dlthub workspace list` output (space-padded table, Name first)."""
+
+    # Mirrors the real CLI output: header, separator, then space-padded rows.
+    SAMPLE = (
+        "Name                 Organization         ID                                    Role\n"
+        "-------------------  -------------------  ------------------------------------  ------\n"
+        "My Workspace         Personal Workspaces  927a586a-9d98-40ae-a70d-46b02ee19d80  owner\n"
+        "playground           Personal Workspaces  ebe84413-790a-41c1-9947-37ce70a491d9  owner\n"
+    )
+
+    def test_detects_existing_workspace(self) -> None:
+        self.assertTrue(_workspace_in_list(self.SAMPLE, "playground"))
+
+    def test_absent_workspace_returns_false(self) -> None:
+        self.assertFalse(_workspace_in_list(self.SAMPLE, "Sandbox"))
+
+    def test_matches_name_with_internal_spaces(self) -> None:
+        # "My Workspace" has a single internal space; columns split on 2+ spaces.
+        self.assertTrue(_workspace_in_list(self.SAMPLE, "My Workspace"))
+
+    def test_header_and_separator_rows_are_ignored(self) -> None:
+        self.assertFalse(_workspace_in_list(self.SAMPLE, "Name"))
+
+    def test_empty_output_returns_false(self) -> None:
+        self.assertFalse(_workspace_in_list("", "Playground"))
 
 
 if __name__ == "__main__":

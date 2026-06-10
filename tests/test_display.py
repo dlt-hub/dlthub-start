@@ -14,6 +14,7 @@ from create_dlthub_workspace.config import VERSION
 from create_dlthub_workspace.display import (
     CREATED_TREE,
     NEXT_STEPS,
+    NEXT_STEPS_AFTER_RUN,
     _cd_target,
     console,
     print_banner,
@@ -35,6 +36,18 @@ class PrintNextStepsTests(unittest.TestCase):
         self.assertIn("uv run dlthub run load_sample_shop", output)
         # Minimal scaffold has an instruction-only step with no command.
         self.assertIn("Edit pipeline.py", output)
+
+    def test_first_pipeline_ran_shows_build_own_source_step(self) -> None:
+        # When the first pipeline was already run during setup, the panel drops
+        # the run / view-runs steps (they just happened) and points the user at
+        # building a pipeline for their own source.
+        with console.capture() as cap:
+            print_next_steps(Path.cwd(), scaffold="minimal_workspace", first_pipeline_ran=True)
+        output = cap.get()
+
+        self.assertNotIn("uv run dlthub run load_sample_shop", output)
+        self.assertNotIn("job runs show", output)
+        self.assertIn("Build a pipeline", output)
 
     def test_renders_selected_agent(self) -> None:
         with console.capture() as cap:
@@ -112,8 +125,10 @@ class CreatedTreeTests(unittest.TestCase):
 
     def test_created_tree_covers_every_next_steps_scaffold(self) -> None:
         # If a scaffold can render next steps, it should also render a matching
-        # "Created" tree.
+        # "Created" tree and a post-run step list (used when the first pipeline
+        # was run during setup).
         self.assertEqual(set(CREATED_TREE), set(NEXT_STEPS))
+        self.assertEqual(set(NEXT_STEPS_AFTER_RUN), set(NEXT_STEPS))
 
 
 class PrintResumeStepsTests(unittest.TestCase):

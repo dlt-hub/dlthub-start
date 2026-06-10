@@ -37,16 +37,19 @@ class WorkspacePlan:
     agent: str
     uv_executable: str | None
     install_uv: bool
+    run_first_pipeline: bool
     verbose: bool
 
 
 def build_plan(args: argparse.Namespace) -> WorkspacePlan:
     """Gather every answer needed to scaffold the workspace. No filesystem writes.
 
-    Order: target -> agent (content question), then uv install + sync (setup
-    questions). The target-directory check fires first so an occupied directory
-    fails fast — before the user answers any other questions. There is a single
-    bundled scaffold, so no scaffold prompt is asked.
+    Order: target -> agent (content question), then the uv-install question (only
+    when uv is missing). The target-directory check fires first so an occupied
+    directory fails fast. There is a single bundled scaffold, so no scaffold
+    prompt is asked. uv sync and the first pipeline run happen automatically:
+    --skip-uv-sync opts out of sync, and the first run is skipped under --yes
+    (its login is interactive).
 
     The workspace is initialized in place: the current directory by default, or
     an explicit ``project_dir`` if given. Either way the target must be empty.
@@ -73,15 +76,14 @@ def build_plan(args: argparse.Namespace) -> WorkspacePlan:
         else:
             stage = WorkspaceStage.SCAFFOLD_ONLY
 
-    if stage != WorkspaceStage.SCAFFOLD_ONLY:
-        if args.skip_uv_sync or (
-            not args.yes
-            and not confirm(
-                strings.PROMPT_RUN_UV_SYNC,
-                recommended=RECOMMENDED.run_uv_sync,
-            )
-        ):
-            stage = WorkspaceStage.THROUGH_UV_INSTALL
+    # uv sync runs automatically; --skip-uv-sync is the explicit opt-out.
+    if stage is WorkspaceStage.FULL and args.skip_uv_sync:
+        stage = WorkspaceStage.THROUGH_UV_INSTALL
+
+    # Run the first pipeline automatically once deps are in place (stage FULL).
+    # Never under --yes: the first run triggers an interactive login that a
+    # non-interactive invocation can't answer.
+    run_first_pipeline = stage is WorkspaceStage.FULL and not args.yes
 
     return WorkspacePlan(
         project_dir=project_dir,
@@ -90,5 +92,6 @@ def build_plan(args: argparse.Namespace) -> WorkspacePlan:
         agent=agent,
         uv_executable=uv_executable,
         install_uv=install_uv,
+        run_first_pipeline=run_first_pipeline,
         verbose=args.verbose,
     )

@@ -23,7 +23,6 @@ from __future__ import annotations
 # Prompts ---------------------------------------------------------------
 PROMPT_AGENT_HEADER = "\n[bold]Choose your coding agent[/bold] [dim](↑/↓ to move, enter to confirm)[/dim]"
 PROMPT_INSTALL_UV = "uv is required but was not found. Install uv now?"
-PROMPT_RUN_UV_SYNC = "Install workspace dependencies with `uv sync`?"
 
 
 # Errors (call sites use .format() with named placeholders) -------------
@@ -48,6 +47,15 @@ MSG_SKIPPED_UV_AND_SYNC = "\n[yellow]Skipped[/yellow] uv install and dependency 
 MSG_SKIPPED_SYNC = "\n[yellow]Skipped[/yellow] dependency sync.\n"
 MSG_INSTALLING_DEPS = "Installing dependencies"
 MSG_INSTALLED_DEPS = "[green]Installed[/green] dependencies into .venv"
+# First-run flow. Login is the only step with an interactive prompt, so it
+# streams; the rest run under spinners (MSG_* used as spinner descriptions,
+# with a matching "done" line printed after).
+MSG_LOGGING_IN = "\nLogging in to dltHub — follow the prompts below…\n"
+MSG_CONNECTING_PLAYGROUND = "Connecting to a {workspace} workspace"
+MSG_CONNECTED_PLAYGROUND = "[green]Connected[/green] to the {workspace} workspace"
+MSG_RUNNING_FIRST_PIPELINE = "Running your first pipeline"
+MSG_RAN_FIRST_PIPELINE = "[green]Done[/green] — your first pipeline run is complete."
+MSG_OPENING_OVERVIEW = "\nOpening your workspace overview in dltHub…"
 
 
 # Panel titles ----------------------------------------------------------
@@ -103,6 +111,10 @@ STEPS_LABEL_CD = "Change into the workspace:"
 STEPS_LABEL_RUN_SAMPLE_SHOP = "Run the sample shop pipeline in dltHub (you'll be prompted to connect/login):"
 STEPS_LABEL_VIEW_SAMPLE_SHOP_RUNS = "View runs for the sample shop pipeline:"
 STEPS_LABEL_EDIT_PIPELINE = "Edit pipeline.py to swap in your own source, then re-run."
+STEPS_LABEL_BUILD_OWN_SOURCE = (
+    "Build a pipeline for your own data: ask your coding agent to ingest from your source "
+    '(e.g. "load my Stripe data") — it finds the right dlt source and wires it up.'
+)
 STEPS_LABEL_INSTALL_UV = "Install uv:"
 STEPS_LABEL_INSTALL_DEPS = "Install workspace dependencies:"
 
