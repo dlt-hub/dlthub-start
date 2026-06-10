@@ -73,22 +73,10 @@ def _ignore_runtime(src: str, names: list[str]) -> set[str]:
 
 
 def _isolated_env() -> dict[str, str]:
-    """Drop parent venv hints so uv resolves the workspace's own .venv.
-
-    Also pins ``core.autocrlf=false`` for any git invoked downstream: ``dlthub
-    ai`` clones the workbench via GitPython (which shells out to the git binary),
-    and on Windows the default ``autocrlf=true`` would check those files out with
-    CRLF. Since the toolkit manifest stores byte-level ``sha3_256`` hashes, that
-    would make generation non-deterministic across OSes. The ``GIT_CONFIG_*``
-    env vars inject the setting into every git process without touching the
-    user's global config.
-    """
+    """Drop parent venv hints so uv resolves the workspace's own .venv."""
     env = os.environ.copy()
     for name in ("VIRTUAL_ENV", "CONDA_PREFIX", "PYTHONPATH"):
         env.pop(name, None)
-    env["GIT_CONFIG_COUNT"] = "1"
-    env["GIT_CONFIG_KEY_0"] = "core.autocrlf"
-    env["GIT_CONFIG_VALUE_0"] = "false"
     return env
 
 

@@ -1,9 +1,0 @@
-# Force LF line endings on every platform.
-#
-# The bundled scaffolds ship a `.dlt/.toolkits` manifest containing sha3_256
-# hashes of the vendored AI files. Those hashes are byte-sensitive, so a CRLF
-# vs LF difference (e.g. Git-for-Windows `core.autocrlf=true`) changes the hash
-# even when the content is logically identical — which makes `make generate-ai`
-# / `check-ai` diverge across operating systems. Pinning LF keeps every
-# checkout byte-identical.
-* text=auto eol=lf
