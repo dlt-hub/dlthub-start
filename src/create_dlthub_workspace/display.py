@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import os
+import shutil
+import subprocess
+import sys
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
@@ -220,6 +223,30 @@ def print_banner() -> None:
     )
 
 
+def copy_to_clipboard(text: str) -> bool:
+    """Best-effort copy ``text`` to the system clipboard. Returns True on success.
+
+    Tries the platform's clipboard tool and silently no-ops (returns False) when
+    none is available or the copy fails — it's a convenience, never required.
+    """
+    if sys.platform == "darwin":
+        candidates = [["pbcopy"]]
+    elif sys.platform == "win32":
+        candidates = [["clip"]]
+    else:
+        candidates = [["wl-copy"], ["xclip", "-selection", "clipboard"], ["xsel", "--clipboard", "--input"]]
+
+    for cmd in candidates:
+        if shutil.which(cmd[0]) is None:
+            continue
+        try:
+            subprocess.run(cmd, input=text.encode("utf-8"), check=True, capture_output=True)
+            return True
+        except (OSError, subprocess.SubprocessError):
+            continue
+    return False
+
+
 def _cd_target(project_dir: Path) -> str:
     """Path for the `cd` step. Relative to the cwd the user ran from when the
     workspace sits under it (so the command is short and copy-pasteable);
@@ -233,8 +260,21 @@ def _cd_target(project_dir: Path) -> str:
     return str(relative)
 
 
-def print_next_steps(project_dir: Path, *, scaffold: str, agent: str | None = None) -> None:
-    """Post-setup tips panel. Steps are tailored to the chosen scaffold."""
+def print_next_steps(
+    project_dir: Path,
+    *,
+    scaffold: str,
+    agent: str | None = None,
+    first_pipeline_ran: bool = False,
+    prompt_copied: bool = False,
+) -> None:
+    """Post-setup tips panel. Steps are tailored to the chosen scaffold.
+
+    When ``first_pipeline_ran`` is True, the run / view-runs steps already
+    happened during setup, so the panel shows the post-run step instead.
+    ``prompt_copied`` flips the wording to say the prompt is already on the
+    clipboard (the actual copy happens in the orchestration layer).
+    """
     created_tree = CREATED_TREE[scaffold]
     # Lead with "go to the directory" only when the workspace is a subdirectory;
     # when it's the current directory (cwd) the cd step is noise (`cd .`).
@@ -242,7 +282,18 @@ def print_next_steps(project_dir: Path, *, scaffold: str, agent: str | None = No
     cd_step: tuple[tuple[str, str | None], ...] = (
         () if cd == "." else ((strings.STEPS_LABEL_CD, strings.CMD_CD.format(project_dir=cd)),)
     )
-    steps: tuple[tuple[str, str | None], ...] = (*cd_step, *NEXT_STEPS[scaffold])
+    if first_pipeline_ran:
+        # The run / view-runs steps already happened during setup. Point the user
+        # at building their own pipeline, with a verbatim prompt to paste into the
+        # coding agent they chose (the prompt itself is never reformatted).
+        label_template = (
+            strings.STEPS_LABEL_BUILD_OWN_SOURCE_COPIED if prompt_copied else strings.STEPS_LABEL_BUILD_OWN_SOURCE
+        )
+        label = label_template.format(agent=agent or "coding")
+        next_steps: tuple[tuple[str, str | None], ...] = ((label, strings.CMD_BUILD_OWN_SOURCE_PROMPT),)
+    else:
+        next_steps = NEXT_STEPS[scaffold]
+    steps: tuple[tuple[str, str | None], ...] = (*cd_step, *next_steps)
 
     body = Text()
     body.append(f"{strings.LABEL_CREATED}\n\n", style="bold #C6D300")

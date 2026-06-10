@@ -22,8 +22,9 @@ pip install dlthub-start
 dlthub-start
 ```
 
-The CLI prompts for a scaffold and AI workbench files, checks for `uv`, offers
-to install it if needed, offers to run `uv sync`, and prints next steps.
+The CLI prompts for your coding agent, checks for `uv` (offering to install it
+if missing), installs dependencies with `uv sync`, runs your first pipeline on
+dltHub, and prints next steps.
 
 For a non-interactive setup with the recommended defaults:
 

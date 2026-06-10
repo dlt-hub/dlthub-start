@@ -3,23 +3,26 @@
 from __future__ import annotations
 
 import argparse
+import re
 import sys
+from pathlib import Path
 
 from . import strings
-from .config import AGENTS, RECOMMENDED
+from .config import AGENTS, PLAYGROUND_WORKSPACE, RECOMMENDED
 from .display import (
     console,
+    copy_to_clipboard,
     print_banner,
     print_dir_not_empty,
     print_next_steps,
     print_resume_steps,
     step,
 )
-from .errors import WorkspaceDirectoryNotEmptyError, WorkspaceError
+from .errors import UvError, WorkspaceDirectoryNotEmptyError, WorkspaceError
 from .plan import WorkspacePlan, WorkspaceStage, build_plan
 from .project_metadata import apply_workspace_name
 from .scaffold import copy_scaffold
-from .uv import execute_uv_install, run_uv_sync
+from .uv import capture_uv_command, execute_uv_install, run_uv_command, run_uv_sync
 
 
 def _ensure_utf8_io_on_windows() -> None:
@@ -106,6 +109,50 @@ def run(args: argparse.Namespace) -> None:
     execute_plan(plan)
 
 
+def _workspace_in_list(list_output: str, name: str) -> bool:
+    """True if ``name`` appears in the Name column of `dlthub workspace list`.
+
+    The output is a space-padded table; workspace names can contain single
+    spaces (e.g. "My Workspace"), so columns are split on runs of 2+ spaces and
+    the first field is the name. The header row (before the dashed separator)
+    and the separator itself are skipped, so a workspace literally named like a
+    column header can't false-match.
+    """
+    seen_separator = False
+    for line in list_output.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if set(stripped) <= {"-", " "}:
+            seen_separator = True
+            continue
+        if not seen_separator:
+            continue  # header row(s) above the separator
+        first_column = re.split(r"\s{2,}", stripped)[0]
+        if first_column == name:
+            return True
+    return False
+
+
+def _playground_exists(uv_executable: str, project_dir: Path) -> bool:
+    """Report whether the playground workspace already exists for the user.
+
+    Lists remote workspaces with --non-interactive so an unauthenticated user
+    fails fast (no hanging prompt) instead of blocking. On any failure we report
+    False, so the caller falls back to `connect --create` — and that connect
+    step then triggers the interactive login.
+    """
+    try:
+        output = capture_uv_command(
+            uv_executable,
+            project_dir,
+            ["run", "dlthub", "--non-interactive", "workspace", "list"],
+        )
+    except UvError:
+        return False
+    return _workspace_in_list(output, PLAYGROUND_WORKSPACE)
+
+
 def execute_plan(plan: WorkspacePlan) -> None:
     verbose = plan.verbose
 
@@ -135,8 +182,49 @@ def execute_plan(plan: WorkspacePlan) -> None:
         run_uv_sync(uv_executable, plan.project_dir, verbose=verbose)
     console.print(strings.MSG_INSTALLED_DEPS)
 
+    if plan.run_first_pipeline:
+        # Login is the only step with an interactive prompt, so stream it
+        # (verbose=True). It also authenticates the steps below up front, so the
+        # workspace list is reliable rather than inferring login from connect.
+        console.print(strings.MSG_LOGGING_IN)
+        run_uv_command(uv_executable, plan.project_dir, ["run", "dlthub", "login"], verbose=True)
+
+        # Bind to a playground workspace. Pass --create only when it doesn't
+        # already exist — `connect --create` errors on an existing one. No
+        # prompts now that we're logged in, so run it under a spinner.
+        with step(strings.MSG_CONNECTING_PLAYGROUND.format(workspace=PLAYGROUND_WORKSPACE), verbose=verbose):
+            connect_args = ["run", "dlthub", "workspace", "connect", PLAYGROUND_WORKSPACE]
+            if not _playground_exists(uv_executable, plan.project_dir):
+                connect_args.append("--create")
+            run_uv_command(uv_executable, plan.project_dir, connect_args, verbose=verbose)
+        console.print(strings.MSG_CONNECTED_PLAYGROUND.format(workspace=PLAYGROUND_WORKSPACE))
+
+        with step(strings.MSG_RUNNING_FIRST_PIPELINE, verbose=verbose):
+            # --follow blocks until the remote run actually completes; without it
+            # the command returns early and the overview page below is empty.
+            run_uv_command(
+                uv_executable,
+                plan.project_dir,
+                ["run", "dlthub", "run", "--follow", "load_sample_shop"],
+                verbose=verbose,
+            )
+        console.print(strings.MSG_RAN_FIRST_PIPELINE)
+
+        # Open the workspace overview in the dltHub web app.
+        console.print(strings.MSG_OPENING_OVERVIEW)
+        run_uv_command(uv_executable, plan.project_dir, ["run", "dlthub", "show"], verbose=verbose)
+
     console.print()
-    print_next_steps(plan.project_dir, scaffold=plan.scaffold, agent=plan.agent)
+    # When we ran the first pipeline, the next-steps panel shows a prompt to
+    # paste into the agent — copy it to the clipboard so it's one paste away.
+    prompt_copied = plan.run_first_pipeline and copy_to_clipboard(strings.CMD_BUILD_OWN_SOURCE_PROMPT)
+    print_next_steps(
+        plan.project_dir,
+        scaffold=plan.scaffold,
+        agent=plan.agent,
+        first_pipeline_ran=plan.run_first_pipeline,
+        prompt_copied=prompt_copied,
+    )
 
 
 if __name__ == "__main__":
