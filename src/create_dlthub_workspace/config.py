@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-VERSION = "0.5.3"
+VERSION = "0.6.0"
 
 AGENTS = ("claude", "cursor", "codex")
 
