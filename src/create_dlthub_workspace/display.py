@@ -29,9 +29,7 @@ NEXT_STEPS: dict[str, tuple[tuple[str, str | None], ...]] = {
 # logs shown) during setup: the run / view-runs steps just happened, so point
 # the user at the real next move — building a pipeline for their own source.
 NEXT_STEPS_AFTER_RUN: dict[str, tuple[tuple[str, str | None], ...]] = {
-    "minimal_workspace": (
-        (strings.STEPS_LABEL_BUILD_OWN_SOURCE, None),
-    ),
+    "minimal_workspace": ((strings.STEPS_LABEL_BUILD_OWN_SOURCE, None),),
 }
 
 CREATED_TREE: dict[str, tuple[str, ...]] = {
