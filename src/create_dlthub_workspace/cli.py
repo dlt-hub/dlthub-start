@@ -6,7 +6,7 @@ import argparse
 import sys
 
 from . import strings
-from .config import AGENTS, RECOMMENDED, SCAFFOLDS
+from .config import AGENTS, RECOMMENDED
 from .display import (
     console,
     print_banner,
@@ -53,11 +53,6 @@ def build_parser() -> argparse.ArgumentParser:
         nargs="?",
         default=None,
         help="Directory to scaffold into (must be empty). Defaults to the current directory.",
-    )
-    parser.add_argument(
-        "--scaffold",
-        choices=[key for key, _, _ in SCAFFOLDS],
-        help=f"Bundled scaffold to use. Defaults to the recommended {RECOMMENDED.scaffold!r} in non-interactive mode.",
     )
     parser.add_argument(
         "--agent",

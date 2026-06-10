@@ -37,19 +37,10 @@ class CopyScaffoldTests(unittest.TestCase):
             self.assertTrue((project_dir / "__deployment__.py").exists())
             self.assertTrue((project_dir / ".dlt" / "config.toml").exists())
 
-    def test_copies_bundled_starter_scaffold(self) -> None:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            project_dir = Path(tmpdir) / "new_workspace"
-            copy_scaffold(project_dir, scaffold="starter_workspace")
-
-            self.assertTrue((project_dir / "pyproject.toml").exists())
-            self.assertTrue((project_dir / "starter_pipeline.py").exists())
-            self.assertTrue((project_dir / "notebooks").is_dir())
-
     def test_skips_runtime_artifacts(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             project_dir = Path(tmpdir) / "new_workspace"
-            copy_scaffold(project_dir, scaffold="starter_workspace")
+            copy_scaffold(project_dir, scaffold="minimal_workspace")
 
             # Verify the dev-time artifacts are not propagated to the user's workspace.
             self.assertFalse((project_dir / "__pycache__").exists())
@@ -119,10 +110,9 @@ class CopyScaffoldTests(unittest.TestCase):
 
 class ValidateAgentTests(unittest.TestCase):
     def test_passes_for_every_vendored_agent(self) -> None:
-        for scaffold in ("minimal_workspace", "starter_workspace"):
-            for agent in AGENTS:
-                with self.subTest(scaffold=scaffold, agent=agent):
-                    validate_agent(scaffold=scaffold, agent=agent)  # must not raise
+        for agent in AGENTS:
+            with self.subTest(agent=agent):
+                validate_agent(scaffold="minimal_workspace", agent=agent)  # must not raise
 
     def test_raises_for_unknown_agent(self) -> None:
         with self.assertRaises(ScaffoldError):
@@ -132,15 +122,14 @@ class ValidateAgentTests(unittest.TestCase):
 class PerAgentLayoutTests(unittest.TestCase):
     """Each scaffold must vendor a self-contained tree for every agent."""
 
-    def test_every_agent_is_vendored_for_every_scaffold(self) -> None:
-        for scaffold in ("minimal_workspace", "starter_workspace"):
-            agents_dir = SCAFFOLDS_DIR / scaffold / PER_AGENT_DIR
-            for agent in AGENTS:
-                with self.subTest(scaffold=scaffold, agent=agent):
-                    self.assertTrue(
-                        (agents_dir / agent).is_dir(),
-                        f"{scaffold}/{PER_AGENT_DIR}/{agent} missing — run `make generate-ai`.",
-                    )
+    def test_every_agent_is_vendored(self) -> None:
+        agents_dir = SCAFFOLDS_DIR / "minimal_workspace" / PER_AGENT_DIR
+        for agent in AGENTS:
+            with self.subTest(agent=agent):
+                self.assertTrue(
+                    (agents_dir / agent).is_dir(),
+                    f"minimal_workspace/{PER_AGENT_DIR}/{agent} missing — run `make generate-ai`.",
+                )
 
 
 class StampInstallTimeTests(unittest.TestCase):
@@ -210,13 +199,11 @@ class ValidateScaffoldNameTests(unittest.TestCase):
             validate_scaffold_name("does-not-exist")
 
     def test_passes_for_bundled_scaffolds(self) -> None:
-        validate_scaffold_name("starter_workspace")  # must not raise
         validate_scaffold_name("minimal_workspace")  # must not raise
 
 
 class ScaffoldsDirTests(unittest.TestCase):
     def test_bundled_scaffolds_exist(self) -> None:
-        self.assertTrue((SCAFFOLDS_DIR / "starter_workspace").is_dir())
         self.assertTrue((SCAFFOLDS_DIR / "minimal_workspace").is_dir())
 
 

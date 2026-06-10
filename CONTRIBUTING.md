@@ -33,10 +33,9 @@ Create a workspace without running the generated workspace dependency sync:
 uv run dlthub-start my-workspace --yes --skip-uv-sync
 ```
 
-Choose a scaffold or AI workbench explicitly:
+Choose an AI workbench explicitly:
 
 ```bash
-uv run dlthub-start my-workspace --scaffold minimal_workspace
 uv run dlthub-start my-workspace --agent claude
 uv run dlthub-start my-workspace --agent claude --agent codex
 ```
@@ -147,25 +146,6 @@ The source ref is pinned in `WORKBENCH_REF` in
 you only need to regenerate against the already-pinned ref, run `make
 generate-ai` directly. `make check-ai` reruns generation and fails if the
 committed scaffolds drift from the pinned workbench ref.
-
-## Scaffold templates that are gitignored
-
-A few scaffold templates -- notably
-`src/create_dlthub_workspace/scaffolds/*/.dlt/secrets.toml` -- are matched by
-the scaffold's own `.gitignore` (the one that ships into the user's generated
-workspace to keep their real credentials out of git). Because git applies the
-*deepest* matching `.gitignore` to a path, that rule also takes effect inside
-this repo, and git will normally skip the file.
-
-We want the template tracked here so it ships in the package and reaches every
-user. The fix is one-time:
-
-```bash
-git add -f src/create_dlthub_workspace/scaffolds/starter_workspace/.dlt/secrets.toml
-```
-
-Once tracked, future edits show up in `git diff` like any other file. If you
-add a similar tracked-but-ignored scaffold template in the future, do the same.
 
 ## Release Checklist
 

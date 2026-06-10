@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Removed
+- Removed the `starter_workspace` scaffold along with the `--scaffold` flag and the interactive scaffold picker. `minimal_workspace` is now the only bundled scaffold.
 - The minimal workspace no longer ships `report_notebook.py`. On dltHub Platform the notebook had to re-run the whole pipeline to repopulate the worker-local DuckDB before charting, which made it slow and undercut the first-run experience. It's removed temporarily until shared workspace storage lands and the notebook speed issue is fixed; agents can still build notebooks on demand via the `data-exploration` toolkit.
 
 ### Changed

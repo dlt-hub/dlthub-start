@@ -10,7 +10,7 @@ class WorkspaceError(Exception):
 
 
 class ScaffoldError(WorkspaceError):
-    """Raised when the starter scaffold cannot be downloaded or extracted."""
+    """Raised when the bundled scaffold cannot be copied into the target directory."""
 
 
 class WorkspaceDirectoryNotEmptyError(ScaffoldError):

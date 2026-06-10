@@ -5,13 +5,12 @@ from __future__ import annotations
 import unittest
 from unittest.mock import MagicMock, patch
 
-from create_dlthub_workspace.config import AGENTS, RECOMMENDED, SCAFFOLDS
+from create_dlthub_workspace.config import AGENTS, RECOMMENDED
 from create_dlthub_workspace.display import console
 from create_dlthub_workspace.prompts import (
     RECOMMENDED_SUFFIX,
     _echo_selection,
     choose_agent,
-    choose_scaffold,
     confirm,
 )
 
@@ -19,37 +18,13 @@ from create_dlthub_workspace.prompts import (
 class EchoSelectionTests(unittest.TestCase):
     def test_prints_value_with_tick_and_bold_markup(self) -> None:
         with console.capture() as cap:
-            _echo_selection("Starter")
+            _echo_selection("claude")
         output = cap.get()
 
-        self.assertIn("Starter", output)
+        self.assertIn("claude", output)
         # The tick character is rendered through rich markup; just verify it
         # made it to the output stream.
         self.assertIn("●", output)
-
-
-class ChooseScaffoldTests(unittest.TestCase):
-    @patch("create_dlthub_workspace.prompts.console.print")
-    @patch("create_dlthub_workspace.prompts.beaupy.select", return_value=0)
-    def test_returns_selected_scaffold_key(
-        self,
-        _select: MagicMock,
-        _console_print: MagicMock,
-    ) -> None:
-        self.assertEqual(choose_scaffold(), SCAFFOLDS[0][0])
-
-    @patch("create_dlthub_workspace.prompts.console.print")
-    @patch("create_dlthub_workspace.prompts.beaupy.select", return_value=0)
-    def test_recommended_scaffold_gets_badge(
-        self,
-        select: MagicMock,
-        _console_print: MagicMock,
-    ) -> None:
-        choose_scaffold()
-        options = select.call_args.args[0]
-        recommended_label = next(label for key, label, _ in SCAFFOLDS if key == RECOMMENDED.scaffold)
-        recommended_option = next(opt for opt in options if recommended_label in opt)
-        self.assertIn(RECOMMENDED_SUFFIX, recommended_option)
 
 
 class ChooseAgentTests(unittest.TestCase):

@@ -21,7 +21,6 @@ from __future__ import annotations
 
 
 # Prompts ---------------------------------------------------------------
-PROMPT_SCAFFOLD_HEADER = "\n[bold]Choose your onboarding experience[/bold] [dim](↑/↓ to move, enter to confirm)[/dim]"
 PROMPT_AGENT_HEADER = "\n[bold]Choose your coding agent[/bold] [dim](↑/↓ to move, enter to confirm)[/dim]"
 PROMPT_INSTALL_UV = "uv is required but was not found. Install uv now?"
 PROMPT_RUN_UV_SYNC = "Install workspace dependencies with `uv sync`?"
@@ -101,13 +100,7 @@ LINK_DOCS_LABEL = "github.com/dlt-hub/dlthub-ai-workbench"
 
 # Step labels (prose halves of the (label, command) tuples) -------------
 STEPS_LABEL_CD = "Change into the workspace:"
-STEPS_LABEL_ADD_MOTHERDUCK_CREDENTIALS = (
-    "Add your MotherDuck database name and token to .dlt/prod.secrets.toml "
-    "(open the file and follow the instructions inside)."
-)
-STEPS_LABEL_RUN_BREWERIES = "Run the ingestion pipeline in dltHub (you'll be prompted to connect/login):"
 STEPS_LABEL_RUN_SAMPLE_SHOP = "Run the sample shop pipeline in dltHub (you'll be prompted to connect/login):"
-STEPS_LABEL_VIEW_JOB_RUNS = "View runs for the brewery pipeline:"
 STEPS_LABEL_VIEW_SAMPLE_SHOP_RUNS = "View runs for the sample shop pipeline:"
 STEPS_LABEL_EDIT_PIPELINE = "Edit pipeline.py to swap in your own source, then re-run."
 STEPS_LABEL_INSTALL_UV = "Install uv:"
@@ -117,8 +110,6 @@ STEPS_LABEL_INSTALL_DEPS = "Install workspace dependencies:"
 # Commands shown to the user (the right halves of the tuples) -----------
 CMD_INSTALL_UV_UNIX = "curl -LsSf https://astral.sh/uv/install.sh | sh"
 CMD_UV_SYNC = "uv sync"
-CMD_DLTHUB_RUN_BREWERIES = "uv run dlthub run load_breweries"
 CMD_DLTHUB_RUN_SAMPLE_SHOP = "uv run dlthub run load_sample_shop"
-CMD_DLTHUB_JOB_RUNS_SHOW_BREWERIES = "uv run dlthub job runs show starter_pipeline.load_breweries"
 CMD_DLTHUB_JOB_RUNS_SHOW_SAMPLE_SHOP = "uv run dlthub job runs show pipeline.load_sample_shop"
 CMD_CD = "cd {project_dir}"
