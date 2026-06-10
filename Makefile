@@ -91,6 +91,21 @@ generate-ai: ## Refresh bundled AI workbench files in scaffolds (run after bumpi
 update-ai: ## Bump WORKBENCH_REF to latest workbench commit (or REF=<sha>) and regenerate scaffolds
 	uv run python scripts/update_ai.py $(REF)
 
-check-ai: ## CI guard: fail if generate-ai would produce a diff
-	$(MAKE) generate-ai
-	git diff --exit-code -- src/create_dlthub_workspace/scaffolds
+check-ai: ## CI guard: fail if generate-ai would produce a diff (generate-ai output is hidden unless it fails)
+	@echo "check-ai: regenerating scaffolds (output hidden unless it fails)…"; \
+	log="$$(mktemp)"; \
+	if ! $(MAKE) --no-print-directory generate-ai >"$$log" 2>&1; then \
+		echo "check-ai: generate-ai failed — its output:"; \
+		cat "$$log"; rm -f "$$log"; exit 1; \
+	fi; \
+	rm -f "$$log"; \
+	changed="$$(git status --porcelain -- src/create_dlthub_workspace/scaffolds)"; \
+	if [ -z "$$changed" ]; then \
+		echo "check-ai: OK — bundled scaffolds are up to date."; \
+	else \
+		echo "check-ai: FAILED — these scaffold files differ from 'make generate-ai' output; regenerate and commit them:"; \
+		printf '%s\n' "$$changed" | sed 's/^/    /'; \
+		echo ""; \
+		git --no-pager diff -- src/create_dlthub_workspace/scaffolds; \
+		exit 1; \
+	fi
