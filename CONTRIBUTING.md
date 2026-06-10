@@ -48,10 +48,10 @@ make workspace
 
 The `workspace` target recreates `examples/my-workspace` by default. It
 pre-deletes that directory before running the CLI, so only use it for
-throwaway local workspaces. To choose a different workspace name:
+throwaway local workspaces. To target a different directory:
 
 ```bash
-make workspace TEST_WORKSPACE_NAME=starter-demo
+make workspace REMOVE_PREV_WORKSPACE=examples/my-demo
 ```
 
 ## Tests
