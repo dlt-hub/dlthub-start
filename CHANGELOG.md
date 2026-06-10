@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- The minimal workspace no longer ships `report_notebook.py`. On dltHub Platform the notebook had to re-run the whole pipeline to repopulate the worker-local DuckDB before charting, which made it slow and undercut the first-run experience. It's removed temporarily until shared workspace storage lands and the notebook speed issue is fixed; agents can still build notebooks on demand via the `data-exploration` toolkit.
+
 ### Changed
 - `dlthub-start` now initializes a workspace **in place** — the current directory by default (the workspace-name prompt is gone). An explicit positional argument still targets a named subdirectory. Either way the target must be empty; a non-empty target stops with a dedicated "Directory not empty" message and exit code `2` instead of a generic error. Next-steps guidance adapts: the `cd` step is omitted when initializing in place, and a note reminds AI agents to run from the workspace root when a subdirectory is used.
 

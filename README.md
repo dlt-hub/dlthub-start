@@ -64,7 +64,7 @@ Common options:
 | Option | Description |
 | --- | --- |
 | `--yes`, `-y` | Use the recommended path: the recommended scaffold, the Claude workbench, install `uv` if missing, and run `uv sync`. |
-| `--scaffold minimal_workspace` | The "Hello World" workspace: a runnable sample pipeline + report notebook. **Recommended default.** |
+| `--scaffold minimal_workspace` | The "Hello World" workspace: a runnable sample pipeline. **Recommended default.** |
 | `--scaffold starter_workspace` | The full workflow: ingestion, transformations, data quality, notebooks, and deployment. |
 | `--agent claude` | Use the Claude workbench files. Choose exactly one agent (`claude`, `cursor`, or `codex`); defaults to `claude`. |
 | `--agent cursor` | Use the Cursor workbench files. |
@@ -86,7 +86,7 @@ uvx dlthub-start@latest my-workspace --yes     # alternative: create + initializ
 
 | Scaffold | Best For | Contents |
 | --- | --- | --- |
-| `minimal_workspace` (default) | A quick, runnable first look. | A sample online-shop pipeline, a marimo report notebook, local warehouse config, and a generated deployment module. |
+| `minimal_workspace` (default) | A quick, runnable first look. | A sample online-shop pipeline, local warehouse config, and a generated deployment module. |
 | `starter_workspace` | Exploring the full dltHub workflow. | Open Brewery DB ingestion, Ibis transformations, scheduled data quality checks, marimo notebooks, and a generated deployment module. |
 
 ## Generated Workspace
@@ -98,7 +98,6 @@ shaped roughly like this:
 .
 |-- pyproject.toml
 |-- pipeline.py
-|-- report_notebook.py
 |-- __deployment__.py
 |-- README.md
 |-- .dlt/
