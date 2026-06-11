@@ -21,7 +21,12 @@ Run the CLI from the checkout:
 uv run dlthub-start --help
 ```
 
-Create a workspace with the recommended non-interactive path:
+Create a workspace non-interactively (for tests/CI). `--yes`/`-y` and
+`--skip-uv-sync` are hidden testing shortcuts — they cut the guided setup short
+(`--yes` skips the prompts and the first run; `--skip-uv-sync` also skips the
+dependency sync), so the workspace is scaffolded but not run. Both are
+deliberately absent from `--help`; the normal, complete path is interactive
+(no flag):
 
 ```bash
 uv run dlthub-start my-workspace --yes

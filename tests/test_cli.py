@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
+import argparse
 import contextlib
 import io
 import unittest
+from pathlib import Path
 from typing import Iterator
 from unittest.mock import MagicMock, patch
 
-from pathlib import Path
-
-from create_dlthub_workspace.cli import _workspace_in_list, build_parser, execute_plan, main
+from create_dlthub_workspace.cli import _workspace_in_list, build_parser, execute_plan, main, run
 from create_dlthub_workspace.config import PLAYGROUND_WORKSPACE
 from create_dlthub_workspace.errors import WorkspaceDirectoryNotEmptyError, WorkspaceError
 from create_dlthub_workspace.plan import WorkspacePlan, WorkspaceStage
@@ -34,7 +34,8 @@ class BuildParserTests(unittest.TestCase):
         with _silenced(), self.assertRaises(SystemExit):
             parser.parse_args(["my_workspace", "--agent", "not-an-agent"])
 
-    def test_yes_flag_parses_to_true(self) -> None:
+    def test_yes_flag_still_parses_to_true(self) -> None:
+        # --yes stays functional for tests/CI even though it's hidden from --help.
         parser = build_parser()
         args = parser.parse_args(["my_workspace", "--yes"])
         self.assertTrue(args.yes)
@@ -48,6 +49,14 @@ class BuildParserTests(unittest.TestCase):
         parser = build_parser()
         args = parser.parse_args(["my_workspace"])
         self.assertFalse(args.yes)
+
+    def test_testing_shortcuts_are_hidden_from_help(self) -> None:
+        # The interactive flow is the only documented path; the non-interactive
+        # testing shortcuts must not show up in --help.
+        help_text = build_parser().format_help()
+        self.assertNotIn("--yes", help_text)
+        self.assertNotIn("-y", help_text)
+        self.assertNotIn("--skip-uv-sync", help_text)
 
     def test_skip_uv_sync_flag_parses_to_true(self) -> None:
         parser = build_parser()
@@ -94,6 +103,43 @@ class MainExitCodeTests(unittest.TestCase):
             self.assertEqual(main(["my_workspace"]), 2)
         # Routed to the clean response, not the generic error line.
         print_dir_not_empty.assert_called_once_with(target)
+
+
+class RunNoticeTests(unittest.TestCase):
+    """run() warns (on stderr) when a hidden testing shortcut is used."""
+
+    def _run_with(self, **flags: bool) -> MagicMock:
+        fields: dict[str, object] = {
+            "project_dir": None,
+            "agent": None,
+            "yes": False,
+            "verbose": False,
+            "skip_uv_sync": False,
+        }
+        fields.update(flags)
+        args = argparse.Namespace(**fields)
+        with (
+            patch("create_dlthub_workspace.cli.execute_plan"),
+            patch("create_dlthub_workspace.cli.build_plan"),
+            patch("create_dlthub_workspace.cli.print_banner"),
+            patch("create_dlthub_workspace.cli.err_console") as err_console,
+            _silenced(),
+        ):
+            run(args)
+        return err_console
+
+    def test_yes_prints_testing_notice(self) -> None:
+        self._run_with(yes=True).print.assert_called_once()
+
+    def test_skip_uv_sync_prints_testing_notice(self) -> None:
+        self._run_with(skip_uv_sync=True).print.assert_called_once()
+
+    def test_both_shortcuts_print_a_single_notice(self) -> None:
+        # One shared note, not one per flag.
+        self._run_with(yes=True, skip_uv_sync=True).print.assert_called_once()
+
+    def test_interactive_run_prints_no_notice(self) -> None:
+        self._run_with().print.assert_not_called()
 
 
 def _make_plan(**overrides: object) -> WorkspacePlan:
