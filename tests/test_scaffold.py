@@ -17,6 +17,7 @@ from create_dlthub_workspace.scaffold import (
     _stamp_install_time,
     copy_scaffold,
     first_available_dir,
+    overlay_agent,
     resolve_workspace_target,
     validate_agent,
     validate_scaffold_name,
@@ -124,6 +125,29 @@ class CopyScaffoldTests(unittest.TestCase):
 
             with self.assertRaises(ScaffoldError):
                 copy_scaffold(project_dir, scaffold="minimal_workspace")
+
+
+class OverlayAgentTests(unittest.TestCase):
+    def test_overlays_agent_onto_shared_scaffold(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_dir = Path(tmpdir) / "ws"
+            copy_scaffold(project_dir, scaffold="minimal_workspace", agent=None)
+            for entry in AGENT_OWNED["claude"]:
+                self.assertFalse((project_dir / entry).exists())
+
+            overlay_agent(project_dir, scaffold="minimal_workspace", agent="claude")
+
+            for entry in AGENT_OWNED["claude"]:
+                self.assertTrue((project_dir / entry).exists(), f"{entry} should be present")
+            manifest = project_dir / ".dlt" / ".toolkits"
+            self.assertNotIn(INSTALL_TIME_SENTINEL, manifest.read_text(encoding="utf-8"))
+
+    def test_raises_for_unknown_agent(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_dir = Path(tmpdir) / "ws"
+            copy_scaffold(project_dir, scaffold="minimal_workspace", agent=None)
+            with self.assertRaises(ScaffoldError):
+                overlay_agent(project_dir, scaffold="minimal_workspace", agent="bogus")
 
 
 class ValidateAgentTests(unittest.TestCase):
