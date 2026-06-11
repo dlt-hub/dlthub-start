@@ -17,7 +17,7 @@ from pathlib import Path
 from . import strings
 from .config import RECOMMENDED
 from .prompts import choose_agent, confirm
-from .scaffold import validate_agent, validate_scaffold_name, validate_target_dir
+from .scaffold import resolve_workspace_target, validate_agent, validate_scaffold_name
 from .uv import find_uv
 
 
@@ -32,6 +32,7 @@ class WorkspaceStage(Enum):
 @dataclass(frozen=True)
 class WorkspacePlan:
     project_dir: Path
+    relocated_from: Path | None
     scaffold: str
     stage: WorkspaceStage
     agent: str
@@ -51,11 +52,11 @@ def build_plan(args: argparse.Namespace) -> WorkspacePlan:
     --skip-uv-sync opts out of sync, and the first run is skipped under --yes
     (its login is interactive).
 
-    The workspace is initialized in place: the current directory by default, or
-    an explicit ``project_dir`` if given. Either way the target must be empty.
+    The workspace inits in place when the target is empty, else falls back to a
+    free dir (see ``resolve_workspace_target``), recorded as ``relocated_from``.
     """
-    project_dir = (Path(args.project_dir).expanduser() if args.project_dir else Path.cwd()).resolve()
-    validate_target_dir(project_dir)
+    resolution = resolve_workspace_target(args.project_dir)
+    project_dir = resolution.project_dir
 
     scaffold = RECOMMENDED.scaffold
     validate_scaffold_name(scaffold)
@@ -87,6 +88,7 @@ def build_plan(args: argparse.Namespace) -> WorkspacePlan:
 
     return WorkspacePlan(
         project_dir=project_dir,
+        relocated_from=resolution.relocated_from,
         scaffold=scaffold,
         stage=stage,
         agent=agent,

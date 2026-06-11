@@ -50,6 +50,7 @@ MSG_TESTING_SHORTCUT_NOTE = (
 )
 MSG_CANCELLED = "\n[yellow]Cancelled.[/yellow]"
 MSG_ERROR_PREFIX = "[red]Error:[/red] {message}"
+MSG_RELOCATED = "[yellow]Heads up:[/yellow] {relocated_from} isn't empty — scaffolding into {project_dir} instead."
 MSG_CREATING_WORKSPACE = "Creating workspace at {project_dir}"
 MSG_CREATED = "[green]Created[/green] {project_dir}"
 MSG_PACKAGE_NAME = "[dim]Project package name:[/dim] {package_name}"
@@ -86,8 +87,8 @@ MSG_AGENT_WORKSPACE_NOTE = (
 MSG_DIR_NOT_EMPTY = (
     "Can't initialize a dltHub workspace here — this directory isn't empty:\n\n"
     "  [bold]{project_dir}[/bold]\n\n"
-    "The directory must be completely empty. Hidden entries like "
-    ".git, .gitignore, .dlt, .venv, and .DS_Store count too.\n\n"
+    "The directory must be empty apart from editor/OS cruft and a bare .git — "
+    "entries like .gitignore, .dlt, and .venv count as content.\n\n"
     "Start from an empty directory, or create a new one:\n\n"
     "  [bold #59C1D5]uvx dlthub-start@latest my-workspace[/bold #59C1D5]\n\n"
     "[dim]Note for AI agents: initializing a workspace installs AI skills and an "

@@ -1,21 +1,39 @@
 from __future__ import annotations
 
+import os
 import tempfile
 import unittest
+from contextlib import contextmanager
 from pathlib import Path
+from typing import Iterator
 
-from create_dlthub_workspace.config import AGENTS
+from create_dlthub_workspace.config import AGENTS, PLAYGROUND_WORKSPACE
 from create_dlthub_workspace.errors import ScaffoldError
 from create_dlthub_workspace.scaffold import (
+    BENIGN_ENTRIES,
     INSTALL_TIME_SENTINEL,
     PER_AGENT_DIR,
     SCAFFOLDS_DIR,
     _stamp_install_time,
     copy_scaffold,
+    first_available_dir,
+    resolve_workspace_target,
     validate_agent,
     validate_scaffold_name,
     validate_target_dir,
 )
+
+
+@contextmanager
+def _chdir(target: Path) -> Iterator[None]:
+    """Run the body with ``target`` as the current working directory."""
+    previous = os.getcwd()
+    os.chdir(target)
+    try:
+        yield
+    finally:
+        os.chdir(previous)
+
 
 # Top-level entries that belong to each agent. Used only by the tests to assert
 # the assembled workspace contains the selected agent's files and none other.
@@ -189,6 +207,153 @@ class ValidateTargetDirTests(unittest.TestCase):
             project_dir = Path(tmpdir) / "empty_dir"
             project_dir.mkdir()
             validate_target_dir(project_dir)  # must not raise
+
+    def test_raises_when_a_file_sits_on_the_path(self) -> None:
+        # A plain file on the target name counts as occupied — and must not crash
+        # the way `any(path.iterdir())` would on a non-directory.
+        with tempfile.TemporaryDirectory() as tmpdir:
+            target = Path(tmpdir) / "afile"
+            target.write_text("hi", encoding="utf-8")
+
+            with self.assertRaises(ScaffoldError):
+                validate_target_dir(target)
+
+    def test_passes_when_dir_holds_only_benign_entries(self) -> None:
+        # An IDE/VCS-cluttered-but-otherwise-empty dir (e.g. `git init` + PyCharm)
+        # still initializes in place rather than counting as occupied.
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_dir = Path(tmpdir) / "looks_empty"
+            project_dir.mkdir()
+            (project_dir / ".git").mkdir()
+            (project_dir / ".idea").mkdir()
+            (project_dir / ".DS_Store").write_text("", encoding="utf-8")
+
+            validate_target_dir(project_dir)  # must not raise
+
+    def test_raises_when_benign_entries_mixed_with_real_content(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_dir = Path(tmpdir) / "has_real_file"
+            project_dir.mkdir()
+            (project_dir / ".git").mkdir()
+            (project_dir / "main.py").write_text("print('hi')\n", encoding="utf-8")
+
+            with self.assertRaises(ScaffoldError):
+                validate_target_dir(project_dir)
+
+
+class BenignEntriesInvariantTests(unittest.TestCase):
+    """The allowlist must never name something the scaffold itself writes."""
+
+    def test_benign_entries_disjoint_from_scaffold_top_level(self) -> None:
+        # A benign name that the scaffold also ships would clobber it on in-place init.
+        scaffold = SCAFFOLDS_DIR / "minimal_workspace"
+        written_top_level = {p.name for p in scaffold.iterdir() if p.name != PER_AGENT_DIR}
+        agents_dir = scaffold / PER_AGENT_DIR
+        for agent_dir in agents_dir.iterdir():
+            if agent_dir.is_dir():
+                written_top_level.update(p.name for p in agent_dir.iterdir())
+
+        collisions = BENIGN_ENTRIES & written_top_level
+        self.assertEqual(
+            collisions,
+            set(),
+            f"BENIGN_ENTRIES names scaffold-shipped entries {collisions} — they'd be clobbered on in-place init",
+        )
+
+
+class FirstAvailableDirTests(unittest.TestCase):
+    """The ``base`` → ``base-1`` → ``base-2`` … suffix search."""
+
+    def test_returns_base_when_free(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir) / "ws"
+            self.assertEqual(first_available_dir(base), base)
+
+    def test_returns_base_when_it_is_an_empty_dir(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir) / "ws"
+            base.mkdir()
+            self.assertEqual(first_available_dir(base), base)
+
+    def test_suffixes_past_occupied_names(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir) / "ws"
+            base.mkdir()
+            (base / "f.txt").write_text("x", encoding="utf-8")  # ws occupied
+            taken1 = base.with_name("ws-1")
+            taken1.mkdir()
+            (taken1 / "f.txt").write_text("x", encoding="utf-8")  # ws-1 occupied
+
+            self.assertEqual(first_available_dir(base), base.with_name("ws-2"))
+
+
+class ResolveWorkspaceTargetTests(unittest.TestCase):
+    """The CLI-facing rule: in-place when free, else playground / suffixed sibling."""
+
+    def test_explicit_name_used_as_is_when_free(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            requested = Path(tmpdir) / "myproj"
+            resolution = resolve_workspace_target(str(requested))
+
+            self.assertEqual(resolution.project_dir, requested.resolve())
+            self.assertIsNone(resolution.relocated_from)
+
+    def test_explicit_name_suffixed_when_occupied(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            requested = Path(tmpdir) / "myproj"
+            requested.mkdir()
+            (requested / "f.txt").write_text("x", encoding="utf-8")
+
+            resolution = resolve_workspace_target(str(requested))
+
+            self.assertEqual(resolution.project_dir, requested.with_name("myproj-1").resolve())
+            self.assertEqual(resolution.relocated_from, requested.resolve())
+
+    def test_no_name_uses_cwd_in_place_when_empty(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cwd = Path(tmpdir) / "empty"
+            cwd.mkdir()
+            with _chdir(cwd):
+                resolution = resolve_workspace_target(None)
+
+            self.assertEqual(resolution.project_dir, cwd.resolve())
+            self.assertIsNone(resolution.relocated_from)
+
+    def test_no_name_inits_in_place_when_cwd_holds_only_benign(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cwd = Path(tmpdir) / "git_repo"
+            cwd.mkdir()
+            (cwd / ".git").mkdir()
+            with _chdir(cwd):
+                resolution = resolve_workspace_target(None)
+
+            self.assertEqual(resolution.project_dir, cwd.resolve())
+            self.assertIsNone(resolution.relocated_from)
+
+    def test_no_name_nests_playground_when_cwd_not_empty(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cwd = Path(tmpdir) / "busy"
+            cwd.mkdir()
+            (cwd / "existing.txt").write_text("x", encoding="utf-8")
+            with _chdir(cwd):
+                resolution = resolve_workspace_target(None)
+
+            self.assertEqual(resolution.project_dir, (cwd / PLAYGROUND_WORKSPACE).resolve())
+            self.assertEqual(resolution.relocated_from, cwd.resolve())
+
+    def test_no_name_suffixes_playground_when_it_also_exists(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cwd = Path(tmpdir) / "busy"
+            cwd.mkdir()
+            (cwd / "existing.txt").write_text("x", encoding="utf-8")
+            playground = cwd / PLAYGROUND_WORKSPACE
+            playground.mkdir()
+            (playground / "f.txt").write_text("x", encoding="utf-8")  # playground occupied
+            with _chdir(cwd):
+                resolution = resolve_workspace_target(None)
+
+            self.assertEqual(resolution.project_dir, playground.with_name(f"{PLAYGROUND_WORKSPACE}-1").resolve())
+            self.assertEqual(resolution.relocated_from, cwd.resolve())
 
 
 class ValidateScaffoldNameTests(unittest.TestCase):

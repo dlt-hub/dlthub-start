@@ -3,13 +3,33 @@
 from __future__ import annotations
 
 import shutil
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
 from . import strings
+from .config import PLAYGROUND_WORKSPACE
 from .errors import ScaffoldError, WorkspaceDirectoryNotEmptyError
 
 SCAFFOLDS_DIR = Path(__file__).parent / "scaffolds"
+
+_MAX_SUFFIX = 1000
+
+# Editor/OS/tool cruft + a bare .git: present-but-ignorable, so a dir holding only
+# these still inits in place. Kept disjoint from scaffold-shipped files by a test.
+BENIGN_ENTRIES = frozenset(
+    {
+        ".git",
+        ".idea",
+        ".vscode",
+        ".DS_Store",
+        "Thumbs.db",
+        "__pycache__",
+        ".ruff_cache",
+        ".mypy_cache",
+        ".pytest_cache",
+    }
+)
 
 # Subdirectory under each scaffold that holds the per-agent vendored AI files
 # (`_agents/<agent>/...`). `generate_ai.py` writes them; copy_scaffold lays
@@ -24,14 +44,51 @@ TOOLKITS_MANIFEST = Path(".dlt") / ".toolkits"
 INSTALL_TIME_SENTINEL = "1970-01-01T00:00:00+00:00"
 
 
-def validate_target_dir(project_dir: Path) -> None:
-    """Refuse to write into a non-empty existing directory. No filesystem writes.
+@dataclass(frozen=True)
+class TargetResolution:
+    """The chosen target dir, plus ``relocated_from`` when we had to fall back (else None)."""
 
-    The target must be completely empty; hidden entries (.git, .dlt, ...) count.
-    Raises ``WorkspaceDirectoryNotEmptyError`` so the CLI can render a dedicated
-    response rather than the generic error line.
-    """
-    if project_dir.exists() and any(project_dir.iterdir()):
+    project_dir: Path
+    relocated_from: Path | None
+
+
+def _is_available(path: Path) -> bool:
+    """True if ``path`` is absent, an empty dir, or holds only ``BENIGN_ENTRIES``."""
+    if not path.exists():
+        return True
+    if path.is_dir():
+        return all(entry.name in BENIGN_ENTRIES for entry in path.iterdir())
+    return False
+
+
+def first_available_dir(base: Path) -> Path:
+    """``base`` if free, else the first free ``base-1``, ``base-2``, … sibling. No writes."""
+    if _is_available(base):
+        return base
+    for n in range(1, _MAX_SUFFIX + 1):
+        candidate = base.with_name(f"{base.name}-{n}")
+        if _is_available(candidate):
+            return candidate
+    raise WorkspaceDirectoryNotEmptyError(base)
+
+
+def resolve_workspace_target(requested_arg: str | None) -> TargetResolution:
+    """Pick a free target dir, never refusing an occupied one. No filesystem writes."""
+    if requested_arg is not None:
+        base = Path(requested_arg).expanduser().resolve()
+        chosen = first_available_dir(base)
+        return TargetResolution(chosen, base if chosen != base else None)
+
+    cwd = Path.cwd().resolve()
+    if _is_available(cwd):
+        return TargetResolution(cwd, None)
+    chosen = first_available_dir(cwd / PLAYGROUND_WORKSPACE)
+    return TargetResolution(chosen, cwd)
+
+
+def validate_target_dir(project_dir: Path) -> None:
+    """Raise if ``project_dir`` isn't usable. Defensive guard against a resolve→copy race."""
+    if not _is_available(project_dir):
         raise WorkspaceDirectoryNotEmptyError(project_dir)
 
 
