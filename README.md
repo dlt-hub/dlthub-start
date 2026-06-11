@@ -22,9 +22,10 @@ pip install dlthub-start
 dlthub-start
 ```
 
-The CLI prompts for your coding agent, checks for `uv` (offering to install it
-if missing), installs dependencies with `uv sync`, runs your first pipeline on
-dltHub, and prints next steps.
+The CLI scaffolds the workspace, checks for `uv` (offering to install it if
+missing), installs dependencies with `uv sync`, runs your first pipeline on
+dltHub, then prompts for your coding agent and sets up its files — and prints
+next steps.
 
 The full setup runs through the interactive prompts:
 
