@@ -62,13 +62,7 @@ def run_uv_command(
     stream: bool = False,
     on_line: Callable[[str], None] | None = None,
 ) -> None:
-    """Run a uv command in the generated workspace.
-
-    With ``stream`` set, the command's output is read line by line and passed to
-    ``on_line`` as it arrives (regardless of ``verbose``) — used for the pipeline
-    run so its ``--follow`` logs show live, recolored, instead of being hidden
-    behind a spinner.
-    """
+    """Run a uv command in the generated workspace."""
     command = [uv_executable, *args]
     if stream:
         _run_streamed(command, cwd=project_dir, on_line=on_line)
@@ -158,14 +152,8 @@ def _run_streamed(
     cwd: Path | None = None,
     on_line: Callable[[str], None] | None = None,
 ) -> None:
-    """Run a command and hand each output line to ``on_line`` as it arrives.
-
-    stderr is merged into stdout so the caller sees one ordered stream. We force
-    ``NO_COLOR`` and read through a pipe so the child emits plain text — the
-    caller recolors every line uniformly, which is what marks it as streamed
-    output rather than the CLI's own messages.
-    """
     env = _isolated_project_env()
+    # NO_COLOR so output is plain text the caller can recolor uniformly.
     env["NO_COLOR"] = "1"
     try:
         process = subprocess.Popen(

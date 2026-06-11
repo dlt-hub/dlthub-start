@@ -57,9 +57,7 @@ MSG_SKIPPED_UV_AND_SYNC = "\n[yellow]Skipped[/yellow] uv install and dependency 
 MSG_SKIPPED_SYNC = "\n[yellow]Skipped[/yellow] dependency sync.\n"
 MSG_INSTALLING_DEPS = "Installing dependencies"
 MSG_INSTALLED_DEPS = "[green]Installed[/green] dependencies into .venv"
-# First-run flow. Login (interactive prompts) and the pipeline run (live
-# --follow logs) stream their output; the rest run under spinners (MSG_* used
-# as spinner descriptions, with a matching "done" line printed after).
+# First-run flow messages. Spinner descriptions get a matching "done" line printed after.
 MSG_LOGGING_IN = "\nLogging in to dltHub — follow the prompts below…\n"
 MSG_CONNECTING_PLAYGROUND = "Connecting to a {workspace} workspace"
 MSG_CONNECTED_PLAYGROUND = "[green]Connected[/green] to the {workspace} workspace"

@@ -61,13 +61,7 @@ def step(description: str, *, verbose: bool = False) -> Iterator[None]:
 
 @contextmanager
 def streaming_step(description: str, *, note: str | None = None) -> Iterator[None]:
-    """Run a subprocess step while its logs stream straight to the terminal.
-
-    Unlike ``step`` there is no spinner: the child process writes directly to
-    the terminal, and a Rich live spinner would fight it for cursor control. A
-    rule above and below frames the streamed output so it reads as intentional
-    rather than as the CLI losing the thread.
-    """
+    """Frame a streamed step with rules, no spinner (a live spinner fights the child for the cursor)."""
     console.print()
     console.rule(f"[bold]{description}[/bold]", style="#59C1D5", align="left")
     if note:
@@ -80,17 +74,11 @@ def streaming_step(description: str, *, note: str | None = None) -> Iterator[Non
         console.rule(style="#59C1D5")
 
 
-# Streamed subprocess output (e.g. the pipeline run's --follow logs) is recolored
-# uniformly so it reads as nested, live output rather than the CLI's own messages.
 STREAM_LOG_STYLE = "dim cyan"
 
 
 def print_streamed_line(line: str) -> None:
-    """Print one line of streamed subprocess output in the streamed-log style.
-
-    ``markup``/``highlight`` are off so log content is shown verbatim (brackets,
-    numbers, and the like aren't reinterpreted); ``soft_wrap`` lets the terminal
-    wrap long lines instead of Rich cropping them."""
+    """Print one streamed-output line verbatim (no markup/highlight), terminal-wrapped."""
     console.print(line, style=STREAM_LOG_STYLE, markup=False, highlight=False, soft_wrap=True)
 
 

@@ -213,10 +213,7 @@ def execute_plan(plan: WorkspacePlan) -> None:
             run_uv_command(uv_executable, plan.project_dir, connect_args, verbose=verbose)
         console.print(strings.MSG_CONNECTED_PLAYGROUND.format(workspace=PLAYGROUND_WORKSPACE))
 
-        # Stream the run's --follow logs straight to the terminal (no spinner)
-        # so the user sees real progress. --follow blocks until the remote run
-        # actually completes; without it the command returns early and the
-        # overview page below is empty.
+        # --follow blocks until the remote run completes; without it the overview below would be empty.
         with streaming_step(strings.MSG_RUNNING_FIRST_PIPELINE, note=strings.HINT_PIPELINE_STREAMING):
             run_uv_command(
                 uv_executable,
