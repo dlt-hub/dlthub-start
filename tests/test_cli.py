@@ -1,4 +1,4 @@
-"""Tests for the CLI entrypoint: argparse surface + main exit codes."""
+"""Tests for the CLI entrypoint: argparse surface + the linear run() orchestration."""
 
 from __future__ import annotations
 
@@ -10,10 +10,10 @@ from pathlib import Path
 from typing import Iterator
 from unittest.mock import MagicMock, patch
 
-from create_dlthub_workspace.cli import _workspace_in_list, build_parser, execute_plan, main, run
-from create_dlthub_workspace.config import PLAYGROUND_WORKSPACE
+from create_dlthub_workspace.cli import _workspace_in_list, build_parser, main, run
+from create_dlthub_workspace.config import PLAYGROUND_WORKSPACE, RECOMMENDED
 from create_dlthub_workspace.errors import WorkspaceDirectoryNotEmptyError, WorkspaceError
-from create_dlthub_workspace.plan import WorkspacePlan, WorkspaceStage
+from create_dlthub_workspace.scaffold import TargetResolution
 
 
 @contextlib.contextmanager
@@ -51,8 +51,6 @@ class BuildParserTests(unittest.TestCase):
         self.assertFalse(args.yes)
 
     def test_testing_shortcuts_are_hidden_from_help(self) -> None:
-        # The interactive flow is the only documented path; the non-interactive
-        # testing shortcuts must not show up in --help.
         help_text = build_parser().format_help()
         self.assertNotIn("--yes", help_text)
         self.assertNotIn("-y", help_text)
@@ -101,159 +99,119 @@ class MainExitCodeTests(unittest.TestCase):
         run.side_effect = WorkspaceDirectoryNotEmptyError(target)
         with _silenced():
             self.assertEqual(main(["my_workspace"]), 2)
-        # Routed to the clean response, not the generic error line.
         print_dir_not_empty.assert_called_once_with(target)
 
 
-class RunNoticeTests(unittest.TestCase):
-    """run() warns (on stderr) when a hidden testing shortcut is used."""
-
-    def _run_with(self, **flags: bool) -> MagicMock:
-        fields: dict[str, object] = {
-            "project_dir": None,
-            "agent": None,
-            "yes": False,
-            "verbose": False,
-            "skip_uv_sync": False,
-        }
-        fields.update(flags)
-        args = argparse.Namespace(**fields)
-        with (
-            patch("create_dlthub_workspace.cli.execute_plan"),
-            patch("create_dlthub_workspace.cli.build_plan"),
-            patch("create_dlthub_workspace.cli.print_banner"),
-            patch("create_dlthub_workspace.cli.err_console") as err_console,
-            _silenced(),
-        ):
-            run(args)
-        return err_console
-
-    def test_yes_prints_testing_notice(self) -> None:
-        self._run_with(yes=True).print.assert_called_once()
-
-    def test_skip_uv_sync_prints_testing_notice(self) -> None:
-        self._run_with(skip_uv_sync=True).print.assert_called_once()
-
-    def test_both_shortcuts_print_a_single_notice(self) -> None:
-        # One shared note, not one per flag.
-        self._run_with(yes=True, skip_uv_sync=True).print.assert_called_once()
-
-    def test_interactive_run_prints_no_notice(self) -> None:
-        self._run_with().print.assert_not_called()
-
-
-def _make_plan(**overrides: object) -> WorkspacePlan:
-    """Construct a WorkspacePlan with sensible defaults; tests override fields."""
+def _make_args(**overrides: object) -> argparse.Namespace:
+    """Mirror what argparse produces; tests override individual fields."""
     defaults: dict[str, object] = {
-        "project_dir": Path("/tmp/test_workspace"),
-        "relocated_from": None,
-        "scaffold": "minimal_workspace",
-        "stage": WorkspaceStage.FULL,
-        "agent": "claude",
-        "uv_executable": "/usr/local/bin/uv",
-        "install_uv": False,
-        "run_first_pipeline": False,
+        "project_dir": "/tmp/test_workspace",
+        "agent": None,
+        "yes": False,
         "verbose": False,
+        "skip_uv_sync": False,
     }
     defaults.update(overrides)
-    return WorkspacePlan(**defaults)  # type: ignore[arg-type]
+    return argparse.Namespace(**defaults)
 
 
-class ExecutePlanFlowTests(unittest.TestCase):
-    """Pins down the orchestration order: copy, then conditional uv work, then next steps."""
+# Every side-effecting step run() calls, patched so tests exercise only control flow.
+_STEP_TARGETS = (
+    "copy_scaffold",
+    "overlay_agent",
+    "apply_workspace_name",
+    "resolve_workspace_target",
+    "find_uv",
+    "confirm",
+    "choose_agent",
+    "execute_uv_install",
+    "run_uv_sync",
+    "run_uv_command",
+    "capture_uv_command",
+    "copy_to_clipboard",
+    "print_banner",
+    "print_next_steps",
+    "print_resume_steps",
+)
 
-    @patch("create_dlthub_workspace.cli.print_next_steps")
-    @patch("create_dlthub_workspace.cli.print_resume_steps")
-    @patch("create_dlthub_workspace.cli.run_uv_sync")
-    @patch("create_dlthub_workspace.cli.execute_uv_install")
-    @patch("create_dlthub_workspace.cli.apply_workspace_name", return_value="test-workspace")
-    @patch("create_dlthub_workspace.cli.copy_scaffold")
-    def test_full_stage_runs_copy_sync_next_steps(
-        self,
-        copy_scaffold: MagicMock,
-        _apply_name: MagicMock,
-        execute_uv_install: MagicMock,
-        run_uv_sync: MagicMock,
-        print_resume_steps: MagicMock,
-        print_next_steps: MagicMock,
-    ) -> None:
+
+class RunFlowTests(unittest.TestCase):
+    """run() orchestration: scaffold (shared) → uv → first run → agent files."""
+
+    def setUp(self) -> None:
+        self.m: dict[str, MagicMock] = {}
+        for name in _STEP_TARGETS:
+            patcher = patch(f"create_dlthub_workspace.cli.{name}")
+            self.m[name] = patcher.start()
+            self.addCleanup(patcher.stop)
+        self.m["apply_workspace_name"].return_value = "test-workspace"
+        self.m["find_uv"].return_value = "/usr/local/bin/uv"
+        self.m["confirm"].return_value = True
+        self.m["choose_agent"].return_value = "claude"
+        self.m["execute_uv_install"].return_value = "/usr/local/bin/uv"
+        self.m["copy_to_clipboard"].return_value = True
+        self.m["capture_uv_command"].return_value = "Name\n----\n"
+        self.m["resolve_workspace_target"].return_value = TargetResolution(Path("/tmp/test_workspace"), None)
+
+    def _run(self, **overrides: object) -> None:
         with _silenced():
-            execute_plan(_make_plan(stage=WorkspaceStage.FULL))
+            run(_make_args(**overrides))
 
-        copy_scaffold.assert_called_once()
-        run_uv_sync.assert_called_once()
-        print_next_steps.assert_called_once()
-        execute_uv_install.assert_not_called()  # uv was already present in the plan
-        print_resume_steps.assert_not_called()
+    def test_agent_files_added_after_the_first_run(self) -> None:
+        order = MagicMock()
+        order.attach_mock(self.m["copy_scaffold"], "copy_scaffold")
+        order.attach_mock(self.m["run_uv_command"], "run_uv_command")
+        order.attach_mock(self.m["overlay_agent"], "overlay_agent")
 
-    @patch("create_dlthub_workspace.cli.console")
-    @patch("create_dlthub_workspace.cli.print_next_steps")
-    @patch("create_dlthub_workspace.cli.run_uv_sync")
-    @patch("create_dlthub_workspace.cli.apply_workspace_name", return_value="test-workspace")
-    @patch("create_dlthub_workspace.cli.copy_scaffold")
-    def test_relocation_notice_printed_only_when_relocated(
-        self,
-        _copy_scaffold: MagicMock,
-        _apply_name: MagicMock,
-        _run_uv_sync: MagicMock,
-        _print_next_steps: MagicMock,
-        console: MagicMock,
-    ) -> None:
-        def printed_relocation() -> bool:
-            return any("isn't empty" in str(call.args[0]) for call in console.print.call_args_list if call.args)
+        self._run()
 
-        execute_plan(_make_plan(stage=WorkspaceStage.FULL, relocated_from=None))
-        self.assertFalse(printed_relocation(), "no notice when the requested target was used as-is")
+        names = [c[0] for c in order.mock_calls]
+        self.assertLess(names.index("copy_scaffold"), names.index("run_uv_command"))
+        self.assertLess(names.index("run_uv_command"), names.index("overlay_agent"))
+        # Shared scaffold carries no agent; the overlay supplies it last.
+        self.assertIsNone(self.m["copy_scaffold"].call_args.kwargs["agent"])
+        self.m["overlay_agent"].assert_called_once()
+        self.m["choose_agent"].assert_called_once()
+        self.m["print_next_steps"].assert_called_once()
+        self.assertTrue(self.m["print_next_steps"].call_args.kwargs["first_pipeline_ran"])
 
-        console.reset_mock()
-        execute_plan(
-            _make_plan(
-                stage=WorkspaceStage.FULL,
-                project_dir=Path("/tmp/here/playground"),
-                relocated_from=Path("/tmp/here"),
-            )
-        )
-        self.assertTrue(printed_relocation(), "notice fires when we fell back to a different directory")
+    def test_explicit_agent_skips_the_prompt(self) -> None:
+        self._run(agent="codex")
+        self.m["choose_agent"].assert_not_called()
+        self.assertEqual(self.m["overlay_agent"].call_args.kwargs["agent"], "codex")
 
-    @patch("create_dlthub_workspace.cli.run_uv_command")
-    @patch("create_dlthub_workspace.cli.print_next_steps")
-    @patch("create_dlthub_workspace.cli.run_uv_sync")
-    @patch("create_dlthub_workspace.cli.apply_workspace_name", return_value="test-workspace")
-    @patch("create_dlthub_workspace.cli.copy_scaffold")
-    def test_full_stage_without_first_pipeline_does_not_run_it(
-        self,
-        _copy_scaffold: MagicMock,
-        _apply_name: MagicMock,
-        _run_uv_sync: MagicMock,
-        _print_next_steps: MagicMock,
-        run_uv_command: MagicMock,
-    ) -> None:
-        with _silenced():
-            execute_plan(_make_plan(stage=WorkspaceStage.FULL, run_first_pipeline=False))
+    def test_yes_skips_first_run_and_prompt_but_still_adds_agent_files(self) -> None:
+        self._run(yes=True)
+        self.m["run_uv_command"].assert_not_called()
+        self.m["choose_agent"].assert_not_called()
+        self.assertEqual(self.m["overlay_agent"].call_args.kwargs["agent"], RECOMMENDED.agent)
+        self.assertFalse(self.m["print_next_steps"].call_args.kwargs["first_pipeline_ran"])
 
-        run_uv_command.assert_not_called()
+    def test_uv_declined_stops_at_scaffold_only_but_adds_agent_files(self) -> None:
+        self.m["find_uv"].return_value = None
+        self.m["confirm"].return_value = False
 
-    @patch("create_dlthub_workspace.cli.copy_to_clipboard", return_value=True)
-    @patch("create_dlthub_workspace.cli.capture_uv_command", return_value="Name\n----\nMy Workspace\n")
-    @patch("create_dlthub_workspace.cli.run_uv_command")
-    @patch("create_dlthub_workspace.cli.print_next_steps")
-    @patch("create_dlthub_workspace.cli.run_uv_sync")
-    @patch("create_dlthub_workspace.cli.apply_workspace_name", return_value="test-workspace")
-    @patch("create_dlthub_workspace.cli.copy_scaffold")
-    def test_first_pipeline_creates_playground_when_absent_then_runs_and_opens_overview(
-        self,
-        _copy_scaffold: MagicMock,
-        _apply_name: MagicMock,
-        _run_uv_sync: MagicMock,
-        print_next_steps: MagicMock,
-        run_uv_command: MagicMock,
-        _capture_uv_command: MagicMock,
-        _copy_to_clipboard: MagicMock,
-    ) -> None:
-        with _silenced():
-            execute_plan(_make_plan(stage=WorkspaceStage.FULL, run_first_pipeline=True))
+        self._run()
 
-        # Order: log in, connect (--create since absent), run, then open the overview.
+        self.m["execute_uv_install"].assert_not_called()
+        self.m["run_uv_sync"].assert_not_called()
+        self.m["overlay_agent"].assert_called_once()
+        self.m["print_next_steps"].assert_not_called()
+        self.m["print_resume_steps"].assert_called_once_with(Path("/tmp/test_workspace"), uv_installed=False)
+
+    def test_skip_uv_sync_stops_after_install_but_adds_agent_files(self) -> None:
+        self._run(skip_uv_sync=True)
+        self.m["run_uv_sync"].assert_not_called()
+        self.m["overlay_agent"].assert_called_once()
+        self.m["print_next_steps"].assert_not_called()
+        self.m["print_resume_steps"].assert_called_once_with(Path("/tmp/test_workspace"), uv_installed=True)
+
+    def test_first_run_creates_playground_when_absent(self) -> None:
+        self.m["capture_uv_command"].return_value = "Name\n----\nMy Workspace\n"
+
+        self._run()
+
+        run_uv_command = self.m["run_uv_command"]
         self.assertEqual(run_uv_command.call_count, 4)
         login_args = run_uv_command.call_args_list[0].args[2]
         connect_args = run_uv_command.call_args_list[1].args[2]
@@ -263,111 +221,77 @@ class ExecutePlanFlowTests(unittest.TestCase):
         self.assertEqual(connect_args, ["run", "dlthub", "workspace", "connect", PLAYGROUND_WORKSPACE, "--create"])
         self.assertEqual(run_args, ["run", "dlthub", "run", "--follow", "load_sample_shop"])
         self.assertEqual(show_args, ["run", "dlthub", "show"])
-        # Login streams via verbose (interactive prompts); the pipeline run streams
-        # via stream=True (live --follow logs); connect and show run under a spinner.
+        # Login streams via verbose; the pipeline run streams via stream=True; the rest don't.
         self.assertTrue(run_uv_command.call_args_list[0].kwargs["verbose"])
-        self.assertFalse(any(call.kwargs["verbose"] for call in run_uv_command.call_args_list[1:]))
+        self.assertFalse(any(c.kwargs["verbose"] for c in run_uv_command.call_args_list[1:]))
         self.assertTrue(run_uv_command.call_args_list[2].kwargs["stream"])
         self.assertFalse(
-            any(
-                call.kwargs.get("stream", False)
-                for index, call in enumerate(run_uv_command.call_args_list)
-                if index != 2
-            )
+            any(c.kwargs.get("stream", False) for i, c in enumerate(run_uv_command.call_args_list) if i != 2)
         )
-        # The panel is told the run already happened, so it shows post-run steps.
-        print_next_steps.assert_called_once()
-        self.assertTrue(print_next_steps.call_args.kwargs["first_pipeline_ran"])
 
-    @patch("create_dlthub_workspace.cli.copy_to_clipboard", return_value=True)
-    @patch(
-        "create_dlthub_workspace.cli.capture_uv_command",
-        return_value=f"Name        Organization\n----------  ------------\n{PLAYGROUND_WORKSPACE}  Personal\n",
-    )
-    @patch("create_dlthub_workspace.cli.run_uv_command")
-    @patch("create_dlthub_workspace.cli.print_next_steps")
-    @patch("create_dlthub_workspace.cli.run_uv_sync")
-    @patch("create_dlthub_workspace.cli.apply_workspace_name", return_value="test-workspace")
-    @patch("create_dlthub_workspace.cli.copy_scaffold")
-    def test_first_pipeline_connects_without_create_when_playground_exists(
-        self,
-        _copy_scaffold: MagicMock,
-        _apply_name: MagicMock,
-        _run_uv_sync: MagicMock,
-        _print_next_steps: MagicMock,
-        run_uv_command: MagicMock,
-        _capture_uv_command: MagicMock,
-        _copy_to_clipboard: MagicMock,
-    ) -> None:
-        with _silenced():
-            execute_plan(_make_plan(stage=WorkspaceStage.FULL, run_first_pipeline=True))
+    def test_first_run_connects_without_create_when_playground_exists(self) -> None:
+        self.m[
+            "capture_uv_command"
+        ].return_value = f"Name        Organization\n----------  ------------\n{PLAYGROUND_WORKSPACE}  Personal\n"
 
-        # Playground already exists → connect WITHOUT --create (it would error).
-        # call_args_list[0] is the login step; connect is next.
-        connect_args = run_uv_command.call_args_list[1].args[2]
+        self._run()
+
+        connect_args = self.m["run_uv_command"].call_args_list[1].args[2]
         self.assertEqual(connect_args, ["run", "dlthub", "workspace", "connect", PLAYGROUND_WORKSPACE])
-        self.assertNotIn("--create", connect_args)
 
-    @patch("create_dlthub_workspace.cli.print_next_steps")
-    @patch("create_dlthub_workspace.cli.print_resume_steps")
-    @patch("create_dlthub_workspace.cli.run_uv_sync")
-    @patch("create_dlthub_workspace.cli.execute_uv_install")
-    @patch("create_dlthub_workspace.cli.apply_workspace_name", return_value="test-workspace")
-    @patch("create_dlthub_workspace.cli.copy_scaffold")
-    def test_scaffold_only_stage_stops_after_copy(
-        self,
-        copy_scaffold: MagicMock,
-        _apply_name: MagicMock,
-        execute_uv_install: MagicMock,
-        run_uv_sync: MagicMock,
-        print_resume_steps: MagicMock,
-        print_next_steps: MagicMock,
-    ) -> None:
-        with _silenced():
-            execute_plan(
-                _make_plan(
-                    stage=WorkspaceStage.SCAFFOLD_ONLY,
-                    agent="claude",
-                    uv_executable=None,
-                ),
-            )
+    @patch("create_dlthub_workspace.cli.console")
+    def test_relocation_notice_printed_only_when_relocated(self, console: MagicMock) -> None:
+        def printed_relocation() -> bool:
+            return any("isn't empty" in str(c.args[0]) for c in console.print.call_args_list if c.args)
 
-        copy_scaffold.assert_called_once()
-        execute_uv_install.assert_not_called()
-        run_uv_sync.assert_not_called()
-        print_next_steps.assert_not_called()
-        print_resume_steps.assert_called_once_with(Path("/tmp/test_workspace"), uv_installed=False)
+        self._run()
+        self.assertFalse(printed_relocation())
 
-    @patch("create_dlthub_workspace.cli.print_next_steps")
-    @patch("create_dlthub_workspace.cli.print_resume_steps")
-    @patch("create_dlthub_workspace.cli.run_uv_sync")
-    @patch("create_dlthub_workspace.cli.execute_uv_install", return_value="/usr/local/bin/uv")
-    @patch("create_dlthub_workspace.cli.apply_workspace_name", return_value="test-workspace")
-    @patch("create_dlthub_workspace.cli.copy_scaffold")
-    def test_through_uv_install_stage_installs_uv_then_stops(
-        self,
-        copy_scaffold: MagicMock,
-        _apply_name: MagicMock,
-        execute_uv_install: MagicMock,
-        run_uv_sync: MagicMock,
-        print_resume_steps: MagicMock,
-        print_next_steps: MagicMock,
-    ) -> None:
-        with _silenced():
-            execute_plan(
-                _make_plan(
-                    stage=WorkspaceStage.THROUGH_UV_INSTALL,
-                    agent="claude",
-                    uv_executable=None,
-                    install_uv=True,
-                ),
-            )
+        console.reset_mock()
+        self.m["resolve_workspace_target"].return_value = TargetResolution(
+            Path("/tmp/here/playground"), Path("/tmp/here")
+        )
+        self._run()
+        self.assertTrue(printed_relocation())
 
-        copy_scaffold.assert_called_once()
-        execute_uv_install.assert_called_once()
-        run_uv_sync.assert_not_called()
-        print_next_steps.assert_not_called()
-        print_resume_steps.assert_called_once_with(Path("/tmp/test_workspace"), uv_installed=True)
+
+class RunNoticeTests(unittest.TestCase):
+    """run() warns (on stderr) when a hidden testing shortcut is used."""
+
+    def _run_with(self, **flags: bool) -> MagicMock:
+        with (
+            patch("create_dlthub_workspace.cli.print_banner"),
+            patch("create_dlthub_workspace.cli.resolve_workspace_target") as resolve,
+            patch("create_dlthub_workspace.cli.validate_scaffold_name"),
+            patch("create_dlthub_workspace.cli.copy_scaffold"),
+            patch("create_dlthub_workspace.cli.overlay_agent"),
+            patch("create_dlthub_workspace.cli.apply_workspace_name", return_value="ws"),
+            patch("create_dlthub_workspace.cli.find_uv", return_value="/usr/local/bin/uv"),
+            patch("create_dlthub_workspace.cli.run_uv_sync"),
+            patch("create_dlthub_workspace.cli.run_uv_command"),
+            patch("create_dlthub_workspace.cli.capture_uv_command", return_value="Name\n----\n"),
+            patch("create_dlthub_workspace.cli.copy_to_clipboard", return_value=False),
+            patch("create_dlthub_workspace.cli.choose_agent", return_value="claude"),
+            patch("create_dlthub_workspace.cli.print_next_steps"),
+            patch("create_dlthub_workspace.cli.print_resume_steps"),
+            patch("create_dlthub_workspace.cli.err_console") as err_console,
+            _silenced(),
+        ):
+            resolve.return_value = TargetResolution(Path("/tmp/test_workspace"), None)
+            run(_make_args(**flags))
+        return err_console
+
+    def test_yes_prints_testing_notice(self) -> None:
+        self._run_with(yes=True).print.assert_called_once()
+
+    def test_skip_uv_sync_prints_testing_notice(self) -> None:
+        self._run_with(skip_uv_sync=True).print.assert_called_once()
+
+    def test_both_shortcuts_print_a_single_notice(self) -> None:
+        self._run_with(yes=True, skip_uv_sync=True).print.assert_called_once()
+
+    def test_interactive_run_prints_no_notice(self) -> None:
+        self._run_with().print.assert_not_called()
 
 
 class WorkspaceInListTests(unittest.TestCase):

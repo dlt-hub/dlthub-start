@@ -1,4 +1,4 @@
-"""Interactive prompts. Called only from the planning phase."""
+"""Interactive prompts shown during the run."""
 
 from __future__ import annotations
 

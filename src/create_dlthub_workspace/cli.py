@@ -22,10 +22,16 @@ from .display import (
     streaming_step,
 )
 from .errors import UvError, WorkspaceDirectoryNotEmptyError, WorkspaceError
-from .plan import WorkspacePlan, WorkspaceStage, build_plan
 from .project_metadata import apply_workspace_name
-from .scaffold import copy_scaffold
-from .uv import capture_uv_command, execute_uv_install, run_uv_command, run_uv_sync
+from .prompts import choose_agent, confirm
+from .scaffold import (
+    copy_scaffold,
+    overlay_agent,
+    resolve_workspace_target,
+    validate_agent,
+    validate_scaffold_name,
+)
+from .uv import capture_uv_command, execute_uv_install, find_uv, run_uv_command, run_uv_sync
 
 
 def _ensure_utf8_io_on_windows() -> None:
@@ -69,10 +75,8 @@ def build_parser() -> argparse.ArgumentParser:
         choices=AGENTS,
         help=f"Coding agent to set up ({', '.join(AGENTS)}). If omitted, you'll be prompted to choose (default: {RECOMMENDED.agent}).",
     )
-    # Hidden, non-interactive shortcut for tests/CI only. Intentionally absent
-    # from --help so the interactive flow is the sole documented path: --yes
-    # skips the agent prompt and the guided first run (its login is interactive),
-    # leaving the workspace scaffolded but never run. See MSG_YES_TESTING_NOTE.
+    # Hidden, non-interactive shortcut for tests/CI only. Absent from --help so the
+    # interactive flow is the sole documented path. See MSG_TESTING_SHORTCUT_NOTE.
     parser.add_argument(
         "--yes",
         "-y",
@@ -123,8 +127,98 @@ def run(args: argparse.Namespace) -> None:
     if args.yes or args.skip_uv_sync:
         err_console.print(strings.MSG_TESTING_SHORTCUT_NOTE)
 
-    plan = build_plan(args)
-    execute_plan(plan)
+    verbose = args.verbose
+    scaffold = RECOMMENDED.scaffold
+    validate_scaffold_name(scaffold)
+    if args.agent is not None:
+        validate_agent(scaffold=scaffold, agent=args.agent)
+
+    resolution = resolve_workspace_target(args.project_dir)
+    project_dir = resolution.project_dir
+    if resolution.relocated_from is not None:
+        console.print(strings.MSG_RELOCATED.format(relocated_from=resolution.relocated_from, project_dir=project_dir))
+
+    with step(strings.MSG_CREATING_WORKSPACE.format(project_dir=project_dir), verbose=verbose):
+        copy_scaffold(project_dir, scaffold=scaffold, agent=None)
+        package_name = apply_workspace_name(project_dir, project_dir.name)
+    console.print(strings.MSG_CREATED.format(project_dir=project_dir))
+    console.print(strings.MSG_PACKAGE_NAME.format(package_name=package_name))
+
+    uv_executable = find_uv()
+    if uv_executable is None:
+        if args.yes or confirm(strings.PROMPT_INSTALL_UV, recommended=RECOMMENDED.install_uv):
+            uv_executable = execute_uv_install(verbose=verbose)
+        else:
+            _finalize_agent(project_dir, scaffold, args, verbose=verbose)
+            console.print(strings.MSG_SKIPPED_UV_AND_SYNC)
+            print_resume_steps(project_dir, uv_installed=False)
+            return
+
+    if args.skip_uv_sync:
+        _finalize_agent(project_dir, scaffold, args, verbose=verbose)
+        console.print(strings.MSG_SKIPPED_SYNC)
+        print_resume_steps(project_dir, uv_installed=True)
+        return
+
+    with step(strings.MSG_INSTALLING_DEPS, verbose=verbose):
+        run_uv_sync(uv_executable, project_dir, verbose=verbose)
+    console.print(strings.MSG_INSTALLED_DEPS)
+
+    # Skipped under --yes: the first run's login is interactive.
+    first_pipeline_ran = not args.yes
+    if first_pipeline_ran:
+        _run_first_pipeline(uv_executable, project_dir, verbose=verbose)
+
+    agent = _finalize_agent(project_dir, scaffold, args, verbose=verbose)
+
+    console.print()
+    prompt_copied = first_pipeline_ran and copy_to_clipboard(strings.CMD_BUILD_OWN_SOURCE_PROMPT)
+    print_next_steps(
+        project_dir,
+        scaffold=scaffold,
+        agent=agent,
+        first_pipeline_ran=first_pipeline_ran,
+        prompt_copied=prompt_copied,
+    )
+
+
+def _finalize_agent(project_dir: Path, scaffold: str, args: argparse.Namespace, *, verbose: bool) -> str:
+    """Resolve the agent (prompting unless --agent/--yes set it) and lay down its AI files."""
+    agent = args.agent or (RECOMMENDED.agent if args.yes else choose_agent())
+    with step(strings.MSG_ADDING_AGENT_FILES.format(agent=agent), verbose=verbose):
+        overlay_agent(project_dir, scaffold=scaffold, agent=agent)
+    console.print(strings.MSG_ADDED_AGENT_FILES.format(agent=agent))
+    return agent
+
+
+def _run_first_pipeline(uv_executable: str, project_dir: Path, *, verbose: bool) -> None:
+    """Log in, bind the playground workspace, run load_sample_shop, open the overview."""
+    # Login is the only interactive step, so stream it; it also authenticates the steps below.
+    console.print(strings.MSG_LOGGING_IN)
+    run_uv_command(uv_executable, project_dir, ["run", "dlthub", "login"], verbose=True)
+
+    with step(strings.MSG_CONNECTING_PLAYGROUND.format(workspace=PLAYGROUND_WORKSPACE), verbose=verbose):
+        # connect --create errors on an existing workspace, so pass it only when absent.
+        connect_args = ["run", "dlthub", "workspace", "connect", PLAYGROUND_WORKSPACE]
+        if not _playground_exists(uv_executable, project_dir):
+            connect_args.append("--create")
+        run_uv_command(uv_executable, project_dir, connect_args, verbose=verbose)
+    console.print(strings.MSG_CONNECTED_PLAYGROUND.format(workspace=PLAYGROUND_WORKSPACE))
+
+    # --follow blocks until the remote run completes; without it the overview below would be empty.
+    with streaming_step(strings.MSG_RUNNING_FIRST_PIPELINE, note=strings.HINT_PIPELINE_STREAMING):
+        run_uv_command(
+            uv_executable,
+            project_dir,
+            ["run", "dlthub", "run", "--follow", "load_sample_shop"],
+            verbose=verbose,
+            stream=True,
+            on_line=print_streamed_line,
+        )
+    console.print(strings.MSG_RAN_FIRST_PIPELINE)
+
+    console.print(strings.MSG_OPENING_OVERVIEW)
+    run_uv_command(uv_executable, project_dir, ["run", "dlthub", "show"], verbose=verbose)
 
 
 def _workspace_in_list(list_output: str, name: str) -> bool:
@@ -169,84 +263,6 @@ def _playground_exists(uv_executable: str, project_dir: Path) -> bool:
     except UvError:
         return False
     return _workspace_in_list(output, PLAYGROUND_WORKSPACE)
-
-
-def execute_plan(plan: WorkspacePlan) -> None:
-    verbose = plan.verbose
-
-    if plan.relocated_from is not None:
-        console.print(strings.MSG_RELOCATED.format(relocated_from=plan.relocated_from, project_dir=plan.project_dir))
-
-    with step(strings.MSG_CREATING_WORKSPACE.format(project_dir=plan.project_dir), verbose=verbose):
-        copy_scaffold(plan.project_dir, scaffold=plan.scaffold, agent=plan.agent)
-        package_name = apply_workspace_name(plan.project_dir, plan.project_dir.name)
-    console.print(strings.MSG_CREATED.format(project_dir=plan.project_dir))
-    console.print(strings.MSG_PACKAGE_NAME.format(package_name=package_name))
-
-    if plan.stage is WorkspaceStage.SCAFFOLD_ONLY:
-        console.print(strings.MSG_SKIPPED_UV_AND_SYNC)
-        print_resume_steps(plan.project_dir, uv_installed=False)
-        return
-
-    if plan.install_uv:
-        uv_executable = execute_uv_install(verbose=verbose)
-    else:
-        assert plan.uv_executable is not None
-        uv_executable = plan.uv_executable
-
-    if plan.stage is WorkspaceStage.THROUGH_UV_INSTALL:
-        console.print(strings.MSG_SKIPPED_SYNC)
-        print_resume_steps(plan.project_dir, uv_installed=True)
-        return
-
-    with step(strings.MSG_INSTALLING_DEPS, verbose=verbose):
-        run_uv_sync(uv_executable, plan.project_dir, verbose=verbose)
-    console.print(strings.MSG_INSTALLED_DEPS)
-
-    if plan.run_first_pipeline:
-        # Login is the only step with an interactive prompt, so stream it
-        # (verbose=True). It also authenticates the steps below up front, so the
-        # workspace list is reliable rather than inferring login from connect.
-        console.print(strings.MSG_LOGGING_IN)
-        run_uv_command(uv_executable, plan.project_dir, ["run", "dlthub", "login"], verbose=True)
-
-        # Bind to a playground workspace. Pass --create only when it doesn't
-        # already exist — `connect --create` errors on an existing one. No
-        # prompts now that we're logged in, so run it under a spinner.
-        with step(strings.MSG_CONNECTING_PLAYGROUND.format(workspace=PLAYGROUND_WORKSPACE), verbose=verbose):
-            connect_args = ["run", "dlthub", "workspace", "connect", PLAYGROUND_WORKSPACE]
-            if not _playground_exists(uv_executable, plan.project_dir):
-                connect_args.append("--create")
-            run_uv_command(uv_executable, plan.project_dir, connect_args, verbose=verbose)
-        console.print(strings.MSG_CONNECTED_PLAYGROUND.format(workspace=PLAYGROUND_WORKSPACE))
-
-        # --follow blocks until the remote run completes; without it the overview below would be empty.
-        with streaming_step(strings.MSG_RUNNING_FIRST_PIPELINE, note=strings.HINT_PIPELINE_STREAMING):
-            run_uv_command(
-                uv_executable,
-                plan.project_dir,
-                ["run", "dlthub", "run", "--follow", "load_sample_shop"],
-                verbose=verbose,
-                stream=True,
-                on_line=print_streamed_line,
-            )
-        console.print(strings.MSG_RAN_FIRST_PIPELINE)
-
-        # Open the workspace overview in the dltHub web app.
-        console.print(strings.MSG_OPENING_OVERVIEW)
-        run_uv_command(uv_executable, plan.project_dir, ["run", "dlthub", "show"], verbose=verbose)
-
-    console.print()
-    # When we ran the first pipeline, the next-steps panel shows a prompt to
-    # paste into the agent — copy it to the clipboard so it's one paste away.
-    prompt_copied = plan.run_first_pipeline and copy_to_clipboard(strings.CMD_BUILD_OWN_SOURCE_PROMPT)
-    print_next_steps(
-        plan.project_dir,
-        scaffold=plan.scaffold,
-        agent=plan.agent,
-        first_pipeline_ran=plan.run_first_pipeline,
-        prompt_copied=prompt_copied,
-    )
 
 
 if __name__ == "__main__":

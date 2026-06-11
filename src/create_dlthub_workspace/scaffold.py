@@ -153,6 +153,13 @@ def copy_scaffold(project_dir: Path, *, scaffold: str, agent: str | None = None)
     _stamp_install_time(project_dir)
 
 
+def overlay_agent(project_dir: Path, *, scaffold: str, agent: str) -> None:
+    """Overlay an agent's vendored AI files onto an already-scaffolded workspace."""
+    validate_agent(scaffold=scaffold, agent=agent)
+    shutil.copytree(SCAFFOLDS_DIR / scaffold / PER_AGENT_DIR / agent, project_dir, dirs_exist_ok=True)
+    _stamp_install_time(project_dir)
+
+
 def _stamp_install_time(project_dir: Path) -> None:
     """Replace the sentinel `installed_at` in the toolkits manifest with now."""
     manifest = project_dir / TOOLKITS_MANIFEST
