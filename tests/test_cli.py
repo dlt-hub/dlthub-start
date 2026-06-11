@@ -263,9 +263,18 @@ class ExecutePlanFlowTests(unittest.TestCase):
         self.assertEqual(connect_args, ["run", "dlthub", "workspace", "connect", PLAYGROUND_WORKSPACE, "--create"])
         self.assertEqual(run_args, ["run", "dlthub", "run", "--follow", "load_sample_shop"])
         self.assertEqual(show_args, ["run", "dlthub", "show"])
-        # Only login streams (it's the lone interactive step); the rest run under a spinner.
+        # Login streams via verbose (interactive prompts); the pipeline run streams
+        # via stream=True (live --follow logs); connect and show run under a spinner.
         self.assertTrue(run_uv_command.call_args_list[0].kwargs["verbose"])
         self.assertFalse(any(call.kwargs["verbose"] for call in run_uv_command.call_args_list[1:]))
+        self.assertTrue(run_uv_command.call_args_list[2].kwargs["stream"])
+        self.assertFalse(
+            any(
+                call.kwargs.get("stream", False)
+                for index, call in enumerate(run_uv_command.call_args_list)
+                if index != 2
+            )
+        )
         # The panel is told the run already happened, so it shows post-run steps.
         print_next_steps.assert_called_once()
         self.assertTrue(print_next_steps.call_args.kwargs["first_pipeline_ran"])

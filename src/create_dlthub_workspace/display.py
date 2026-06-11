@@ -59,6 +59,29 @@ def step(description: str, *, verbose: bool = False) -> Iterator[None]:
         yield
 
 
+@contextmanager
+def streaming_step(description: str, *, note: str | None = None) -> Iterator[None]:
+    """Frame a streamed step with rules, no spinner (a live spinner fights the child for the cursor)."""
+    console.print()
+    console.rule(f"[bold]{description}[/bold]", style="#59C1D5", align="left")
+    if note:
+        console.print(f"[dim]{note}[/dim]")
+    console.print()
+    try:
+        yield
+    finally:
+        console.print()
+        console.rule(style="#59C1D5")
+
+
+STREAM_LOG_STYLE = "dim cyan"
+
+
+def print_streamed_line(line: str) -> None:
+    """Print one streamed-output line verbatim (no markup/highlight), terminal-wrapped."""
+    console.print(line, style=STREAM_LOG_STYLE, markup=False, highlight=False, soft_wrap=True)
+
+
 ROWS = [
     [
         ("", ""),
