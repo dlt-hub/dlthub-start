@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- The minimal workspace now ships a committed `uv.lock`, so `uv sync` installs from pinned versions instead of resolving against the PyPI index on every workspace creation — faster, reproducible, and resilient to intermittent `pypi.org/simple/` outages. Renaming a generated workspace rewrites the root package name in `uv.lock` in lock-step with `pyproject.toml`, so the two never diverge — otherwise uv would treat the bundled lock as out of date and fall back to a full re-resolution against `pypi.org/simple/`, defeating the purpose of shipping the lock.
+
 ## [0.6.0] - 2026-06-10
 
 ### Added

@@ -32,6 +32,12 @@ def apply_workspace_name(project_dir: Path, workspace_name: str) -> str:
         return package_name
 
     pyproject.write_text(_replace_project_name(content, package_name), encoding="utf-8")
+    # The bundled uv.lock pins the root (virtual) package under the scaffold's
+    # original name. uv treats the lock as out of date the moment that name no
+    # longer matches pyproject, which forces a full re-resolution against the
+    # PyPI index — defeating the point of shipping the lock. Rename it in lock-
+    # step so `uv sync` installs straight from the lock.
+    _replace_lock_project_name(project_dir / "uv.lock", package_name)
     return package_name
 
 
@@ -66,3 +72,35 @@ def _replace_project_name(content: str, package_name: str) -> str:
 
     lines.insert(insert_at, f'name = "{package_name}"\n')
     return "".join(lines)
+
+
+def _replace_lock_project_name(lock_path: Path, package_name: str) -> None:
+    """Rename the root (virtual) package in ``uv.lock`` to ``package_name``.
+
+    No-op when the lock is absent or has no virtual root entry. Edits are scoped
+    to the ``[[package]]`` block whose ``source = { virtual = "." }`` so unrelated
+    dependencies that happen to share the name are never touched, and the rest of
+    the file is left byte-for-byte intact (uv is strict about lock formatting).
+    """
+    if not lock_path.exists():
+        return
+
+    lines = lock_path.read_text(encoding="utf-8").splitlines(keepends=True)
+    name_index: int | None = None
+    in_package = False
+
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        if stripped == "[[package]]":
+            in_package = True
+            name_index = None
+            continue
+        if not in_package:
+            continue
+        if re.match(r"^name\s*=", stripped):
+            name_index = index
+        elif stripped == 'source = { virtual = "." }' and name_index is not None:
+            newline = "\n" if lines[name_index].endswith("\n") else ""
+            lines[name_index] = f'name = "{package_name}"{newline}'
+            lock_path.write_text("".join(lines), encoding="utf-8")
+            return
