@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- The first pipeline run now streams its `--follow` logs live instead of hiding them behind a spinner. The step shows a clean rule header ("Running your first pipeline") with a "streaming live logs" note, then prints the run's output line by line — recolored uniformly (dim cyan) so it reads as nested, live output — and closes with a trailing rule. A spinner and streamed output can't share the terminal (Rich's live spinner fights the child for the cursor), so the spinner is dropped for this step; the run always streams regardless of `--verbose`.
 - `--yes`/`-y` and `--skip-uv-sync` are now hidden, non-interactive shortcuts for tests/CI only — both are removed from `--help` and print a stderr notice when used, because they cut the guided setup short (`--yes` skips the prompts and the first run; `--skip-uv-sync` also skips dependency sync), leaving the workspace scaffolded but never run. The interactive flow (no flag) is now the only documented path. The flags still work when explicitly passed, so nothing breaks for automated callers.
 
 ### Added
