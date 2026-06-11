@@ -24,8 +24,8 @@ from .helpers import EXPECTED_AGENT_ROOT_ENTRIES, scaffold_has_ai_files, silence
 class WorkspaceCreationFastTests(unittest.TestCase):
     """E2E paths that use --skip-uv-sync: no real `uv sync`, runs in ~1s.
 
-    Validates the orchestration layer (argparse → plan → execute_plan →
-    copy_scaffold) end-to-end without paying the sync cost.
+    Validates the orchestration layer (argparse → run → copy_scaffold) end-to-end
+    without paying the sync cost.
     """
 
     def test_yes_skip_sync_creates_workspace_without_venv(self) -> None:
