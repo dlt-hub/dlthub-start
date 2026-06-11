@@ -40,9 +40,6 @@ ERROR_PARSE_PYPROJECT = "Could not parse generated pyproject.toml: {reason}"
 # Status / info messages ------------------------------------------------
 MSG_CANCELLED = "\n[yellow]Cancelled.[/yellow]"
 MSG_ERROR_PREFIX = "[red]Error:[/red] {message}"
-# Shown when the requested target wasn't empty and we fell back to a free
-# directory (a `playground` subdirectory by default, or a suffixed sibling for
-# an explicit name) instead of refusing.
 MSG_RELOCATED = "[yellow]Heads up:[/yellow] {relocated_from} isn't empty — scaffolding into {project_dir} instead."
 MSG_CREATING_WORKSPACE = "Creating workspace at {project_dir}"
 MSG_CREATED = "[green]Created[/green] {project_dir}"

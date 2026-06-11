@@ -245,10 +245,7 @@ class BenignEntriesInvariantTests(unittest.TestCase):
     """The allowlist must never name something the scaffold itself writes."""
 
     def test_benign_entries_disjoint_from_scaffold_top_level(self) -> None:
-        # copy_scaffold overwrites same-named target entries, so anything the
-        # scaffold lays down (shared source + any agent overlay) must NOT be
-        # treated as benign — otherwise initializing in place would clobber the
-        # user's copy of that file.
+        # A benign name that the scaffold also ships would clobber it on in-place init.
         scaffold = SCAFFOLDS_DIR / "minimal_workspace"
         written_top_level = {p.name for p in scaffold.iterdir() if p.name != PER_AGENT_DIR}
         agents_dir = scaffold / PER_AGENT_DIR

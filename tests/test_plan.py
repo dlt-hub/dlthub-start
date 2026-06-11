@@ -264,10 +264,7 @@ class BuildPlanValidationTests(unittest.TestCase):
         _resolve: MagicMock,
         _find_uv: MagicMock,
     ) -> None:
-        # An occupied target no longer short-circuits planning — the resolver
-        # hands back a free fallback directory, and build_plan threads both the
-        # chosen dir and where it would have gone onto the plan so the CLI can
-        # tell the user.
+        # Occupied targets relocate instead of failing; the plan carries both.
         plan = build_plan(_make_args(yes=True))
 
         self.assertEqual(plan.project_dir, Path("/tmp/occupied/playground"))

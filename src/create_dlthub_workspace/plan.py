@@ -52,12 +52,8 @@ def build_plan(args: argparse.Namespace) -> WorkspacePlan:
     --skip-uv-sync opts out of sync, and the first run is skipped under --yes
     (its login is interactive).
 
-    The workspace is initialized in place when the target is empty: the current
-    directory by default, or an explicit ``project_dir`` if given. An occupied
-    target never fails — it falls back to a free directory (a ``playground``
-    subdirectory for the default, or a ``name-1``/``name-2`` sibling for an
-    explicit name), recorded as ``relocated_from`` so the user is told where it
-    landed.
+    The workspace inits in place when the target is empty, else falls back to a
+    free dir (see ``resolve_workspace_target``), recorded as ``relocated_from``.
     """
     resolution = resolve_workspace_target(args.project_dir)
     project_dir = resolution.project_dir
