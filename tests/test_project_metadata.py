@@ -61,7 +61,7 @@ class ProjectMetadataTests(unittest.TestCase):
             )
             lock = project_dir / "uv.lock"
             lock.write_text(
-                'version = 1\nrevision = 3\n\n'
+                "version = 1\nrevision = 3\n\n"
                 "[[package]]\n"
                 'name = "dlthub-minimal-workspace"\n'
                 'version = "0.1.0"\n'
