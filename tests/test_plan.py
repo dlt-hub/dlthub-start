@@ -290,10 +290,7 @@ class BuildPlanValidationTests(unittest.TestCase):
 
 
 class BuildPlanTargetDirTests(unittest.TestCase):
-    """build_plan delegates target resolution to resolve_workspace_target and
-    threads its result onto the plan. The resolution rules themselves (in-place
-    vs playground fallback vs suffixed sibling) are covered in test_scaffold.py.
-    """
+    """build_plan delegates to resolve_workspace_target and threads its result onto the plan."""
 
     @patch(
         "create_dlthub_workspace.plan.resolve_workspace_target",

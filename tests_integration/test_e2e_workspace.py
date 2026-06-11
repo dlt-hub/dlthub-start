@@ -105,12 +105,7 @@ class WorkspaceCreationSlowTests(unittest.TestCase):
 
 
 class WorkspaceCollisionTests(unittest.TestCase):
-    """End-to-end: a second run at the same path auto-resolves to a free sibling.
-
-    Exercises the resolve_workspace_target path with a real filesystem (not
-    mocks). Catches regressions where an occupied target stops relocating and
-    starts erroring (or clobbering) again.
-    """
+    """End-to-end: a second run at the same path auto-resolves to a free sibling."""
 
     def test_second_run_at_same_path_relocates_to_sibling(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -163,10 +158,7 @@ class InstalledEntryPointTests(unittest.TestCase):
             self.assertTrue((ws / "pyproject.toml").exists())
 
     def test_subprocess_relocates_occupied_target(self) -> None:
-        # Guards the module entry point (`python -m`) *and* the relocation
-        # contract end-to-end: an occupied target must succeed (exit 0) from the
-        # real process by scaffolding into a free sibling, leaving the original
-        # contents untouched.
+        # Via `python -m`: an occupied target exits 0, relocates to a sibling, leaves originals.
         with tempfile.TemporaryDirectory() as tmpdir:
             ws = Path(tmpdir) / "occupied"
             ws.mkdir()
