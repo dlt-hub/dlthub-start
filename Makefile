@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help dev test test-integration compile build clean-dist publish-library ci workspace workspace-here lint lint-fix format format-check fl lint-ci generate-ai update-ai check-ai
+.PHONY: help dev test test-integration compile build clean-dist publish-library ci workspace workspace-env workspace-local workspace-stage workspace-dev workspace-here lint lint-fix format format-check fl lint-ci generate-ai update-ai check-ai
 
 PYTHONPYCACHEPREFIX ?= /tmp/create-dlthub-pyc
 PACKAGE_MODULES := $(wildcard src/create_dlthub_workspace/*.py)
@@ -72,6 +72,26 @@ workspace: ## Run dlthub-start at ./$(REMOVE_PREV_WORKSPACE) for a clean test wo
 	uv run dlthub-start "$(REMOVE_PREV_WORKSPACE)"
 
 WORKSPACE_HERE_DIR ?= examples/here-workspace
+
+API_BASE_URL ?= https://api.dlthub.test
+
+workspace-env: ## Like workspace, but pointed at $(API_BASE_URL); persists the URL into the workspace config
+	@case "$(REMOVE_PREV_WORKSPACE)" in *..*|"") echo "invalid REMOVE_PREV_WORKSPACE: $(REMOVE_PREV_WORKSPACE)"; exit 1;; esac
+	rm -rf -- "$(REMOVE_PREV_WORKSPACE)"
+	RUNTIME__API_BASE_URL=$(API_BASE_URL) DLT_RUNTIME_INSECURE=$(DLT_RUNTIME_INSECURE) uv run dlthub-start "$(REMOVE_PREV_WORKSPACE)"
+	@awk -v url='$(API_BASE_URL)' '1; $$0 == "[runtime]" {print "api_base_url = \"" url "\""}' \
+		"$(REMOVE_PREV_WORKSPACE)/.dlt/config.toml" > "$(REMOVE_PREV_WORKSPACE)/.dlt/config.toml.tmp"
+	@mv "$(REMOVE_PREV_WORKSPACE)/.dlt/config.toml.tmp" "$(REMOVE_PREV_WORKSPACE)/.dlt/config.toml"
+	@echo "workspace-env: pinned api_base_url = $(API_BASE_URL) in $(REMOVE_PREV_WORKSPACE)/.dlt/config.toml"
+
+workspace-local: ## Scaffold a workspace pointed at the local runtime stack (api.dlthub.test); skips TLS verify (mkcert CA is not in Python's bundle)
+	$(MAKE) workspace-env API_BASE_URL=https://api.dlthub.test DLT_RUNTIME_INSECURE=true
+
+workspace-stage: ## Scaffold a workspace pointed at the staging stack (api.dlthub.net)
+	$(MAKE) workspace-env API_BASE_URL=https://api.dlthub.net
+
+workspace-dev: ## Scaffold a workspace pointed at the dev stack (api.dlthub.dev)
+	$(MAKE) workspace-env API_BASE_URL=https://api.dlthub.dev
 
 workspace-here: dev ## Init in place: make empty ./$(WORKSPACE_HERE_DIR), cd in, run the local CLI with no positional (pass ARGS="--yes --skip-uv-sync")
 	@case "$(WORKSPACE_HERE_DIR)" in *..*|"") echo "invalid WORKSPACE_HERE_DIR: $(WORKSPACE_HERE_DIR)"; exit 1;; esac
