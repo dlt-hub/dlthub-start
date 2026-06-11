@@ -26,13 +26,11 @@ The CLI prompts for your coding agent, checks for `uv` (offering to install it
 if missing), installs dependencies with `uv sync`, runs your first pipeline on
 dltHub, and prints next steps.
 
-For a non-interactive setup with the recommended defaults:
+The full setup runs through the interactive prompts:
 
 ```bash
 mkdir my-workspace && cd my-workspace
-uvx dlthub-start@latest --yes
-uv run dlthub run load_sample_shop
-uv run dlthub show
+uvx dlthub-start@latest
 ```
 
 You can also pass a target directory (`uvx dlthub-start@latest my-workspace`),
@@ -64,20 +62,17 @@ Common options:
 
 | Option | Description |
 | --- | --- |
-| `--yes`, `-y` | Use the recommended path: the Claude workbench, install `uv` if missing, and run `uv sync`. |
-| `--agent claude` | Use the Claude workbench files. Choose exactly one agent (`claude`, `cursor`, or `codex`); defaults to `claude`. |
+| `--agent claude` | Use the Claude workbench files. Choose exactly one agent (`claude`, `cursor`, or `codex`); if omitted you're prompted (defaults to `claude`). |
 | `--agent cursor` | Use the Cursor workbench files. |
 | `--agent codex` | Use the Codex workbench files. |
-| `--skip-uv-sync` | Create the scaffold and selected AI files, but stop before installing workspace dependencies. |
 | `--verbose`, `-v` | Stream output from underlying subprocesses. |
 
 Examples:
 
 ```bash
-uvx dlthub-start@latest --yes                  # initialize in the current (empty) directory — recommended
-uvx dlthub-start@latest --agent codex
-uvx dlthub-start@latest --yes --skip-uv-sync
-uvx dlthub-start@latest my-workspace --yes     # alternative: create + initialize a subdirectory
+uvx dlthub-start@latest                         # interactive setup in the current (empty) directory — recommended
+uvx dlthub-start@latest --agent codex           # skip the agent prompt
+uvx dlthub-start@latest my-workspace            # alternative: create + initialize a subdirectory
 ```
 
 ## Workspace contents
@@ -131,7 +126,7 @@ into a non-empty directory.
 Re-run with `--verbose` to see subprocess output:
 
 ```bash
-uvx dlthub-start@latest my-workspace --yes --verbose
+uvx dlthub-start@latest my-workspace --verbose
 ```
 
 If the scaffold was created successfully, you can also enter the workspace and
