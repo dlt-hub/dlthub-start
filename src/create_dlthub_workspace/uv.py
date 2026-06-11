@@ -7,6 +7,7 @@ import platform
 import shutil
 import subprocess
 import urllib.request
+from collections.abc import Callable
 from pathlib import Path
 
 from . import strings
@@ -58,9 +59,15 @@ def run_uv_command(
     args: list[str],
     *,
     verbose: bool = False,
+    stream: bool = False,
+    on_line: Callable[[str], None] | None = None,
 ) -> None:
     """Run a uv command in the generated workspace."""
-    _run([uv_executable, *args], cwd=project_dir, isolated_project=True, verbose=verbose)
+    command = [uv_executable, *args]
+    if stream:
+        _run_streamed(command, cwd=project_dir, on_line=on_line)
+        return
+    _run(command, cwd=project_dir, isolated_project=True, verbose=verbose)
 
 
 def capture_uv_command(uv_executable: str, project_dir: Path, args: list[str]) -> str:
@@ -137,6 +144,39 @@ def _run(
             if captured:
                 message = f"{message}\n\n{captured}"
         raise UvError(message) from exc
+
+
+def _run_streamed(
+    command: list[str],
+    *,
+    cwd: Path | None = None,
+    on_line: Callable[[str], None] | None = None,
+) -> None:
+    env = _isolated_project_env()
+    # NO_COLOR so output is plain text the caller can recolor uniformly.
+    env["NO_COLOR"] = "1"
+    try:
+        process = subprocess.Popen(
+            command,
+            cwd=cwd,
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        )
+    except FileNotFoundError as exc:
+        raise UvError(strings.ERROR_UV_COMMAND_NOT_FOUND.format(cmd=command[0])) from exc
+
+    assert process.stdout is not None
+    with process.stdout as pipe:
+        for line in pipe:
+            if on_line is not None:
+                on_line(line.rstrip("\n"))
+    returncode = process.wait()
+    if returncode != 0:
+        joined = " ".join(command)
+        raise UvError(strings.ERROR_UV_COMMAND_FAILED.format(returncode=returncode, cmd=joined))
 
 
 def _format_captured(stderr: bytes | None, stdout: bytes | None) -> str:

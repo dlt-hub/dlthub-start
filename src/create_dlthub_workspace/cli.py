@@ -17,7 +17,9 @@ from .display import (
     print_dir_not_empty,
     print_next_steps,
     print_resume_steps,
+    print_streamed_line,
     step,
+    streaming_step,
 )
 from .errors import UvError, WorkspaceDirectoryNotEmptyError, WorkspaceError
 from .plan import WorkspacePlan, WorkspaceStage, build_plan
@@ -211,14 +213,15 @@ def execute_plan(plan: WorkspacePlan) -> None:
             run_uv_command(uv_executable, plan.project_dir, connect_args, verbose=verbose)
         console.print(strings.MSG_CONNECTED_PLAYGROUND.format(workspace=PLAYGROUND_WORKSPACE))
 
-        with step(strings.MSG_RUNNING_FIRST_PIPELINE, verbose=verbose):
-            # --follow blocks until the remote run actually completes; without it
-            # the command returns early and the overview page below is empty.
+        # --follow blocks until the remote run completes; without it the overview below would be empty.
+        with streaming_step(strings.MSG_RUNNING_FIRST_PIPELINE, note=strings.HINT_PIPELINE_STREAMING):
             run_uv_command(
                 uv_executable,
                 plan.project_dir,
                 ["run", "dlthub", "run", "--follow", "load_sample_shop"],
                 verbose=verbose,
+                stream=True,
+                on_line=print_streamed_line,
             )
         console.print(strings.MSG_RAN_FIRST_PIPELINE)
 
