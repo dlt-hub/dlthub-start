@@ -47,6 +47,42 @@ class UvTests(unittest.TestCase):
         self.assertEqual(subprocess_run.call_args.args[0], ["/usr/local/bin/uv", "run", "dlthub", "--version"])
         self.assertEqual(subprocess_run.call_args.kwargs["cwd"], Path("/tmp/workspace"))
 
+    @patch("create_dlthub_workspace.uv.subprocess.Popen")
+    def test_run_uv_command_streams_each_line_to_callback(self, popen: MagicMock) -> None:
+        process = popen.return_value
+        process.stdout.__enter__.return_value = iter(["loading source\n", "1000 rows\n"])
+        process.wait.return_value = 0
+        lines: list[str] = []
+
+        run_uv_command(
+            "/usr/local/bin/uv",
+            project_dir=Path("/tmp/workspace"),
+            args=["run", "dlthub", "run", "--follow", "load_sample_shop"],
+            stream=True,
+            on_line=lines.append,
+        )
+
+        # Lines are delivered as they arrive, newline-stripped.
+        self.assertEqual(lines, ["loading source", "1000 rows"])
+        # The child runs with color disabled so the caller can recolor uniformly.
+        self.assertEqual(popen.call_args.kwargs["env"]["NO_COLOR"], "1")
+        self.assertIs(popen.call_args.kwargs["stderr"], subprocess.STDOUT)
+
+    @patch("create_dlthub_workspace.uv.subprocess.Popen")
+    def test_run_uv_command_stream_raises_on_nonzero_exit(self, popen: MagicMock) -> None:
+        process = popen.return_value
+        process.stdout.__enter__.return_value = iter(["boom\n"])
+        process.wait.return_value = 1
+
+        with self.assertRaises(UvError):
+            run_uv_command(
+                "/usr/local/bin/uv",
+                project_dir=Path("/tmp/workspace"),
+                args=["run", "dlthub", "run", "--follow", "load_sample_shop"],
+                stream=True,
+                on_line=lambda _line: None,
+            )
+
 
 class FindUvTests(unittest.TestCase):
     @patch("create_dlthub_workspace.uv.shutil.which", return_value="/usr/local/bin/uv")
