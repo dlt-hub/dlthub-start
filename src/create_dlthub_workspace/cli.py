@@ -55,7 +55,11 @@ def build_parser() -> argparse.ArgumentParser:
         "project_dir",
         nargs="?",
         default=None,
-        help="Directory to scaffold into (must be empty). Defaults to the current directory.",
+        help=(
+            "Directory to scaffold into. Defaults to the current directory, falling back to "
+            "a ./playground subdirectory (then ./playground-N) when it isn't empty. An explicit "
+            "name that's occupied falls back to <name>-1, <name>-2, …"
+        ),
     )
     parser.add_argument(
         "--agent",
@@ -155,6 +159,9 @@ def _playground_exists(uv_executable: str, project_dir: Path) -> bool:
 
 def execute_plan(plan: WorkspacePlan) -> None:
     verbose = plan.verbose
+
+    if plan.relocated_from is not None:
+        console.print(strings.MSG_RELOCATED.format(relocated_from=plan.relocated_from, project_dir=plan.project_dir))
 
     with step(strings.MSG_CREATING_WORKSPACE.format(project_dir=plan.project_dir), verbose=verbose):
         copy_scaffold(plan.project_dir, scaffold=plan.scaffold, agent=plan.agent)

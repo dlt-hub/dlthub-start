@@ -100,6 +100,7 @@ def _make_plan(**overrides: object) -> WorkspacePlan:
     """Construct a WorkspacePlan with sensible defaults; tests override fields."""
     defaults: dict[str, object] = {
         "project_dir": Path("/tmp/test_workspace"),
+        "relocated_from": None,
         "scaffold": "minimal_workspace",
         "stage": WorkspaceStage.FULL,
         "agent": "claude",
@@ -138,6 +139,35 @@ class ExecutePlanFlowTests(unittest.TestCase):
         print_next_steps.assert_called_once()
         execute_uv_install.assert_not_called()  # uv was already present in the plan
         print_resume_steps.assert_not_called()
+
+    @patch("create_dlthub_workspace.cli.console")
+    @patch("create_dlthub_workspace.cli.print_next_steps")
+    @patch("create_dlthub_workspace.cli.run_uv_sync")
+    @patch("create_dlthub_workspace.cli.apply_workspace_name", return_value="test-workspace")
+    @patch("create_dlthub_workspace.cli.copy_scaffold")
+    def test_relocation_notice_printed_only_when_relocated(
+        self,
+        _copy_scaffold: MagicMock,
+        _apply_name: MagicMock,
+        _run_uv_sync: MagicMock,
+        _print_next_steps: MagicMock,
+        console: MagicMock,
+    ) -> None:
+        def printed_relocation() -> bool:
+            return any("isn't empty" in str(call.args[0]) for call in console.print.call_args_list if call.args)
+
+        execute_plan(_make_plan(stage=WorkspaceStage.FULL, relocated_from=None))
+        self.assertFalse(printed_relocation(), "no notice when the requested target was used as-is")
+
+        console.reset_mock()
+        execute_plan(
+            _make_plan(
+                stage=WorkspaceStage.FULL,
+                project_dir=Path("/tmp/here/playground"),
+                relocated_from=Path("/tmp/here"),
+            )
+        )
+        self.assertTrue(printed_relocation(), "notice fires when we fell back to a different directory")
 
     @patch("create_dlthub_workspace.cli.run_uv_command")
     @patch("create_dlthub_workspace.cli.print_next_steps")

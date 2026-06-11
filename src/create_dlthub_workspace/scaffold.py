@@ -3,13 +3,42 @@
 from __future__ import annotations
 
 import shutil
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
 from . import strings
+from .config import PLAYGROUND_WORKSPACE
 from .errors import ScaffoldError, WorkspaceDirectoryNotEmptyError
 
 SCAFFOLDS_DIR = Path(__file__).parent / "scaffolds"
+
+# Upper bound on the ``-1``, ``-2``, … suffix search when a target is occupied.
+# A free name is found almost immediately in practice; this only guards against
+# a pathological filesystem so the search can't spin forever.
+_MAX_SUFFIX = 1000
+
+# Top-level entries that don't count as "occupied" — a directory holding only
+# these still initializes in place rather than falling back to a sibling/playground.
+# These are editor/OS/tool cruft plus a bare ``.git`` (the common "I just ran
+# `git init`/cloned an empty repo" case). INVARIANT: every name here must be
+# disjoint from what the scaffold lays down — `copy_scaffold` overwrites
+# same-named target entries, so anything the scaffold ships (e.g. ``.gitignore``,
+# ``.dlt``) must NOT be listed, or we'd silently clobber the user's copy. A test
+# enforces this against the bundled scaffold's actual top-level names.
+BENIGN_ENTRIES = frozenset(
+    {
+        ".git",
+        ".idea",
+        ".vscode",
+        ".DS_Store",
+        "Thumbs.db",
+        "__pycache__",
+        ".ruff_cache",
+        ".mypy_cache",
+        ".pytest_cache",
+    }
+)
 
 # Subdirectory under each scaffold that holds the per-agent vendored AI files
 # (`_agents/<agent>/...`). `generate_ai.py` writes them; copy_scaffold lays
@@ -24,14 +53,83 @@ TOOLKITS_MANIFEST = Path(".dlt") / ".toolkits"
 INSTALL_TIME_SENTINEL = "1970-01-01T00:00:00+00:00"
 
 
+@dataclass(frozen=True)
+class TargetResolution:
+    """Where the workspace will actually be scaffolded.
+
+    ``project_dir`` is the chosen (guaranteed-available) directory. ``relocated_from``
+    is the location we'd have used if it were free — set only when we had to fall
+    back (cwd wasn't empty, or an explicit name was occupied), so the CLI can tell
+    the user where their workspace landed and why. ``None`` means no relocation.
+    """
+
+    project_dir: Path
+    relocated_from: Path | None
+
+
+def _is_available(path: Path) -> bool:
+    """True if ``path`` can be used as a fresh workspace target.
+
+    A target is available when it's absent, an empty directory, or a directory
+    holding only benign cruft (see ``BENIGN_ENTRIES`` — editor/OS files and a
+    bare ``.git``). Any other entry — including scaffold-shipped ones like
+    ``.gitignore`` or ``.dlt`` — counts as occupied. A file sitting on the name
+    counts as occupied too.
+    """
+    if not path.exists():
+        return True
+    if path.is_dir():
+        return all(entry.name in BENIGN_ENTRIES for entry in path.iterdir())
+    return False
+
+
+def first_available_dir(base: Path) -> Path:
+    """Return ``base`` if available, else the first free ``base-1``, ``base-2``, … sibling.
+
+    The suffix is appended to the directory name within the same parent, so
+    ``/x/playground`` falls back to ``/x/playground-1``. No filesystem writes.
+    """
+    if _is_available(base):
+        return base
+    for n in range(1, _MAX_SUFFIX + 1):
+        candidate = base.with_name(f"{base.name}-{n}")
+        if _is_available(candidate):
+            return candidate
+    raise WorkspaceDirectoryNotEmptyError(base)
+
+
+def resolve_workspace_target(requested_arg: str | None) -> TargetResolution:
+    """Pick a free workspace directory, never refusing on an occupied target.
+
+    - Explicit name (``requested_arg`` given): use it if free, else ``name-1``,
+      ``name-2``, … as siblings.
+    - No name: initialize in the current directory when it's empty; otherwise
+      nest a ``playground`` subdirectory (``playground-1``, … if that's taken too).
+
+    No filesystem writes — only existence/emptiness probing.
+    """
+    if requested_arg is not None:
+        base = Path(requested_arg).expanduser().resolve()
+        chosen = first_available_dir(base)
+        return TargetResolution(chosen, base if chosen != base else None)
+
+    cwd = Path.cwd().resolve()
+    if _is_available(cwd):
+        return TargetResolution(cwd, None)
+    chosen = first_available_dir(cwd / PLAYGROUND_WORKSPACE)
+    return TargetResolution(chosen, cwd)
+
+
 def validate_target_dir(project_dir: Path) -> None:
     """Refuse to write into a non-empty existing directory. No filesystem writes.
 
-    The target must be completely empty; hidden entries (.git, .dlt, ...) count.
+    The target must be empty apart from benign cruft (see ``BENIGN_ENTRIES``).
     Raises ``WorkspaceDirectoryNotEmptyError`` so the CLI can render a dedicated
-    response rather than the generic error line.
+    response rather than the generic error line. Defensive last-resort guard:
+    ``resolve_workspace_target`` normally hands ``copy_scaffold`` an empty target,
+    so this only fires on a race (the dir filling between resolve and copy).
     """
-    if project_dir.exists() and any(project_dir.iterdir()):
+    if not _is_available(project_dir):
         raise WorkspaceDirectoryNotEmptyError(project_dir)
 
 

@@ -55,10 +55,16 @@ official [`uv` installation guide](https://docs.astral.sh/uv/getting-started/ins
 uvx dlthub-start@latest [project-dir] [options]
 ```
 
-Initializes a workspace **in place**: the current directory by default, or
-`project-dir` if given. Either way the target directory must be **empty**
-(hidden entries like `.git` and `.gitignore` count) — otherwise the command
-stops with guidance and does nothing.
+Initializes a workspace **in place** when the target is empty: the current
+directory by default, or `project-dir` if given. A non-empty target never
+fails — the CLI scaffolds into a free directory instead and tells you where it
+landed. With no argument it nests a `playground` subdirectory (then
+`playground-1`, `playground-2`, …); an explicit `project-dir` that's occupied
+falls back to `<project-dir>-1`, `<project-dir>-2`, …. Existing contents are
+left untouched. A directory holding only benign cruft — editor/OS files
+(`.idea`, `.vscode`, `.DS_Store`), tool caches, and a bare `.git` — still counts
+as empty and initializes in place; anything the scaffold ships (`.gitignore`,
+`.dlt`, …) counts as content and triggers the fallback.
 
 Common options:
 
@@ -120,11 +126,13 @@ Install the CLI with `pip install dlthub-start` (into your current Python
 environment) and run `dlthub-start` instead. The CLI will still offer to
 install `uv` before syncing the generated workspace dependencies.
 
-`Directory not empty`
+`My workspace landed in a `playground`/`-1` subdirectory`
 
-Run `dlthub-start` from an empty directory (hidden entries like `.git` and
-`.gitignore` count), or pass a new target directory name. The CLI never writes
-into a non-empty directory.
+That's expected when the target wasn't empty: rather than refuse, the CLI
+scaffolds into a free directory and prints where it went. To control the
+location, pass an explicit empty target — `uvx dlthub-start@latest my-workspace`
+— or run from an empty directory. The CLI never writes into a non-empty
+directory; it picks a fresh one alongside it.
 
 `uv sync` fails
 

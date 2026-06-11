@@ -105,14 +105,14 @@ class WorkspaceCreationSlowTests(unittest.TestCase):
 
 
 class WorkspaceCollisionTests(unittest.TestCase):
-    """End-to-end: two runs at the same path should produce an error on the second.
+    """End-to-end: a second run at the same path auto-resolves to a free sibling.
 
-    Exercises the validate_target_dir path with a real filesystem (not mocks).
-    Catches regressions where the existence check moves, gets removed, or stops
-    firing before destructive work begins.
+    Exercises the resolve_workspace_target path with a real filesystem (not
+    mocks). Catches regressions where an occupied target stops relocating and
+    starts erroring (or clobbering) again.
     """
 
-    def test_second_run_at_same_path_fails(self) -> None:
+    def test_second_run_at_same_path_relocates_to_sibling(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             ws = Path(tmpdir) / "collision_test"
 
@@ -123,11 +123,13 @@ class WorkspaceCollisionTests(unittest.TestCase):
 
             with silenced():
                 second_exit = main([str(ws), "--yes", "--skip-uv-sync"])
-            self.assertEqual(
-                second_exit,
-                2,
-                "Second run against the same non-empty path should fail with the dedicated dir-not-empty exit code",
-            )
+            self.assertEqual(second_exit, 0, "Second run should succeed by relocating, not fail")
+
+            sibling = ws.with_name("collision_test-1")
+            self.assertTrue(sibling.is_dir(), "Second run should land in the -1 sibling")
+            self.assertTrue((sibling / "pyproject.toml").exists())
+            # The original workspace is left untouched.
+            self.assertTrue((ws / "pyproject.toml").exists())
 
 
 class InstalledEntryPointTests(unittest.TestCase):
@@ -160,11 +162,11 @@ class InstalledEntryPointTests(unittest.TestCase):
             self.assertTrue(ws.is_dir())
             self.assertTrue((ws / "pyproject.toml").exists())
 
-    def test_subprocess_propagates_dir_not_empty_exit_code(self) -> None:
-        # Guards the module entry point (`python -m`) *and* the dir-not-empty
-        # exit-code contract: a non-empty target must surface as exit 2 from the
-        # real process, not just from an in-process main() call. Regression for
-        # __main__.py dropping main()'s return value (always exited 0).
+    def test_subprocess_relocates_occupied_target(self) -> None:
+        # Guards the module entry point (`python -m`) *and* the relocation
+        # contract end-to-end: an occupied target must succeed (exit 0) from the
+        # real process by scaffolding into a free sibling, leaving the original
+        # contents untouched.
         with tempfile.TemporaryDirectory() as tmpdir:
             ws = Path(tmpdir) / "occupied"
             ws.mkdir()
@@ -185,9 +187,14 @@ class InstalledEntryPointTests(unittest.TestCase):
 
             self.assertEqual(
                 result.returncode,
-                2,
-                f"Expected exit 2 for non-empty target; stderr={result.stderr.decode()!r}",
+                0,
+                f"Expected exit 0 (relocated) for non-empty target; stderr={result.stderr.decode()!r}",
             )
+            sibling = ws.with_name("occupied-1")
+            self.assertTrue(sibling.is_dir(), "Should have scaffolded into the -1 sibling")
+            self.assertTrue((sibling / "pyproject.toml").exists())
+            # Original target left as the user had it.
+            self.assertEqual((ws / "README.md").read_text(encoding="utf-8"), "not empty\n")
 
 
 if __name__ == "__main__":
