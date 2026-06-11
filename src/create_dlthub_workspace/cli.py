@@ -12,6 +12,7 @@ from .config import AGENTS, PLAYGROUND_WORKSPACE, RECOMMENDED
 from .display import (
     console,
     copy_to_clipboard,
+    err_console,
     print_banner,
     print_dir_not_empty,
     print_next_steps,
@@ -60,13 +61,17 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--agent",
         choices=AGENTS,
-        help=f"Coding agent to set up. Defaults to the recommended {RECOMMENDED.agent!r} in non-interactive mode.",
+        help=f"Coding agent to set up ({', '.join(AGENTS)}). If omitted, you'll be prompted to choose (default: {RECOMMENDED.agent}).",
     )
+    # Hidden, non-interactive shortcut for tests/CI only. Intentionally absent
+    # from --help so the interactive flow is the sole documented path: --yes
+    # skips the agent prompt and the guided first run (its login is interactive),
+    # leaving the workspace scaffolded but never run. See MSG_YES_TESTING_NOTE.
     parser.add_argument(
         "--yes",
         "-y",
         action="store_true",
-        help=f"Run the recommended path (minimal scaffold, install uv, uv sync, {RECOMMENDED.agent} agent).",
+        help=argparse.SUPPRESS,
     )
     parser.add_argument(
         "--verbose",
@@ -74,10 +79,14 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Stream output from underlying subprocesses (uv, dlthub).",
     )
+    # Hidden, like --yes: a non-interactive shortcut for tests/CI that stops
+    # before dependency sync (and, with it, the guided first run), leaving an
+    # incomplete workspace. Kept functional but absent from --help so the
+    # interactive flow is the sole documented path. See MSG_TESTING_SHORTCUT_NOTE.
     parser.add_argument(
         "--skip-uv-sync",
         action="store_true",
-        help="Stop before dependency sync. The scaffold and selected agent's files are still created.",
+        help=argparse.SUPPRESS,
     )
     return parser
 
@@ -104,6 +113,9 @@ def main(argv: list[str] | None = None) -> int:
 def run(args: argparse.Namespace) -> None:
     print_banner()
     console.print()
+
+    if args.yes or args.skip_uv_sync:
+        err_console.print(strings.MSG_TESTING_SHORTCUT_NOTE)
 
     plan = build_plan(args)
     execute_plan(plan)

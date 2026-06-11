@@ -19,6 +19,9 @@ from . import strings
 from .config import VERSION
 
 console = Console()
+# Separate stderr stream for out-of-band notes (e.g. the hidden --yes warning),
+# so they don't interleave with the primary stdout output.
+err_console = Console(stderr=True)
 
 NEXT_STEPS: dict[str, tuple[tuple[str, str | None], ...]] = {
     "minimal_workspace": (
