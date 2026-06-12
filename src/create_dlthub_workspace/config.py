@@ -18,7 +18,7 @@ AGENT_LAUNCH_COMMANDS = {
 # Adjust here to rename it everywhere (CLI command + user-facing messages).
 PLAYGROUND_WORKSPACE = "playground"
 
-TOOLKITS = ("one-shot-pipeline", "dlthub-platform")
+TOOLKITS = ("one-shot", "data-exploration")
 
 # The dltHub AI workbench repo that `make generate-ai` / `make update-ai` pull from.
 WORKBENCH_REPO = "https://github.com/dlt-hub/dlthub-ai-workbench.git"
