@@ -31,53 +31,23 @@ class PrintNextStepsTests(unittest.TestCase):
             print_next_steps(Path("/tmp/my_workspace"), scaffold="minimal_workspace")
         output = cap.get()
 
-        self.assertIn("Created", output)
-        self.assertIn("pipeline.py", output)
-        self.assertNotIn("starter_pipeline.py", output)
         self.assertIn("uv run dlthub run load_sample_shop", output)
         # Minimal scaffold has an instruction-only step with no command.
         self.assertIn("Edit pipeline.py", output)
 
-    def test_first_pipeline_ran_shows_build_own_source_step(self) -> None:
-        # When the first pipeline was already run during setup, the panel drops
-        # the run / view-runs steps (they just happened) and shows a copy-paste
-        # prompt addressed to the chosen agent.
+    def test_first_pipeline_ran_shows_only_the_agent_prompt(self) -> None:
+        # After the first run, the panel drops the run/edit steps and shows just
+        # the instruction + the verbatim prompt to hand to the agent.
         with console.capture() as cap:
-            print_next_steps(Path.cwd(), scaffold="minimal_workspace", agent="cursor", first_pipeline_ran=True)
-        output = cap.get()
+            print_next_steps(Path.cwd(), scaffold="minimal_workspace", first_pipeline_ran=True, prompt_copied=True)
+        # Strip panel borders (Unicode │ on POSIX, ASCII | on the Windows console)
+        # and collapse line-wrapping so the prompt is one contiguous string.
+        output = " ".join(cap.get().replace("│", " ").replace("|", " ").split())
 
         self.assertNotIn("uv run dlthub run load_sample_shop", output)
-        self.assertNotIn("job runs show", output)
-        # The verbatim prompt copy and the chosen agent both appear.
-        self.assertIn("Build a dlt pipeline for the", output)
-        self.assertIn("DuckDB", output)
-        self.assertIn("cursor", output)
-        # Not copied → wording asks the user to copy it.
-        self.assertIn("Copy this prompt", output)
-
-    def test_prompt_copied_changes_wording_to_clipboard(self) -> None:
-        with console.capture() as cap:
-            print_next_steps(
-                Path.cwd(),
-                scaffold="minimal_workspace",
-                agent="claude",
-                first_pipeline_ran=True,
-                prompt_copied=True,
-            )
-        output = cap.get()
-
-        # The verbatim prompt is unchanged; the wording says it's on the clipboard.
-        self.assertIn("Build a dlt pipeline for the", output)
-        self.assertIn("clipboard", output)
-        self.assertNotIn("Copy this prompt", output)
-
-    def test_renders_selected_agent(self) -> None:
-        with console.capture() as cap:
-            print_next_steps(Path("/tmp/my_workspace"), scaffold="minimal_workspace", agent="claude")
-        output = cap.get()
-
-        self.assertIn("Coding agent", output)
-        self.assertIn("claude", output)
+        self.assertIn("Tell your agent to navigate to the directory you just ran", output)
+        self.assertIn("Build a dlt pipeline for the [API name] API and load [endpoint/data] into DuckDB", output)
+        self.assertIn("Already copied to your clipboard", output)
 
     def test_unknown_scaffold_raises_key_error(self) -> None:
         with self.assertRaises(KeyError):
@@ -104,17 +74,6 @@ class PrintNextStepsTests(unittest.TestCase):
         self.assertNotIn("cd ", output)
         # The actual first step (the pipeline run) is still present.
         self.assertIn("uv run dlthub run load_sample_shop", output)
-
-    def test_agent_workspace_note_shown_only_for_subdir(self) -> None:
-        # Subdir → note reminds AI agents to work from the workspace root.
-        with console.capture() as cap:
-            print_next_steps(Path.cwd() / "hello-world", scaffold="minimal_workspace")
-        self.assertIn("Note for AI agents", cap.get())
-
-        # Init-in-place (cwd) → no note; the agent is already at the root.
-        with console.capture() as cap:
-            print_next_steps(Path.cwd(), scaffold="minimal_workspace")
-        self.assertNotIn("Note for AI agents", cap.get())
 
 
 class CdTargetTests(unittest.TestCase):

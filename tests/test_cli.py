@@ -10,7 +10,8 @@ from pathlib import Path
 from typing import Iterator
 from unittest.mock import MagicMock, patch
 
-from create_dlthub_workspace.cli import _workspace_in_list, build_parser, main, run
+from create_dlthub_workspace import strings
+from create_dlthub_workspace.cli import _launch_agent, _workspace_in_list, build_parser, main, run
 from create_dlthub_workspace.config import PLAYGROUND_WORKSPACE, RECOMMENDED
 from create_dlthub_workspace.errors import WorkspaceDirectoryNotEmptyError, WorkspaceError
 from create_dlthub_workspace.scaffold import TargetResolution
@@ -129,7 +130,9 @@ _STEP_TARGETS = (
     "run_uv_command",
     "capture_uv_command",
     "copy_to_clipboard",
+    "_launch_agent",
     "print_banner",
+    "print_created_tree",
     "print_next_steps",
     "print_resume_steps",
 )
@@ -150,6 +153,7 @@ class RunFlowTests(unittest.TestCase):
         self.m["choose_agent"].return_value = "claude"
         self.m["execute_uv_install"].return_value = "/usr/local/bin/uv"
         self.m["copy_to_clipboard"].return_value = True
+        self.m["_launch_agent"].return_value = False
         self.m["capture_uv_command"].return_value = "Name\n----\n"
         self.m["resolve_workspace_target"].return_value = TargetResolution(Path("/tmp/test_workspace"), None)
 
@@ -174,6 +178,18 @@ class RunFlowTests(unittest.TestCase):
         self.m["choose_agent"].assert_called_once()
         self.m["print_next_steps"].assert_called_once()
         self.assertTrue(self.m["print_next_steps"].call_args.kwargs["first_pipeline_ran"])
+
+    def test_launched_agent_replaces_the_next_steps_panel(self) -> None:
+        self.m["_launch_agent"].return_value = True
+
+        self._run()
+
+        self.m["_launch_agent"].assert_called_once_with(
+            Path("/tmp/test_workspace"), "claude", prompt=strings.CMD_BUILD_OWN_SOURCE_PROMPT
+        )
+        # A successful launch is the hand-off; the manual fallback is skipped.
+        self.m["copy_to_clipboard"].assert_not_called()
+        self.m["print_next_steps"].assert_not_called()
 
     def test_explicit_agent_skips_the_prompt(self) -> None:
         self._run(agent="codex")
@@ -271,6 +287,8 @@ class RunNoticeTests(unittest.TestCase):
             patch("create_dlthub_workspace.cli.run_uv_command"),
             patch("create_dlthub_workspace.cli.capture_uv_command", return_value="Name\n----\n"),
             patch("create_dlthub_workspace.cli.copy_to_clipboard", return_value=False),
+            patch("create_dlthub_workspace.cli.print_created_tree"),
+            patch("create_dlthub_workspace.cli._launch_agent", return_value=False),
             patch("create_dlthub_workspace.cli.choose_agent", return_value="claude"),
             patch("create_dlthub_workspace.cli.print_next_steps"),
             patch("create_dlthub_workspace.cli.print_resume_steps"),
@@ -292,6 +310,31 @@ class RunNoticeTests(unittest.TestCase):
 
     def test_interactive_run_prints_no_notice(self) -> None:
         self._run_with().print.assert_not_called()
+
+
+class LaunchAgentTests(unittest.TestCase):
+    """_launch_agent: runs a detected CLI in the workspace, else reports False."""
+
+    @patch("create_dlthub_workspace.cli.subprocess.run")
+    @patch("create_dlthub_workspace.cli.shutil.which", return_value="/usr/local/bin/claude")
+    def test_runs_detected_cli_seeded_with_prompt(self, _which: MagicMock, run_cmd: MagicMock) -> None:
+        with _silenced():
+            launched = _launch_agent(Path("/tmp/ws"), "claude", prompt="do the thing")
+
+        self.assertTrue(launched)
+        run_cmd.assert_called_once_with(["/usr/local/bin/claude", "do the thing"], cwd=Path("/tmp/ws"), check=False)
+
+    @patch("create_dlthub_workspace.cli.subprocess.run")
+    @patch("create_dlthub_workspace.cli.shutil.which", return_value=None)
+    def test_returns_false_when_cli_not_on_path(self, _which: MagicMock, run_cmd: MagicMock) -> None:
+        self.assertFalse(_launch_agent(Path("/tmp/ws"), "claude", prompt="x"))
+        run_cmd.assert_not_called()
+
+    @patch("create_dlthub_workspace.cli.shutil.which")
+    def test_returns_false_for_agent_without_launch_command(self, which: MagicMock) -> None:
+        # cursor/codex aren't wired for launch; we never even probe PATH for them.
+        self.assertFalse(_launch_agent(Path("/tmp/ws"), "cursor", prompt="x"))
+        which.assert_not_called()
 
 
 class WorkspaceInListTests(unittest.TestCase):
