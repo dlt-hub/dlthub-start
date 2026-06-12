@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-06-12
+
 ### Changed
 - The coding-agent prompt now comes at the *end* of setup — after your first pipeline run — and the agent's AI workbench files are laid down as the final step, so you see the pipeline work before picking your editor. Passing `--agent` still skips the prompt. (Internally, the two-phase plan/execute split was collapsed into a single linear flow.)
 - A non-empty target no longer stops with a "Directory not empty" error. Instead `dlthub-start` scaffolds into a free directory and tells you where it landed: with no argument it initializes in the current directory when empty, otherwise into a `playground` subdirectory (`playground-1`, `playground-2`, … if that's taken too); an explicit name that's occupied falls back to `<name>-1`, `<name>-2`, …. The original directory's contents are never touched. (The `WorkspaceDirectoryNotEmptyError` / exit-code-`2` path remains only as a defensive guard against races.)
