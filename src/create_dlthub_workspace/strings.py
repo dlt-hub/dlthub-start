@@ -22,8 +22,9 @@ from __future__ import annotations
 
 # Prompts ---------------------------------------------------------------
 PROMPT_AGENT_HEADER = (
-    "\n[bold]Choose your coding agent[/bold] [dim](↑/↓ to move, enter to confirm)[/dim]"
-    "\n[dim]We'll set it up in this workspace and launch it, ready to build a pipeline for your own data.[/dim]"
+    "\n[bold]2. Claude/Cursor/Codex-native dlt pipeline building with dltHub Pro[/bold]"
+    "\nNow create your own dlt pipeline to load data from a REST API source into a local DuckDB."
+    "\n\n[bold]Which coding agent do you want to use?[/bold] [dim](↑/↓ to move, enter to confirm)[/dim]"
 )
 PROMPT_INSTALL_UV = "uv is required but was not found. Install uv now?"
 
@@ -55,25 +56,32 @@ MSG_CANCELLED = "\n[yellow]Cancelled.[/yellow]"
 MSG_ERROR_PREFIX = "[red]Error:[/red] {message}"
 MSG_RELOCATED = "[yellow]Heads up:[/yellow] {relocated_from} isn't empty — scaffolding into {project_dir} instead."
 MSG_CREATING_WORKSPACE = "Creating workspace at {project_dir}"
-MSG_CREATED = "[green]Created[/green] {project_dir}"
-MSG_PACKAGE_NAME = "[dim]Project package name:[/dim] {package_name}"
+MSG_CREATED = "Created {project_dir}"
+MSG_PACKAGE_NAME = "Project package name: {package_name}"
 MSG_SKIPPED_UV_AND_SYNC = "\n[yellow]Skipped[/yellow] uv install and dependency sync.\n"
 MSG_SKIPPED_SYNC = "\n[yellow]Skipped[/yellow] dependency sync.\n"
 MSG_INSTALLING_DEPS = "Installing dependencies"
-MSG_INSTALLED_DEPS = "[green]Installed[/green] dependencies into .venv"
+MSG_INSTALLED_DEPS = "Installed dependencies into .venv"
 MSG_ADDING_AGENT_FILES = "Adding {agent} workbench files"
-MSG_ADDED_AGENT_FILES = "[green]Added[/green] {agent} workbench files"
+MSG_ADDED_AGENT_FILES = "Added {agent} workbench files"
 MSG_LAUNCHING_AGENT = (
     "\n[bold #59C1D5]Launching {agent}[/bold #59C1D5] in your workspace — your skills and MCP server are ready.\n"
 )
-# First-run flow messages. Spinner descriptions get a matching "done" line printed after.
-MSG_LOGGING_IN = "\nLogging in to dltHub — follow the prompts below…\n"
+# First-run flow: each sub-step has a running (spinner/active) line and a "done" line it ticks to.
+MSG_LOGGING_IN = "Logging in to dltHub — follow the prompts below"
+MSG_LOGGED_IN = "Logged in to dltHub"
 MSG_CONNECTING_PLAYGROUND = "Connecting to a {workspace} workspace"
-MSG_CONNECTED_PLAYGROUND = "[green]Connected[/green] to the {workspace} workspace"
+MSG_CONNECTED_PLAYGROUND = "Connected to the {workspace} workspace"
 MSG_RUNNING_FIRST_PIPELINE = "Running your first pipeline"
 HINT_PIPELINE_STREAMING = "Streaming live logs — this can take a minute."
-MSG_RAN_FIRST_PIPELINE = "[green]Done[/green] — your first pipeline run is complete."
-MSG_OPENING_OVERVIEW = "\nOpening your workspace overview in dltHub…"
+MSG_RAN_FIRST_PIPELINE = "Ran your first pipeline"
+MSG_OPENING_OVERVIEW = "Opening your workspace overview in dltHub"
+MSG_OPENED_OVERVIEW = "Opened your workspace overview"
+# "What just happened" summary, shown after the first run and before the agent picker.
+MSG_PLAYGROUND_READY = (
+    "\n[bold]1. The dltHub Pro playground experience on your local machine is set[/bold]"
+    "\nWe created a demo dlt pipeline and set up your dltHub playground."
+)
 
 
 # Panel titles ----------------------------------------------------------
@@ -108,6 +116,12 @@ MSG_DIR_NOT_EMPTY = (
 # Section labels inside panels ------------------------------------------
 LABEL_WHAT_TO_TRY = "What to try next"
 LABEL_FINISH_SETUP = "Finish setup"
+LABEL_DOCS = "Docs:"
+
+
+# Links (URL + its display label) ---------------------------------------
+LINK_DOCS_URL = "https://github.com/dlt-hub/dlthub-ai-workbench/blob/master/README.md"
+LINK_DOCS_LABEL = "github.com/dlt-hub/dlthub-ai-workbench"
 
 
 # Hint text / badges / taglines -----------------------------------------

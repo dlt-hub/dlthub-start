@@ -19,7 +19,7 @@ RECOMMENDED_SUFFIX = strings.HINT_RECOMMENDED_SUFFIX
 
 def _echo_selection(value: str) -> None:
     """Persist the user's choice after beaupy clears its widget."""
-    console.print(f"  [{CURSOR_STYLE}]{TICK_CHAR}[/{CURSOR_STYLE}] [bold]{value}[/bold]")
+    console.print(f"[{CURSOR_STYLE}]{TICK_CHAR}[/{CURSOR_STYLE}] [bold]{value}[/bold]")
 
 
 def choose_agent(default: str = RECOMMENDED.agent) -> str:
