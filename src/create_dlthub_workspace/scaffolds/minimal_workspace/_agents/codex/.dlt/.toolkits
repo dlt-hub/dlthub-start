@@ -10,25 +10,25 @@ init:
   installed_at: '1970-01-01T00:00:00+00:00'
   agent: codex
   files:
-    .agents/skills/improve-skills/SKILL.md:
-      sha3_256: c52b222d82d101eaacbbf19d271d3f24b20d8e2bc70d49919d56144d448cd5c4
-    .agents/skills/setup-secrets/SKILL.md:
-      sha3_256: 83fb6e1af003c065ce3bb26042f0e2de24a22df14353db23ad4f6192d90e7785
-    .agents/skills/setup-secrets/cli-reference.md:
-      sha3_256: b3aed4466ecb84770e11176b5b07b109093c72808c44b73d02c5cd789af86c97
-    .agents/skills/toolkit-dispatch/SKILL.md:
-      sha3_256: de66960f9e0f46a11adbb6c203dafdd61d94f4768e2c36465efb66f7f7573577
+    .agents\skills\improve-skills\SKILL.md:
+      sha3_256: bf41f86f63b0bc8e7209a96c4ba38fb5d954f43ee9800855d4ff675acbaed861
+    .agents\skills\setup-secrets\cli-reference.md:
+      sha3_256: 8b972813409b5609aa6fbaaa7a060def42ad9da9a10a4ca18ca4ce801518fd11
+    .agents\skills\setup-secrets\SKILL.md:
+      sha3_256: 3dfee343aa9a421867634ef2c36956987421bc30474d9d6c8fe3e14198d294b8
+    .agents\skills\toolkit-dispatch\SKILL.md:
+      sha3_256: 42c8e675a1f17ce698bfb5c9c16ddcc6989b46cb31a6e42633ce59d204443058
     .codexignore:
-      sha3_256: 1aa4dc9286dd219dcb55399f388c5ee1f940ab5e399a42b644d488cba57a9ec0
-    .agents/skills/init-dlthub-workspace/SKILL.md:
-      sha3_256: 201899950913f6cfdae8ed16387c61f16bf1275ad321c862ef2ea2479a782fed
+      sha3_256: 57cef6343d5f0f1c8a8659fcfb909f7eedfdb2d8c6fdd054014327ef4568b3f6
+    .agents\skills\init-dlthub-workspace\SKILL.md:
+      sha3_256: 20bfaaf40aaddfac8b28b2e834e47c3d811c4eb6cbc73ce2415c9046617c632a
   mcp_servers:
   - dlt-workspace-mcp
   name: init
-one-shot-pipeline:
+one-shot:
   version: 0.1.0
-  description: Build and run a minimal REST API pipeline locally against DuckDB in
-    one shot
+  description: Build and run a minimal REST API pipeline locally against DuckDB, then
+    deploy it to dltHub Platform in one shot
   tags:
   - dlthub
   - pipeline
@@ -37,45 +37,43 @@ one-shot-pipeline:
   - python
   dependencies:
   - init
-  workflow_entry_skill: one-shot-pipeline
+  workflow_entry_skill: create-minimal-pipeline
   installed_at: '1970-01-01T00:00:00+00:00'
   agent: codex
   files:
-    .agents/skills/one-shot-pipeline/SKILL.md:
-      sha3_256: 1aa0a43b5408cfed72ade665259191d7ae49fe8b99ffc43a87e21f3266ab4a84
-    .agents/skills/one-shot-pipeline-workflow/SKILL.md:
-      sha3_256: aca576ebb1975666b60893fccd10de082b7725f590677e159c583e6ace209f14
-  name: one-shot-pipeline
-dlthub-platform:
-  version: 0.1.3
-  description: Deploy dlthub workspace and pipelines to the dltHub Platform
+    .agents\skills\create-minimal-pipeline\SKILL.md:
+      sha3_256: df34d331c3d8bb341700ab7d124a0bf0010c42b1c070fa87a456d32dcee721b4
+    .agents\skills\deploy-minimal-pipeline\SKILL.md:
+      sha3_256: 0cde32ec42d9c1b14696fea1929bc56bfed70adf82ed301f1d2219ba8c60b7a3
+    .agents\skills\one-shot-workflow\SKILL.md:
+      sha3_256: 29b95e56215867ec209c865e1fba5468ea4326420848a95d247a41eca79271c1
+  name: one-shot
+data-exploration:
+  version: 0.1.1
+  description: Quick insights from dlt pipeline data. Connect to a pipeline, profile
+    tables, plan charts, and assemble marimo dashboards.
   tags:
   - dlthub
-  - deploy
-  - platform
+  - marimo
+  - ibis
+  - data-exploration
+  - dashboards
+  - altair
   dependencies:
   - init
-  workflow_entry_skill: setup-runtime
+  workflow_entry_skill: explore-data
   installed_at: '1970-01-01T00:00:00+00:00'
   agent: codex
   files:
-    .agents/skills/debug-deployment/SKILL.md:
-      sha3_256: 5b563de07842c361187e11729c58a7132633b086782bc14a5759dc2895322320
-    .agents/skills/deploy-workspace/SKILL.md:
-      sha3_256: f4388d846c21f0e76309c07f91d365d6c02b0c13d15d5c8910b1592d1f655f83
-    .agents/skills/deploy-workspace/advanced-patterns.md:
-      sha3_256: 6ae7f2d23c83cc074c50902688b2253c429cd89c39b692568f9f2f5f40243db8
-    .agents/skills/deploy-workspace/scheduling-triggers.md:
-      sha3_256: 2c67e4c1a8012d75f1943d7e874df69d8898219973eb295b42c5c706f7274f8f
-    .agents/skills/prepare-deployment/SKILL.md:
-      sha3_256: 161646d939986d76364188b6ee375a5e2d61754b570926c52ce96ee3438c26ef
-    .agents/skills/prepare-deployment/check_destination.py:
-      sha3_256: 34ff49ae54a875f34f7900612d76b31d7aaf00926cc80c40d689474af4d447ec
-    .agents/skills/prepare-deployment/deployment-module.md:
-      sha3_256: 7febda25e999ddd05551036eeff285758fef41c7a25ec7dedd41dfc2f1151d24
-    .agents/skills/setup-runtime/SKILL.md:
-      sha3_256: ee6888e0cbefde7907599cb0ecd9907ab6a5edd789c6119a406ccf7fc1180ace
-    .agents/skills/dlthub-platform-profiles/SKILL.md:
-      sha3_256: 6aeeec113fa5490e30f3d977b799af5565a37cceb1a0d2a7731dd3be3bbd8b45
-    .agents/skills/dlthub-platform-workflow/SKILL.md:
-      sha3_256: ea6d1b77cc5f0588d2611ec9f37dac25e6d8df2be3492b1f2cef880248214412
+    .agents\skills\build-notebook\references\notebook-patterns.md:
+      sha3_256: 16da08c55d5bdde289e54dbb7c378e3906b4b20d1874f0bc4194f786e43c7bfc
+    .agents\skills\build-notebook\SKILL.md:
+      sha3_256: 8052fcd5e330644b6f704699385bc0f9329254bd302256f09254458c64db2780
+    .agents\skills\explore-data\references\analysis-plan-format.md:
+      sha3_256: e5ddff73aeb064a672dc915dd9b2725ca624d495a4311cac8bd0152eaad6c498
+    .agents\skills\explore-data\references\dlt-relation-api.md:
+      sha3_256: 12164f5e87759d420352bd6c8851c4daf3677a189e7a28ff8d77287128824b4d
+    .agents\skills\explore-data\SKILL.md:
+      sha3_256: f6b5438543e0d3082bc8e6db6183f3323bdad8b3ef52fda31aca40d7f0889c3e
+    .agents\skills\data-exploration-workflow\SKILL.md:
+      sha3_256: 2d624ee00c31626e4b6c52f279ecd4b987b4e6d82b7f80c80fe3b4390c10cfd7
