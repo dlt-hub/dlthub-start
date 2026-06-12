@@ -6,6 +6,7 @@ import unittest
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
+from unittest.mock import patch
 
 from create_dlthub_workspace.config import AGENTS, PLAYGROUND_WORKSPACE
 from create_dlthub_workspace.errors import ScaffoldError
@@ -263,6 +264,14 @@ class ValidateTargetDirTests(unittest.TestCase):
 
             with self.assertRaises(ScaffoldError):
                 validate_target_dir(project_dir)
+
+    def test_raises_scaffold_error_when_target_unreadable(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_dir = Path(tmpdir) / "locked"
+            project_dir.mkdir()
+            with patch.object(Path, "iterdir", side_effect=PermissionError("denied")):
+                with self.assertRaises(ScaffoldError):
+                    validate_target_dir(project_dir)
 
 
 class BenignEntriesInvariantTests(unittest.TestCase):

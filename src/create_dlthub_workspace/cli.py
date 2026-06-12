@@ -121,6 +121,13 @@ def main(argv: list[str] | None = None) -> int:
     except WorkspaceError as exc:
         console.print(strings.MSG_ERROR_PREFIX.format(message=exc))
         return 1
+    except Exception as exc:
+        console.print(strings.MSG_UNEXPECTED_ERROR.format(message=exc))
+        if args.verbose:
+            console.print_exception()
+        else:
+            console.print(strings.MSG_UNEXPECTED_ERROR_HINT)
+        return 1
     return 0
 
 
@@ -171,11 +178,18 @@ def run(args: argparse.Namespace) -> None:
     with substep(strings.MSG_INSTALLING_DEPS, strings.MSG_INSTALLED_DEPS, verbose=verbose):
         run_uv_sync(uv_executable, project_dir, verbose=verbose)
 
-    # Skipped under --yes: the first run's login is interactive.
+    # Skipped under --yes: the first run's login is interactive. A run that exits
+    # non-zero degrades to a warning so the rest of setup still completes.
+    # LIMITATION: `dlthub run --follow` can exit 0 on a failed remote run, so a
+    # genuine run failure isn't caught here — we'd still report success. Revisit.
     first_pipeline_ran = not args.yes
     if first_pipeline_ran:
-        _run_first_pipeline(uv_executable, project_dir, verbose=verbose)
-        console.print(strings.MSG_PLAYGROUND_READY)
+        try:
+            _run_first_pipeline(uv_executable, project_dir, verbose=verbose)
+            console.print(strings.MSG_PLAYGROUND_READY)
+        except UvError as exc:
+            first_pipeline_ran = False
+            console.print(strings.MSG_FIRST_RUN_FAILED.format(message=exc))
 
     agent = _finalize_agent(project_dir, scaffold, args, verbose=verbose)
 
@@ -209,7 +223,10 @@ def _launch_agent(project_dir: Path, agent: str, *, prompt: str) -> bool:
     if executable is None:
         return False
     console.print(strings.MSG_LAUNCHING_AGENT.format(agent=agent))
-    subprocess.run([executable, *base[1:], prompt], cwd=project_dir, check=False)
+    try:
+        subprocess.run([executable, *base[1:], prompt], cwd=project_dir, check=False)
+    except OSError:
+        return False
     return True
 
 

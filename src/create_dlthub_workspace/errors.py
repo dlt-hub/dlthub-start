@@ -27,7 +27,3 @@ class WorkspaceDirectoryNotEmptyError(ScaffoldError):
 
 class UvError(WorkspaceError):
     """Raised when uv detection, installation, or execution fails."""
-
-
-class CommandError(WorkspaceError):
-    """Raised when an external command fails."""
