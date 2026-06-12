@@ -39,6 +39,8 @@ ERROR_UV_INSTALLER_FETCH = "Could not download uv installer: {reason}"
 ERROR_UV_NEEDS_POWERSHELL = "PowerShell is required to install uv on Windows."
 ERROR_UNKNOWN_SCAFFOLD = "Unknown scaffold {scaffold!r}. Available: {available}"
 ERROR_PARSE_PYPROJECT = "Could not parse generated pyproject.toml: {reason}"
+ERROR_WRITE_FAILED = "Couldn't write to {path}: {reason}"
+ERROR_READ_FAILED = "Couldn't read {path}: {reason}"
 
 
 # Status / info messages ------------------------------------------------
@@ -54,6 +56,8 @@ MSG_TESTING_SHORTCUT_NOTE = (
 )
 MSG_CANCELLED = "\n[yellow]Cancelled.[/yellow]"
 MSG_ERROR_PREFIX = "[red]Error:[/red] {message}"
+MSG_UNEXPECTED_ERROR = "[red]Unexpected error:[/red] {message}"
+MSG_UNEXPECTED_ERROR_HINT = "[dim]Re-run with --verbose to see the full traceback.[/dim]"
 MSG_RELOCATED = "[yellow]Heads up:[/yellow] {relocated_from} isn't empty — scaffolding into {project_dir} instead."
 MSG_CREATING_WORKSPACE = "Creating workspace at {project_dir}"
 MSG_CREATED = "Created {project_dir}"
@@ -81,6 +85,10 @@ MSG_OPENED_OVERVIEW = "Opened your workspace overview"
 MSG_PLAYGROUND_READY = (
     "\n[bold]1. The dltHub Pro playground experience on your local machine is set[/bold]"
     "\nWe created a demo dlt pipeline and set up your dltHub playground."
+)
+MSG_FIRST_RUN_FAILED = (
+    "\n[yellow]Heads up:[/yellow] couldn't finish the first pipeline run ({message}). "
+    "Your workspace is set up — run it yourself with the steps below."
 )
 
 

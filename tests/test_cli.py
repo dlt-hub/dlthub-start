@@ -13,7 +13,7 @@ from unittest.mock import MagicMock, patch
 from create_dlthub_workspace import strings
 from create_dlthub_workspace.cli import _launch_agent, _workspace_in_list, build_parser, main, run
 from create_dlthub_workspace.config import PLAYGROUND_WORKSPACE, RECOMMENDED
-from create_dlthub_workspace.errors import WorkspaceDirectoryNotEmptyError, WorkspaceError
+from create_dlthub_workspace.errors import UvError, WorkspaceDirectoryNotEmptyError, WorkspaceError
 from create_dlthub_workspace.scaffold import TargetResolution
 
 
@@ -101,6 +101,12 @@ class MainExitCodeTests(unittest.TestCase):
         with _silenced():
             self.assertEqual(main(["my_workspace"]), 2)
         print_dir_not_empty.assert_called_once_with(target)
+
+    @patch("create_dlthub_workspace.cli.run")
+    def test_unexpected_exception_is_caught_not_raised(self, run: MagicMock) -> None:
+        run.side_effect = RuntimeError("kaboom")
+        with _silenced():
+            self.assertEqual(main(["my_workspace"]), 1)
 
 
 def _make_args(**overrides: object) -> argparse.Namespace:
@@ -190,6 +196,15 @@ class RunFlowTests(unittest.TestCase):
         # A successful launch is the hand-off; the manual fallback is skipped.
         self.m["copy_to_clipboard"].assert_not_called()
         self.m["print_next_steps"].assert_not_called()
+
+    def test_first_run_failure_degrades_but_finishes_setup(self) -> None:
+        self.m["run_uv_command"].side_effect = UvError("dlthub run blew up")
+
+        self._run()
+
+        self.m["overlay_agent"].assert_called_once()
+        self.m["_launch_agent"].assert_not_called()
+        self.assertFalse(self.m["print_next_steps"].call_args.kwargs["first_pipeline_ran"])
 
     def test_explicit_agent_skips_the_prompt(self) -> None:
         self._run(agent="codex")
@@ -332,9 +347,14 @@ class LaunchAgentTests(unittest.TestCase):
 
     @patch("create_dlthub_workspace.cli.shutil.which")
     def test_returns_false_for_agent_without_launch_command(self, which: MagicMock) -> None:
-        # cursor/codex aren't wired for launch; we never even probe PATH for them.
         self.assertFalse(_launch_agent(Path("/tmp/ws"), "cursor", prompt="x"))
         which.assert_not_called()
+
+    @patch("create_dlthub_workspace.cli.subprocess.run", side_effect=OSError("exec failed"))
+    @patch("create_dlthub_workspace.cli.shutil.which", return_value="/usr/local/bin/claude")
+    def test_returns_false_when_spawn_fails(self, _which: MagicMock, _run: MagicMock) -> None:
+        with _silenced():
+            self.assertFalse(_launch_agent(Path("/tmp/ws"), "claude", prompt="x"))
 
 
 class WorkspaceInListTests(unittest.TestCase):
