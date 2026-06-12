@@ -22,7 +22,10 @@ def apply_workspace_name(project_dir: Path, workspace_name: str) -> str:
     if not pyproject.exists():
         return package_name
 
-    content = pyproject.read_text(encoding="utf-8")
+    try:
+        content = pyproject.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise ScaffoldError(strings.ERROR_WRITE_FAILED.format(path=pyproject, reason=exc)) from exc
     try:
         data = tomllib.loads(content)
     except tomllib.TOMLDecodeError as exc:
@@ -31,13 +34,16 @@ def apply_workspace_name(project_dir: Path, workspace_name: str) -> str:
     if "project" not in data:
         return package_name
 
-    pyproject.write_text(_replace_project_name(content, package_name), encoding="utf-8")
-    # The bundled uv.lock pins the root (virtual) package under the scaffold's
-    # original name. uv treats the lock as out of date the moment that name no
-    # longer matches pyproject, which forces a full re-resolution against the
-    # PyPI index — defeating the point of shipping the lock. Rename it in lock-
-    # step so `uv sync` installs straight from the lock.
-    _replace_lock_project_name(project_dir / "uv.lock", package_name)
+    try:
+        pyproject.write_text(_replace_project_name(content, package_name), encoding="utf-8")
+        # The bundled uv.lock pins the root (virtual) package under the scaffold's
+        # original name. uv treats the lock as out of date the moment that name no
+        # longer matches pyproject, which forces a full re-resolution against the
+        # PyPI index — defeating the point of shipping the lock. Rename it in lock-
+        # step so `uv sync` installs straight from the lock.
+        _replace_lock_project_name(project_dir / "uv.lock", package_name)
+    except OSError as exc:
+        raise ScaffoldError(strings.ERROR_WRITE_FAILED.format(path=pyproject, reason=exc)) from exc
     return package_name
 
 

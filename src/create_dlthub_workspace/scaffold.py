@@ -56,9 +56,12 @@ def _is_available(path: Path) -> bool:
     """True if ``path`` is absent, an empty dir, or holds only ``BENIGN_ENTRIES``."""
     if not path.exists():
         return True
-    if path.is_dir():
+    if not path.is_dir():
+        return False
+    try:
         return all(entry.name in BENIGN_ENTRIES for entry in path.iterdir())
-    return False
+    except OSError as exc:
+        raise ScaffoldError(strings.ERROR_READ_FAILED.format(path=path, reason=exc)) from exc
 
 
 def first_available_dir(base: Path) -> Path:
@@ -144,20 +147,24 @@ def copy_scaffold(project_dir: Path, *, scaffold: str, agent: str | None = None)
             skip.add(PER_AGENT_DIR)
         return skip
 
-    project_dir.mkdir(parents=True, exist_ok=True)
-    shutil.copytree(source, project_dir, ignore=_ignore_shared, dirs_exist_ok=True)
-
-    if agent is not None:
-        shutil.copytree(source / PER_AGENT_DIR / agent, project_dir, dirs_exist_ok=True)
-
-    _stamp_install_time(project_dir)
+    try:
+        project_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(source, project_dir, ignore=_ignore_shared, dirs_exist_ok=True)
+        if agent is not None:
+            shutil.copytree(source / PER_AGENT_DIR / agent, project_dir, dirs_exist_ok=True)
+        _stamp_install_time(project_dir)
+    except OSError as exc:
+        raise ScaffoldError(strings.ERROR_WRITE_FAILED.format(path=project_dir, reason=exc)) from exc
 
 
 def overlay_agent(project_dir: Path, *, scaffold: str, agent: str) -> None:
     """Overlay an agent's vendored AI files onto an already-scaffolded workspace."""
     validate_agent(scaffold=scaffold, agent=agent)
-    shutil.copytree(SCAFFOLDS_DIR / scaffold / PER_AGENT_DIR / agent, project_dir, dirs_exist_ok=True)
-    _stamp_install_time(project_dir)
+    try:
+        shutil.copytree(SCAFFOLDS_DIR / scaffold / PER_AGENT_DIR / agent, project_dir, dirs_exist_ok=True)
+        _stamp_install_time(project_dir)
+    except OSError as exc:
+        raise ScaffoldError(strings.ERROR_WRITE_FAILED.format(path=project_dir, reason=exc)) from exc
 
 
 def _stamp_install_time(project_dir: Path) -> None:
