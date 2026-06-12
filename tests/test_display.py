@@ -40,7 +40,9 @@ class PrintNextStepsTests(unittest.TestCase):
         # the instruction + the verbatim prompt to hand to the agent.
         with console.capture() as cap:
             print_next_steps(Path.cwd(), scaffold="minimal_workspace", first_pipeline_ran=True, prompt_copied=True)
-        output = " ".join(cap.get().replace("│", " ").split())  # strip panel borders + line-wrapping
+        # Strip panel borders (Unicode │ on POSIX, ASCII | on the Windows console)
+        # and collapse line-wrapping so the prompt is one contiguous string.
+        output = " ".join(cap.get().replace("│", " ").replace("|", " ").split())
 
         self.assertNotIn("uv run dlthub run load_sample_shop", output)
         self.assertIn("Tell your agent to navigate to the directory you just ran", output)
