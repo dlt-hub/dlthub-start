@@ -21,8 +21,9 @@ from .display import (
     print_next_steps,
     print_resume_steps,
     print_streamed_line,
-    step,
-    streaming_step,
+    substep,
+    substep_detail,
+    substep_streaming,
 )
 from .errors import UvError, WorkspaceDirectoryNotEmptyError, WorkspaceError
 from .project_metadata import apply_workspace_name
@@ -141,11 +142,14 @@ def run(args: argparse.Namespace) -> None:
     if resolution.relocated_from is not None:
         console.print(strings.MSG_RELOCATED.format(relocated_from=resolution.relocated_from, project_dir=project_dir))
 
-    with step(strings.MSG_CREATING_WORKSPACE.format(project_dir=project_dir), verbose=verbose):
+    with substep(
+        strings.MSG_CREATING_WORKSPACE.format(project_dir=project_dir),
+        strings.MSG_CREATED.format(project_dir=project_dir),
+        verbose=verbose,
+    ):
         copy_scaffold(project_dir, scaffold=scaffold, agent=None)
         package_name = apply_workspace_name(project_dir, project_dir.name)
-    console.print(strings.MSG_CREATED.format(project_dir=project_dir))
-    console.print(strings.MSG_PACKAGE_NAME.format(package_name=package_name))
+    substep_detail(strings.MSG_PACKAGE_NAME.format(package_name=package_name))
     print_created_tree(scaffold)
 
     uv_executable = find_uv()
@@ -164,14 +168,14 @@ def run(args: argparse.Namespace) -> None:
         print_resume_steps(project_dir, uv_installed=True)
         return
 
-    with step(strings.MSG_INSTALLING_DEPS, verbose=verbose):
+    with substep(strings.MSG_INSTALLING_DEPS, strings.MSG_INSTALLED_DEPS, verbose=verbose):
         run_uv_sync(uv_executable, project_dir, verbose=verbose)
-    console.print(strings.MSG_INSTALLED_DEPS)
 
     # Skipped under --yes: the first run's login is interactive.
     first_pipeline_ran = not args.yes
     if first_pipeline_ran:
         _run_first_pipeline(uv_executable, project_dir, verbose=verbose)
+        console.print(strings.MSG_PLAYGROUND_READY)
 
     agent = _finalize_agent(project_dir, scaffold, args, verbose=verbose)
 
@@ -186,9 +190,12 @@ def run(args: argparse.Namespace) -> None:
 def _finalize_agent(project_dir: Path, scaffold: str, args: argparse.Namespace, *, verbose: bool) -> str:
     """Resolve the agent (prompting unless --agent/--yes set it) and lay down its AI files."""
     agent = args.agent or (RECOMMENDED.agent if args.yes else choose_agent())
-    with step(strings.MSG_ADDING_AGENT_FILES.format(agent=agent), verbose=verbose):
+    with substep(
+        strings.MSG_ADDING_AGENT_FILES.format(agent=agent),
+        strings.MSG_ADDED_AGENT_FILES.format(agent=agent),
+        verbose=verbose,
+    ):
         overlay_agent(project_dir, scaffold=scaffold, agent=agent)
-    console.print(strings.MSG_ADDED_AGENT_FILES.format(agent=agent))
     return agent
 
 
@@ -209,19 +216,24 @@ def _launch_agent(project_dir: Path, agent: str, *, prompt: str) -> bool:
 def _run_first_pipeline(uv_executable: str, project_dir: Path, *, verbose: bool) -> None:
     """Log in, bind the playground workspace, run load_sample_shop, open the overview."""
     # Login is the only interactive step, so stream it; it also authenticates the steps below.
-    console.print(strings.MSG_LOGGING_IN)
-    run_uv_command(uv_executable, project_dir, ["run", "dlthub", "login"], verbose=True)
+    with substep_streaming(strings.MSG_LOGGING_IN, strings.MSG_LOGGED_IN):
+        run_uv_command(uv_executable, project_dir, ["run", "dlthub", "login"], verbose=True)
 
-    with step(strings.MSG_CONNECTING_PLAYGROUND.format(workspace=PLAYGROUND_WORKSPACE), verbose=verbose):
+    with substep(
+        strings.MSG_CONNECTING_PLAYGROUND.format(workspace=PLAYGROUND_WORKSPACE),
+        strings.MSG_CONNECTED_PLAYGROUND.format(workspace=PLAYGROUND_WORKSPACE),
+        verbose=verbose,
+    ):
         # connect --create errors on an existing workspace, so pass it only when absent.
         connect_args = ["run", "dlthub", "workspace", "connect", PLAYGROUND_WORKSPACE]
         if not _playground_exists(uv_executable, project_dir):
             connect_args.append("--create")
         run_uv_command(uv_executable, project_dir, connect_args, verbose=verbose)
-    console.print(strings.MSG_CONNECTED_PLAYGROUND.format(workspace=PLAYGROUND_WORKSPACE))
 
     # --follow blocks until the remote run completes; without it the overview below would be empty.
-    with streaming_step(strings.MSG_RUNNING_FIRST_PIPELINE, note=strings.HINT_PIPELINE_STREAMING):
+    with substep_streaming(
+        strings.MSG_RUNNING_FIRST_PIPELINE, strings.MSG_RAN_FIRST_PIPELINE, note=strings.HINT_PIPELINE_STREAMING
+    ):
         run_uv_command(
             uv_executable,
             project_dir,
@@ -230,10 +242,9 @@ def _run_first_pipeline(uv_executable: str, project_dir: Path, *, verbose: bool)
             stream=True,
             on_line=print_streamed_line,
         )
-    console.print(strings.MSG_RAN_FIRST_PIPELINE)
 
-    console.print(strings.MSG_OPENING_OVERVIEW)
-    run_uv_command(uv_executable, project_dir, ["run", "dlthub", "show"], verbose=verbose)
+    with substep(strings.MSG_OPENING_OVERVIEW, strings.MSG_OPENED_OVERVIEW, verbose=verbose):
+        run_uv_command(uv_executable, project_dir, ["run", "dlthub", "show"], verbose=verbose)
 
 
 def _workspace_in_list(list_output: str, name: str) -> bool:

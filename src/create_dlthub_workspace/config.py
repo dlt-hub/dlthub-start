@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 VERSION = "0.6.0"
 
-AGENTS = ("claude", "cursor", "codex")
+AGENTS = ("claude", "codex", "cursor")
 
 AGENT_LAUNCH_COMMANDS = {
     "claude": ("claude",),

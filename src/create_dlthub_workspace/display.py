@@ -42,28 +42,38 @@ CREATED_TREE: dict[str, tuple[str, ...]] = {
 }
 
 
+def substep_done(message: str) -> None:
+    """Tick a finished sub-step with a green check."""
+    console.print(f"[green]✓[/green] {message}")
+
+
+def substep_detail(message: str) -> None:
+    """A dimmed detail line beneath a sub-step."""
+    console.print(f"[dim]{message}[/dim]")
+
+
 @contextmanager
-def step(description: str, *, verbose: bool = False) -> Iterator[None]:
-    """Show a spinner during a subprocess step, or a plain header in verbose mode."""
+def substep(running: str, done: str, *, verbose: bool = False) -> Iterator[None]:
+    """Spinner while a quick subprocess step runs, swapped for a ✓ line when it finishes."""
     if verbose:
-        console.print(f"[bold]{description}[/bold]")
+        console.print(f"[dim]{running}…[/dim]")
         yield
-        return
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        transient=True,
-        console=console,
-    ) as progress:
-        progress.add_task(description, total=None)
-        yield
+    else:
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            transient=True,
+            console=console,
+        ) as progress:
+            progress.add_task(running, total=None)
+            yield
+    substep_done(done)
 
 
 @contextmanager
-def streaming_step(description: str, *, note: str | None = None) -> Iterator[None]:
-    """Frame a streamed step with rules, no spinner (a live spinner fights the child for the cursor)."""
-    console.print()
-    console.rule(f"[bold]{description}[/bold]", style="#59C1D5", align="left")
+def substep_streaming(running: str, done: str, *, note: str | None = None) -> Iterator[None]:
+    """Frame a streamed sub-step, then tick it. No spinner — a live one fights the child for the cursor."""
+    console.print(f"[dim]{running}…[/dim]")
     if note:
         console.print(f"[dim]{note}[/dim]")
     console.print()
@@ -71,7 +81,7 @@ def streaming_step(description: str, *, note: str | None = None) -> Iterator[Non
         yield
     finally:
         console.print()
-        console.rule(style="#59C1D5")
+    substep_done(done)
 
 
 STREAM_LOG_STYLE = "dim cyan"
@@ -291,7 +301,7 @@ def print_created_tree(scaffold: str) -> None:
     entries = CREATED_TREE[scaffold]
     for index, entry in enumerate(entries):
         branch = "`-- " if index == len(entries) - 1 else "|-- "
-        console.print(f"  [dim]{branch}{entry}[/dim]")
+        console.print(f"[dim]{branch}{entry}[/dim]")
 
 
 def print_next_steps(
@@ -309,6 +319,8 @@ def print_next_steps(
         body.append(f"  {strings.CMD_BUILD_OWN_SOURCE_PROMPT}", style="bold #59C1D5")
         if prompt_copied:
             body.append(f"\n\n  {strings.HINT_PROMPT_COPIED}", style="bold #C6D300")
+        body.append(f"\n\n  {strings.LABEL_DOCS} ", style="dim")
+        body.append(strings.LINK_DOCS_LABEL, style=f"underline #59C1D5 link {strings.LINK_DOCS_URL}")
     else:
         # Lead with `cd` only for a subdirectory; in the cwd it's noise (`cd .`).
         cd = _cd_target(project_dir)
