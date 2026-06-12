@@ -24,8 +24,10 @@ dlthub-start
 
 The CLI scaffolds the workspace, checks for `uv` (offering to install it if
 missing), installs dependencies with `uv sync`, runs your first pipeline on
-dltHub, then prompts for your coding agent and sets up its files — and prints
-next steps.
+dltHub, then prompts for your coding agent and sets up its files. Finally it
+launches that agent in the workspace, seeded with a starter prompt — or, if the
+agent has no command-line launcher, prints the prompt and copies it to your
+clipboard so you can paste it in.
 
 The full setup runs through the interactive prompts:
 

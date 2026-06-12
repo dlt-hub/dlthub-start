@@ -4,16 +4,19 @@ from __future__ import annotations
 
 import argparse
 import re
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
 from . import strings
-from .config import AGENTS, PLAYGROUND_WORKSPACE, RECOMMENDED
+from .config import AGENT_LAUNCH_COMMANDS, AGENTS, PLAYGROUND_WORKSPACE, RECOMMENDED
 from .display import (
     console,
     copy_to_clipboard,
     err_console,
     print_banner,
+    print_created_tree,
     print_dir_not_empty,
     print_next_steps,
     print_resume_steps,
@@ -143,6 +146,7 @@ def run(args: argparse.Namespace) -> None:
         package_name = apply_workspace_name(project_dir, project_dir.name)
     console.print(strings.MSG_CREATED.format(project_dir=project_dir))
     console.print(strings.MSG_PACKAGE_NAME.format(package_name=package_name))
+    print_created_tree(scaffold)
 
     uv_executable = find_uv()
     if uv_executable is None:
@@ -171,15 +175,12 @@ def run(args: argparse.Namespace) -> None:
 
     agent = _finalize_agent(project_dir, scaffold, args, verbose=verbose)
 
+    if first_pipeline_ran and _launch_agent(project_dir, agent, prompt=strings.CMD_BUILD_OWN_SOURCE_PROMPT):
+        return
+
     console.print()
     prompt_copied = first_pipeline_ran and copy_to_clipboard(strings.CMD_BUILD_OWN_SOURCE_PROMPT)
-    print_next_steps(
-        project_dir,
-        scaffold=scaffold,
-        agent=agent,
-        first_pipeline_ran=first_pipeline_ran,
-        prompt_copied=prompt_copied,
-    )
+    print_next_steps(project_dir, scaffold=scaffold, first_pipeline_ran=first_pipeline_ran, prompt_copied=prompt_copied)
 
 
 def _finalize_agent(project_dir: Path, scaffold: str, args: argparse.Namespace, *, verbose: bool) -> str:
@@ -189,6 +190,20 @@ def _finalize_agent(project_dir: Path, scaffold: str, args: argparse.Namespace, 
         overlay_agent(project_dir, scaffold=scaffold, agent=agent)
     console.print(strings.MSG_ADDED_AGENT_FILES.format(agent=agent))
     return agent
+
+
+def _launch_agent(project_dir: Path, agent: str, *, prompt: str) -> bool:
+    """Launch ``agent`` in the workspace, seeded with ``prompt``; False if it has no
+    terminal CLI on PATH, so the caller falls back to the clipboard panel."""
+    base = AGENT_LAUNCH_COMMANDS.get(agent)
+    if base is None:
+        return False
+    executable = shutil.which(base[0])
+    if executable is None:
+        return False
+    console.print(strings.MSG_LAUNCHING_AGENT.format(agent=agent))
+    subprocess.run([executable, *base[1:], prompt], cwd=project_dir, check=False)
+    return True
 
 
 def _run_first_pipeline(uv_executable: str, project_dir: Path, *, verbose: bool) -> None:

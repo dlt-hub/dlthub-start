@@ -8,6 +8,11 @@ VERSION = "0.6.0"
 
 AGENTS = ("claude", "cursor", "codex")
 
+AGENT_LAUNCH_COMMANDS = {
+    "claude": ("claude",),
+    "codex": ("codex",),
+}
+
 # Name of the platform workspace the first pipeline run binds the project to.
 # A binding only (no destination) — the warehouse still comes from the profile.
 # Adjust here to rename it everywhere (CLI command + user-facing messages).

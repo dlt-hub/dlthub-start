@@ -286,64 +286,42 @@ def _cd_target(project_dir: Path) -> str:
     return str(relative)
 
 
+def print_created_tree(scaffold: str) -> None:
+    """List the files the scaffold dropped, printed right after creation."""
+    entries = CREATED_TREE[scaffold]
+    for index, entry in enumerate(entries):
+        branch = "`-- " if index == len(entries) - 1 else "|-- "
+        console.print(f"  [dim]{branch}{entry}[/dim]")
+
+
 def print_next_steps(
     project_dir: Path,
     *,
     scaffold: str,
-    agent: str | None = None,
     first_pipeline_ran: bool = False,
     prompt_copied: bool = False,
 ) -> None:
-    """Post-setup tips panel. Steps are tailored to the chosen scaffold.
-
-    When ``first_pipeline_ran`` is True, the run / view-runs steps already
-    happened during setup, so the panel shows the post-run step instead.
-    ``prompt_copied`` flips the wording to say the prompt is already on the
-    clipboard (the actual copy happens in the orchestration layer).
-    """
-    created_tree = CREATED_TREE[scaffold]
-    # Lead with "go to the directory" only when the workspace is a subdirectory;
-    # when it's the current directory (cwd) the cd step is noise (`cd .`).
-    cd = _cd_target(project_dir)
-    cd_step: tuple[tuple[str, str | None], ...] = (
-        () if cd == "." else ((strings.STEPS_LABEL_CD, strings.CMD_CD.format(project_dir=cd)),)
-    )
-    if first_pipeline_ran:
-        # The run / view-runs steps already happened during setup. Point the user
-        # at building their own pipeline, with a verbatim prompt to paste into the
-        # coding agent they chose (the prompt itself is never reformatted).
-        label_template = (
-            strings.STEPS_LABEL_BUILD_OWN_SOURCE_COPIED if prompt_copied else strings.STEPS_LABEL_BUILD_OWN_SOURCE
-        )
-        label = label_template.format(agent=agent or "coding")
-        next_steps: tuple[tuple[str, str | None], ...] = ((label, strings.CMD_BUILD_OWN_SOURCE_PROMPT),)
-    else:
-        next_steps = NEXT_STEPS[scaffold]
-    steps: tuple[tuple[str, str | None], ...] = (*cd_step, *next_steps)
-
+    """Post-setup panel. After the first run, it's just the prompt to hand to the
+    agent; otherwise it lists the run/edit steps for the scaffold."""
     body = Text()
-    body.append(f"{strings.LABEL_CREATED}\n\n", style="bold #C6D300")
-    for index, entry in enumerate(created_tree):
-        branch = "`-- " if index == len(created_tree) - 1 else "|-- "
-        body.append(f"  {branch}{entry}\n", style="dim")
-    if agent:
-        body.append(f"  {strings.LABEL_CODING_AGENT} ", style="dim")
-        body.append(agent, style="bold #59C1D5")
-        body.append("\n")
-    body.append("\n")
-    body.append(f"{strings.LABEL_WHAT_TO_TRY}\n\n", style="bold #C6D300")
-    for index, (label, command) in enumerate(steps, start=1):
-        body.append(f"  {index}. {label}\n", style="dim")
-        if command is not None:
-            body.append(f"     {command}\n", style="bold #59C1D5")
-        body.append("\n")
-    body.append(f"  {strings.LABEL_DOCS} ", style="dim")
-    body.append(
-        strings.LINK_DOCS_LABEL,
-        style=f"underline #59C1D5 link {strings.LINK_DOCS_URL}",
-    )
-    if cd != ".":
-        body.append(f"\n\n  {strings.MSG_AGENT_WORKSPACE_NOTE}", style="dim")
+    if first_pipeline_ran:
+        body.append(f"{strings.STEPS_LABEL_BUILD_OWN_SOURCE}\n\n")
+        body.append(f"  {strings.CMD_BUILD_OWN_SOURCE_PROMPT}", style="bold #59C1D5")
+        if prompt_copied:
+            body.append(f"\n\n  {strings.HINT_PROMPT_COPIED}", style="bold #C6D300")
+    else:
+        # Lead with `cd` only for a subdirectory; in the cwd it's noise (`cd .`).
+        cd = _cd_target(project_dir)
+        cd_step: tuple[tuple[str, str | None], ...] = (
+            () if cd == "." else ((strings.STEPS_LABEL_CD, strings.CMD_CD.format(project_dir=cd)),)
+        )
+        steps: tuple[tuple[str, str | None], ...] = (*cd_step, *NEXT_STEPS[scaffold])
+        body.append(f"{strings.LABEL_WHAT_TO_TRY}\n\n", style="bold #C6D300")
+        for index, (label, command) in enumerate(steps, start=1):
+            body.append(f"  {index}. {label}\n", style="dim")
+            if command is not None:
+                body.append(f"     {command}\n", style="bold #59C1D5")
+            body.append("\n")
 
     console.print(
         Panel(
@@ -373,13 +351,8 @@ def print_resume_steps(project_dir: Path, *, uv_installed: bool) -> None:
     for index, (label, command) in enumerate(steps, start=1):
         body.append(f"  {index}. {label}\n", style="dim")
         body.append(f"     {command}\n\n", style="bold #59C1D5")
-    body.append(f"  {strings.LABEL_DOCS} ", style="dim")
-    body.append(
-        strings.LINK_DOCS_LABEL,
-        style=f"underline #59C1D5 link {strings.LINK_DOCS_URL}",
-    )
     if cd != ".":
-        body.append(f"\n\n  {strings.MSG_AGENT_WORKSPACE_NOTE}", style="dim")
+        body.append(f"  {strings.MSG_AGENT_WORKSPACE_NOTE}", style="dim")
 
     console.print(
         Panel(

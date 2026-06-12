@@ -21,7 +21,10 @@ from __future__ import annotations
 
 
 # Prompts ---------------------------------------------------------------
-PROMPT_AGENT_HEADER = "\n[bold]Choose your coding agent[/bold] [dim](↑/↓ to move, enter to confirm)[/dim]"
+PROMPT_AGENT_HEADER = (
+    "\n[bold]Choose your coding agent[/bold] [dim](↑/↓ to move, enter to confirm)[/dim]"
+    "\n[dim]We'll set it up in this workspace and launch it, ready to build a pipeline for your own data.[/dim]"
+)
 PROMPT_INSTALL_UV = "uv is required but was not found. Install uv now?"
 
 
@@ -60,6 +63,9 @@ MSG_INSTALLING_DEPS = "Installing dependencies"
 MSG_INSTALLED_DEPS = "[green]Installed[/green] dependencies into .venv"
 MSG_ADDING_AGENT_FILES = "Adding {agent} workbench files"
 MSG_ADDED_AGENT_FILES = "[green]Added[/green] {agent} workbench files"
+MSG_LAUNCHING_AGENT = (
+    "\n[bold #59C1D5]Launching {agent}[/bold #59C1D5] in your workspace — your skills and MCP server are ready.\n"
+)
 # First-run flow messages. Spinner descriptions get a matching "done" line printed after.
 MSG_LOGGING_IN = "\nLogging in to dltHub — follow the prompts below…\n"
 MSG_CONNECTING_PLAYGROUND = "Connecting to a {workspace} workspace"
@@ -100,22 +106,15 @@ MSG_DIR_NOT_EMPTY = (
 
 
 # Section labels inside panels ------------------------------------------
-LABEL_CREATED = "Created"
-LABEL_CODING_AGENT = "Coding agent:"
 LABEL_WHAT_TO_TRY = "What to try next"
 LABEL_FINISH_SETUP = "Finish setup"
-LABEL_DOCS = "Docs:"
 
 
 # Hint text / badges / taglines -----------------------------------------
 HINT_RECOMMENDED_SUFFIX = " [dim](recommended)[/dim]"
+HINT_CODEX_SUFFIX = " [dim](or other agents, e.g. Copilot)[/dim]"
 HINT_NONE = "(none)"
 HINT_BANNER_TAGLINE = "Onboarding"
-
-
-# Links -----------------------------------------------------------------
-LINK_DOCS_URL = "https://github.com/dlt-hub/dlthub-ai-workbench/blob/master/README.md"
-LINK_DOCS_LABEL = "github.com/dlt-hub/dlthub-ai-workbench"
 
 
 # Step labels (prose halves of the (label, command) tuples) -------------
@@ -124,9 +123,9 @@ STEPS_LABEL_RUN_SAMPLE_SHOP = "Run the sample shop pipeline in dltHub (you'll be
 STEPS_LABEL_VIEW_SAMPLE_SHOP_RUNS = "View runs for the sample shop pipeline:"
 STEPS_LABEL_EDIT_PIPELINE = "Edit pipeline.py to swap in your own source, then re-run."
 STEPS_LABEL_BUILD_OWN_SOURCE = (
-    "Ready for your own data? Copy this prompt to your {agent} agent (swap in your API and the data you want):"
+    "Tell your agent to navigate to the directory you just ran the dlthub-start command in and paste this prompt:"
 )
-STEPS_LABEL_BUILD_OWN_SOURCE_COPIED = "Ready for your own data? This prompt is on your clipboard — paste it into your {agent} agent (swap in your API and the data you want):"
+HINT_PROMPT_COPIED = "✓ Already copied to your clipboard — just paste it in."
 STEPS_LABEL_INSTALL_UV = "Install uv:"
 STEPS_LABEL_INSTALL_DEPS = "Install workspace dependencies:"
 
@@ -137,7 +136,4 @@ CMD_UV_SYNC = "uv sync"
 CMD_DLTHUB_RUN_SAMPLE_SHOP = "uv run dlthub run load_sample_shop"
 CMD_DLTHUB_JOB_RUNS_SHOW_SAMPLE_SHOP = "uv run dlthub job runs show pipeline.load_sample_shop"
 CMD_CD = "cd {project_dir}"
-# Verbatim copy-paste prompt for the user's coding agent — shown in the command
-# slot of the post-run next-steps panel. Used as-is (never .format()'d), so the
-# {API name} / {endpoint/data} braces are literal blanks for the user to fill.
-CMD_BUILD_OWN_SOURCE_PROMPT = "Build a dlt pipeline for the {API name} API and load {endpoint/data} into DuckDB."
+CMD_BUILD_OWN_SOURCE_PROMPT = "Build a dlt pipeline for the [API name] API and load [endpoint/data] into DuckDB."
