@@ -79,8 +79,6 @@ jobs:
       - name: Build wheel
         run: uv build
 
-  # Drift guard: fail if uv.lock is out of sync with pyproject.toml.
-  # Runs on one platform only — the lockfile is platform-independent.
   lock-check:
     name: uv.lock drift
     runs-on: ubuntu-latest
@@ -96,12 +94,11 @@ jobs:
           enable-cache: true
 
       - name: Verify lockfile is in sync with pyproject.toml
-        run: uv lock --check
+        run: make lock-check
 
-  # Drift guard: regenerates the bundled AI workbench files from the pinned
-  # WORKBENCH_REF and fails if the result doesn't match what's committed.
-  # Runs on one platform only — the output is platform-independent and we
-  # don't need to triple the CI time.
+      - name: Verify bundled workspace lockfile is in sync with its pyproject.toml
+        run: make scaffold-lock-check
+
   check-ai:
     name: AI workbench drift
     runs-on: ubuntu-latest

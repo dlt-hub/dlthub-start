@@ -118,8 +118,8 @@ Run the full local CI workflow:
 make ci
 ```
 
-`make ci` runs compile checks, linting, unit tests, integration tests, AI
-scaffold drift checks, and package build.
+`make ci` runs compile checks, linting, unit tests, integration tests, lockfile
+drift checks, AI scaffold drift checks, and package build.
 
 ## Build
 
@@ -151,6 +151,25 @@ The source ref is pinned in `WORKBENCH_REF` in
 you only need to regenerate against the already-pinned ref, run `make
 generate-ai` directly. `make check-ai` reruns generation and fails if the
 committed scaffolds drift from the pinned workbench ref.
+
+## Lockfiles
+
+There are two committed `uv.lock` files: the root project's, and the bundled
+workspace scaffold's (`src/create_dlthub_workspace/scaffolds/minimal_workspace/uv.lock`,
+shipped so new workspaces install from pinned versions). Each has a symmetric
+pair of make targets:
+
+| | Upgrade | Drift check |
+|---|---|---|
+| Root | `make lock-upgrade` | `make lock-check` |
+| Scaffold | `make scaffold-lock-upgrade` | `make scaffold-lock-check` |
+
+- `*-upgrade` re-resolves the lockfile to the newest dependency versions its
+  `pyproject.toml` allows. Pass `PKG=<name>` to bump a single package instead of
+  everything. Review the diff and commit.
+- `*-check` fails if the lockfile is out of sync with its `pyproject.toml`. Both
+  checks run in CI and are part of `make ci`; if one fails, run the matching
+  `*-upgrade` target and commit.
 
 ## Release Checklist
 
