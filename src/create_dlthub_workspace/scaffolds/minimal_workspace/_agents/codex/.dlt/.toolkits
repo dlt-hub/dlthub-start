@@ -10,18 +10,18 @@ init:
   installed_at: '1970-01-01T00:00:00+00:00'
   agent: codex
   files:
-    .agents\skills\improve-skills\SKILL.md:
-      sha3_256: bf41f86f63b0bc8e7209a96c4ba38fb5d954f43ee9800855d4ff675acbaed861
-    .agents\skills\setup-secrets\cli-reference.md:
-      sha3_256: 8b972813409b5609aa6fbaaa7a060def42ad9da9a10a4ca18ca4ce801518fd11
-    .agents\skills\setup-secrets\SKILL.md:
-      sha3_256: 3dfee343aa9a421867634ef2c36956987421bc30474d9d6c8fe3e14198d294b8
-    .agents\skills\toolkit-dispatch\SKILL.md:
-      sha3_256: 42c8e675a1f17ce698bfb5c9c16ddcc6989b46cb31a6e42633ce59d204443058
+    .agents/skills/improve-skills/SKILL.md:
+      sha3_256: c52b222d82d101eaacbbf19d271d3f24b20d8e2bc70d49919d56144d448cd5c4
+    .agents/skills/setup-secrets/SKILL.md:
+      sha3_256: 83fb6e1af003c065ce3bb26042f0e2de24a22df14353db23ad4f6192d90e7785
+    .agents/skills/setup-secrets/cli-reference.md:
+      sha3_256: b3aed4466ecb84770e11176b5b07b109093c72808c44b73d02c5cd789af86c97
+    .agents/skills/toolkit-dispatch/SKILL.md:
+      sha3_256: de66960f9e0f46a11adbb6c203dafdd61d94f4768e2c36465efb66f7f7573577
     .codexignore:
-      sha3_256: 57cef6343d5f0f1c8a8659fcfb909f7eedfdb2d8c6fdd054014327ef4568b3f6
-    .agents\skills\init-dlthub-workspace\SKILL.md:
-      sha3_256: 20bfaaf40aaddfac8b28b2e834e47c3d811c4eb6cbc73ce2415c9046617c632a
+      sha3_256: 1aa4dc9286dd219dcb55399f388c5ee1f940ab5e399a42b644d488cba57a9ec0
+    .agents/skills/init-dlthub-workspace/SKILL.md:
+      sha3_256: 2e1d6d054a9c613a3ca3fc353795e5630760d0deb99bf76307f2523cefb6adae
   mcp_servers:
   - dlt-workspace-mcp
   name: init
@@ -41,12 +41,12 @@ one-shot:
   installed_at: '1970-01-01T00:00:00+00:00'
   agent: codex
   files:
-    .agents\skills\create-minimal-pipeline\SKILL.md:
-      sha3_256: df34d331c3d8bb341700ab7d124a0bf0010c42b1c070fa87a456d32dcee721b4
-    .agents\skills\deploy-minimal-pipeline\SKILL.md:
-      sha3_256: 0cde32ec42d9c1b14696fea1929bc56bfed70adf82ed301f1d2219ba8c60b7a3
-    .agents\skills\one-shot-workflow\SKILL.md:
-      sha3_256: 29b95e56215867ec209c865e1fba5468ea4326420848a95d247a41eca79271c1
+    .agents/skills/create-minimal-pipeline/SKILL.md:
+      sha3_256: 17ab1b6f1e5e46ed523de43e0bc07f1645c80d6af3f7e83c20f9032c813686da
+    .agents/skills/deploy-minimal-pipeline/SKILL.md:
+      sha3_256: bf778dc0e80c500f0c0779f86f086a53e51f45dc84c83cd9daa43ad5f8356a6a
+    .agents/skills/one-shot-workflow/SKILL.md:
+      sha3_256: ec17bca01366af894bc7be331183c48e01c90b8b77952d3344b7b47f3d11ae2e
   name: one-shot
 data-exploration:
   version: 0.1.1
@@ -65,15 +65,15 @@ data-exploration:
   installed_at: '1970-01-01T00:00:00+00:00'
   agent: codex
   files:
-    .agents\skills\build-notebook\references\notebook-patterns.md:
-      sha3_256: 16da08c55d5bdde289e54dbb7c378e3906b4b20d1874f0bc4194f786e43c7bfc
-    .agents\skills\build-notebook\SKILL.md:
-      sha3_256: 8052fcd5e330644b6f704699385bc0f9329254bd302256f09254458c64db2780
-    .agents\skills\explore-data\references\analysis-plan-format.md:
-      sha3_256: e5ddff73aeb064a672dc915dd9b2725ca624d495a4311cac8bd0152eaad6c498
-    .agents\skills\explore-data\references\dlt-relation-api.md:
-      sha3_256: 12164f5e87759d420352bd6c8851c4daf3677a189e7a28ff8d77287128824b4d
-    .agents\skills\explore-data\SKILL.md:
-      sha3_256: f6b5438543e0d3082bc8e6db6183f3323bdad8b3ef52fda31aca40d7f0889c3e
-    .agents\skills\data-exploration-workflow\SKILL.md:
-      sha3_256: 2d624ee00c31626e4b6c52f279ecd4b987b4e6d82b7f80c80fe3b4390c10cfd7
+    .agents/skills/build-notebook/SKILL.md:
+      sha3_256: a88f4c19fb10f5afcdcf389e11b938310d1457bf86fed0b28df9cab606961a91
+    .agents/skills/build-notebook/references/notebook-patterns.md:
+      sha3_256: 96d80469820be9e1beddd10961b0a588da526c7678a0d12561e24f30e91037d3
+    .agents/skills/explore-data/SKILL.md:
+      sha3_256: d703ba8cf43cd5564274df0b51bb2df791598c3de27f904ee71ce295595f6cee
+    .agents/skills/explore-data/references/analysis-plan-format.md:
+      sha3_256: 8fcb5223200f4e566432fda35be8b555b8a88274b9f1dc42c41a21c4d6ddbab5
+    .agents/skills/explore-data/references/dlt-relation-api.md:
+      sha3_256: a13cb108f3e47f13b85d54e98c5e486f2c7b12638e00b168ddffc9e33e745047
+    .agents/skills/data-exploration-workflow/SKILL.md:
+      sha3_256: 4810fdfa0bef632366fbd3a99d9c6e2bab7bc89b4194da2dc0a2c8d9c8dcc66e

@@ -10,18 +10,18 @@ init:
   installed_at: '1970-01-01T00:00:00+00:00'
   agent: claude
   files:
-    .claude\skills\improve-skills\SKILL.md:
-      sha3_256: bf41f86f63b0bc8e7209a96c4ba38fb5d954f43ee9800855d4ff675acbaed861
-    .claude\skills\setup-secrets\cli-reference.md:
-      sha3_256: 8b972813409b5609aa6fbaaa7a060def42ad9da9a10a4ca18ca4ce801518fd11
-    .claude\skills\setup-secrets\SKILL.md:
-      sha3_256: 3dfee343aa9a421867634ef2c36956987421bc30474d9d6c8fe3e14198d294b8
-    .claude\skills\toolkit-dispatch\SKILL.md:
-      sha3_256: 42c8e675a1f17ce698bfb5c9c16ddcc6989b46cb31a6e42633ce59d204443058
+    .claude/skills/improve-skills/SKILL.md:
+      sha3_256: c52b222d82d101eaacbbf19d271d3f24b20d8e2bc70d49919d56144d448cd5c4
+    .claude/skills/setup-secrets/SKILL.md:
+      sha3_256: 83fb6e1af003c065ce3bb26042f0e2de24a22df14353db23ad4f6192d90e7785
+    .claude/skills/setup-secrets/cli-reference.md:
+      sha3_256: b3aed4466ecb84770e11176b5b07b109093c72808c44b73d02c5cd789af86c97
+    .claude/skills/toolkit-dispatch/SKILL.md:
+      sha3_256: de66960f9e0f46a11adbb6c203dafdd61d94f4768e2c36465efb66f7f7573577
     .claudeignore:
-      sha3_256: 57cef6343d5f0f1c8a8659fcfb909f7eedfdb2d8c6fdd054014327ef4568b3f6
-    .claude\rules\init-dlthub-workspace.md:
-      sha3_256: ce9983b0069d4d9ac492e579dca0f17151a98f44e7ece0fc65730de4aa114f61
+      sha3_256: 1aa4dc9286dd219dcb55399f388c5ee1f940ab5e399a42b644d488cba57a9ec0
+    .claude/rules/init-dlthub-workspace.md:
+      sha3_256: d31822958b9288aa6a181081ca04c988f46e49894ab65cfc2df9062010dc50c8
   mcp_servers:
   - dlt-workspace-mcp
   name: init
@@ -41,12 +41,12 @@ one-shot:
   installed_at: '1970-01-01T00:00:00+00:00'
   agent: claude
   files:
-    .claude\skills\create-minimal-pipeline\SKILL.md:
-      sha3_256: df34d331c3d8bb341700ab7d124a0bf0010c42b1c070fa87a456d32dcee721b4
-    .claude\skills\deploy-minimal-pipeline\SKILL.md:
-      sha3_256: 0cde32ec42d9c1b14696fea1929bc56bfed70adf82ed301f1d2219ba8c60b7a3
-    .claude\rules\one-shot-workflow.md:
-      sha3_256: 48a284c649ba9fa247982a0a5f275aa756fe43233f0473e46b82fc7d8f75ca04
+    .claude/skills/create-minimal-pipeline/SKILL.md:
+      sha3_256: 17ab1b6f1e5e46ed523de43e0bc07f1645c80d6af3f7e83c20f9032c813686da
+    .claude/skills/deploy-minimal-pipeline/SKILL.md:
+      sha3_256: bf778dc0e80c500f0c0779f86f086a53e51f45dc84c83cd9daa43ad5f8356a6a
+    .claude/rules/one-shot-workflow.md:
+      sha3_256: 3540c59d72cb7585ed78f4ad895b50b78607f05efcabe4e12f127f5b2e427077
   name: one-shot
 data-exploration:
   version: 0.1.1
@@ -65,15 +65,15 @@ data-exploration:
   installed_at: '1970-01-01T00:00:00+00:00'
   agent: claude
   files:
-    .claude\skills\build-notebook\references\notebook-patterns.md:
-      sha3_256: 16da08c55d5bdde289e54dbb7c378e3906b4b20d1874f0bc4194f786e43c7bfc
-    .claude\skills\build-notebook\SKILL.md:
-      sha3_256: 8052fcd5e330644b6f704699385bc0f9329254bd302256f09254458c64db2780
-    .claude\skills\explore-data\references\analysis-plan-format.md:
-      sha3_256: e5ddff73aeb064a672dc915dd9b2725ca624d495a4311cac8bd0152eaad6c498
-    .claude\skills\explore-data\references\dlt-relation-api.md:
-      sha3_256: 12164f5e87759d420352bd6c8851c4daf3677a189e7a28ff8d77287128824b4d
-    .claude\skills\explore-data\SKILL.md:
-      sha3_256: f6b5438543e0d3082bc8e6db6183f3323bdad8b3ef52fda31aca40d7f0889c3e
-    .claude\rules\data-exploration-workflow.md:
-      sha3_256: 400bf3f4f9d0b7eb4f3d1fcb1cd67501463c52a2a9db8853984a2ac73c79c10c
+    .claude/skills/build-notebook/SKILL.md:
+      sha3_256: a88f4c19fb10f5afcdcf389e11b938310d1457bf86fed0b28df9cab606961a91
+    .claude/skills/build-notebook/references/notebook-patterns.md:
+      sha3_256: 96d80469820be9e1beddd10961b0a588da526c7678a0d12561e24f30e91037d3
+    .claude/skills/explore-data/SKILL.md:
+      sha3_256: d703ba8cf43cd5564274df0b51bb2df791598c3de27f904ee71ce295595f6cee
+    .claude/skills/explore-data/references/analysis-plan-format.md:
+      sha3_256: 8fcb5223200f4e566432fda35be8b555b8a88274b9f1dc42c41a21c4d6ddbab5
+    .claude/skills/explore-data/references/dlt-relation-api.md:
+      sha3_256: a13cb108f3e47f13b85d54e98c5e486f2c7b12638e00b168ddffc9e33e745047
+    .claude/rules/data-exploration-workflow.md:
+      sha3_256: 148046c45f2c5c357343e8fdb60ddcfcc803ffeaa5407b08e5384f073b585c6c
