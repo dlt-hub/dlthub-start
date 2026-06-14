@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Bundled AI toolkits are now `one-shot` and `data-exploration` (previously `one-shot-pipeline` and `dlthub-platform`). The one-shot toolkit is reshaped around `create-minimal-pipeline` and `deploy-minimal-pipeline`; the platform deployment toolkit (`deploy-workspace`, `prepare-deployment`, `setup-runtime`, `debug-deployment`, …) is dropped in favor of `data-exploration` (`explore-data`, `build-notebook`).
+- Bumped `WORKBENCH_REF` to `eeacfb8a` and refreshed the bundled AI workbench scaffolds across all agents (claude/codex/cursor).
+
 ## [0.7.0] - 2026-06-12
 
 ### Changed
