@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help dev test test-integration compile build clean-dist publish-library ci workspace workspace-env workspace-local workspace-stage workspace-dev workspace-here lint lint-fix format format-check fl lint-ci generate-ai update-ai check-ai
+.PHONY: help dev test test-integration compile build clean-dist publish-library ci workspace workspace-env workspace-local workspace-stage workspace-dev workspace-here lint lint-fix format format-check fl lint-ci generate-ai update-ai check-ai lock-upgrade lock-check scaffold-lock-upgrade scaffold-lock-check
 
 PYTHONPYCACHEPREFIX ?= /tmp/create-dlthub-pyc
 PACKAGE_MODULES := $(wildcard src/create_dlthub_workspace/*.py)
@@ -99,7 +99,7 @@ workspace-here: dev ## Init in place: make empty ./$(WORKSPACE_HERE_DIR), cd in,
 	mkdir -p -- "$(WORKSPACE_HERE_DIR)"
 	cd "$(WORKSPACE_HERE_DIR)" && "$(CURDIR)/.venv/bin/dlthub-start" $(ARGS)
 
-ci: compile lint-ci test test-integration check-ai build ## Run all CI checks locally
+ci: compile lint-ci test test-integration lock-check scaffold-lock-check check-ai build ## Run all CI checks locally
 
 #
 # Bundled AI workbench refresh
@@ -127,5 +127,45 @@ check-ai: ## CI guard: fail if generate-ai would produce a diff (generate-ai out
 		printf '%s\n' "$$changed" | sed 's/^/    /'; \
 		echo ""; \
 		git --no-pager diff -- src/create_dlthub_workspace/scaffolds; \
+		exit 1; \
+	fi
+
+#
+# Lockfiles
+#
+
+SCAFFOLD_DIR ?= src/create_dlthub_workspace/scaffolds/minimal_workspace
+
+lock-upgrade: ## Upgrade the root uv.lock to the latest deps pyproject.toml allows (PKG=<name> to bump just one); review the diff and commit
+	@echo "lock-upgrade: re-resolving uv.lock to the latest deps pyproject.toml allows…"
+	uv lock $(if $(PKG),--upgrade-package $(PKG),--upgrade)
+	@echo "lock-upgrade: done — review 'git diff uv.lock' and commit."
+
+lock-check: ## CI guard: fail if the root uv.lock is out of sync with pyproject.toml
+	@echo "lock-check: checking uv.lock against pyproject.toml…"; \
+	log="$$(mktemp)"; \
+	if uv lock --check >"$$log" 2>&1; then \
+		rm -f "$$log"; \
+		echo "lock-check: OK — uv.lock is in sync with pyproject.toml."; \
+	else \
+		echo "lock-check: FAILED — uv.lock is out of sync; run 'make lock-upgrade' and commit. uv output:"; \
+		cat "$$log"; rm -f "$$log"; \
+		exit 1; \
+	fi
+
+scaffold-lock-upgrade: ## Upgrade the bundled workspace uv.lock to the latest deps its pyproject allows (PKG=<name> to bump just one); review the diff and commit
+	@echo "scaffold-lock-upgrade: re-resolving $(SCAFFOLD_DIR)/uv.lock to the latest deps its pyproject.toml allows…"
+	uv lock $(if $(PKG),--upgrade-package $(PKG),--upgrade) --project $(SCAFFOLD_DIR)
+	@echo "scaffold-lock-upgrade: done — review 'git diff $(SCAFFOLD_DIR)/uv.lock' and commit."
+
+scaffold-lock-check: ## CI guard: fail if the bundled workspace uv.lock is out of sync with its pyproject
+	@echo "scaffold-lock-check: checking $(SCAFFOLD_DIR)/uv.lock against its pyproject.toml…"; \
+	log="$$(mktemp)"; \
+	if uv lock --check --project $(SCAFFOLD_DIR) >"$$log" 2>&1; then \
+		rm -f "$$log"; \
+		echo "scaffold-lock-check: OK — uv.lock is in sync with pyproject.toml."; \
+	else \
+		echo "scaffold-lock-check: FAILED — uv.lock is out of sync; run 'make scaffold-lock-upgrade' and commit. uv output:"; \
+		cat "$$log"; rm -f "$$log"; \
 		exit 1; \
 	fi
