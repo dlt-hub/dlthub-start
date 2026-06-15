@@ -236,11 +236,15 @@ ROWS = [
 ]
 
 
+# Widen each run to offset the ~2:1 tall-to-wide terminal cell ratio.
+_LOGO_WIDTH_SCALE = 2
+
+
 def _build_logo() -> Text:
     logo = Text()
     for row in ROWS:
         for text, style in row:
-            logo.append(text, style=style)
+            logo.append(text * _LOGO_WIDTH_SCALE, style=style)
         logo.append("\n")
     logo.append(f"\n  {strings.HINT_BANNER_TAGLINE}", style="dim")
     return logo
@@ -248,6 +252,7 @@ def _build_logo() -> Text:
 
 def print_banner() -> None:
     title = Text.from_markup(strings.TITLE_BANNER.format(version=VERSION))
+    console.print()
     console.print(
         Panel(
             _build_logo(),
