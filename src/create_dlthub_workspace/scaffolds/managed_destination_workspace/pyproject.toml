@@ -1,0 +1,9 @@
+[project]
+name = "dlthub-managed-destination-workspace"
+version = "0.1.0"
+description = "Managed destination dltHub workspace"
+requires-python = ">=3.12"
+dependencies = [
+    "deltalake>=1.6.0",
+    "dlt[duckdb,hub,parquet]>=1.27.2",
+]
