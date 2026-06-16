@@ -45,7 +45,7 @@ class RecommendedPath:
 
 
 RECOMMENDED = RecommendedPath(
-    scaffold="minimal_workspace",
+    scaffold="managed_destination_workspace",
     install_uv=True,
     agent="claude",
 )

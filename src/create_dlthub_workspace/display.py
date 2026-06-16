@@ -24,7 +24,7 @@ console = Console()
 err_console = Console(stderr=True)
 
 NEXT_STEPS: dict[str, tuple[tuple[str, str | None], ...]] = {
-    "minimal_workspace": (
+    "managed_destination_workspace": (
         (strings.STEPS_LABEL_RUN_SAMPLE_SHOP, strings.CMD_DLTHUB_RUN_SAMPLE_SHOP),
         (strings.STEPS_LABEL_VIEW_SAMPLE_SHOP_RUNS, strings.CMD_DLTHUB_JOB_RUNS_SHOW_SAMPLE_SHOP),
         (strings.STEPS_LABEL_EDIT_PIPELINE, None),
@@ -32,7 +32,7 @@ NEXT_STEPS: dict[str, tuple[tuple[str, str | None], ...]] = {
 }
 
 CREATED_TREE: dict[str, tuple[str, ...]] = {
-    "minimal_workspace": (
+    "managed_destination_workspace": (
         "pyproject.toml",
         "pipeline.py",
         "__deployment__.py",
