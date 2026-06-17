@@ -39,6 +39,8 @@ def load_sample_shop():
 
     pipeline = dlt.pipeline(
         pipeline_name="sample_shop_pipeline",
+        # "playground" is a managed destination provided by the dltHub platform for onboarding.
+        # Don't swap away from "playground" for this script; see the "Destination" section in README.md.
         destination="playground",
         dataset_name="sample_shop",
     )
