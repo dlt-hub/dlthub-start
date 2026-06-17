@@ -4,8 +4,9 @@ version = "0.1.0"
 description = "Minimal dltHub workspace"
 requires-python = ">=3.12"
 dependencies = [
-    "dlt[hub,filesystem]>=1.17.0",
+    "dlt[hub,filesystem,parquet]>=1.27.2",
     "dlthub[mcp]",
+    "deltalake>=1.6.0",
     "duckdb<1.4.3",
     "marimo>=0.23.8",
     "altair",
