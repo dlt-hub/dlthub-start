@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Bundled AI toolkits are now `one-shot` and `data-exploration` (previously `one-shot-pipeline` and `dlthub-platform`). The one-shot toolkit is reshaped around `create-minimal-pipeline` and `deploy-minimal-pipeline`; the platform deployment toolkit (`deploy-workspace`, `prepare-deployment`, `setup-runtime`, `debug-deployment`, …) is dropped in favor of `data-exploration` (`explore-data`, `build-notebook`).
-- Bumped `WORKBENCH_REF` to `eeacfb8a` and refreshed the bundled AI workbench scaffolds across all agents (claude/codex/cursor).
+- Bumped `WORKBENCH_REF` to `a6a4b08e` and refreshed the bundled AI workbench scaffolds across all agents (claude/codex/cursor).
 - Widened the startup banner logo so it no longer renders compressed, and added a blank line above it for spacing.
 - The minimal workspace now loads into the managed, zero-config `playground` delta destination instead of local `warehouse` (duckdb), so data persists across ephemeral job runs. Bumps the `dlt` floor to `[hub,deltalake]>=1.27.2` (drops the unused `filesystem` extra, adds `deltalake` which pulls `deltalake`/`pyarrow`; `1.28.0` in `uv.lock`) and drops the orphaned `[destination.warehouse]` block.
 - After the first pipeline run, the CLI no longer streams the run's logs live or opens the workspace overview. It now submits the run without `--follow` and then surfaces it with `dlthub job runs show pipeline.load_sample_shop`, so the user sees the run and its logs instead of an overview page.
