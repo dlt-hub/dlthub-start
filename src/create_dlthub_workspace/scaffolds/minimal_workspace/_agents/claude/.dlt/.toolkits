@@ -24,3 +24,23 @@ init:
       sha3_256: d31822958b9288aa6a181081ca04c988f46e49894ab65cfc2df9062010dc50c8
   mcp_servers:
   - dlt-workspace-mcp
+  name: init
+one-shot:
+  version: 0.1.0
+  description: Deploy a GitHub issues pipeline to dltHub Platform in one shot
+  tags:
+  - dlthub
+  - pipeline
+  - one-shot
+  - data-pipeline
+  - python
+  dependencies:
+  - init
+  workflow_entry_skill: deploy-run-sample-pipeline
+  installed_at: '1970-01-01T00:00:00+00:00'
+  agent: claude
+  files:
+    .claude/skills/deploy-run-sample-pipeline/SKILL.md:
+      sha3_256: 9a94c40686e10f801e4329da2d838a50be380eb1beccee10d7230a72117dbab6
+    .claude/rules/one-shot-workflow.md:
+      sha3_256: a477647f9e7a3da9f9276c10fbddb83dfe2851443617d5615328e2b1a0f3edad
