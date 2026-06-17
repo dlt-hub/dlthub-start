@@ -84,14 +84,6 @@ def substep_streaming(running: str, done: str, *, note: str | None = None) -> It
     substep_done(done)
 
 
-STREAM_LOG_STYLE = "dim cyan"
-
-
-def print_streamed_line(line: str) -> None:
-    """Print one streamed-output line verbatim (no markup/highlight), terminal-wrapped."""
-    console.print(line, style=STREAM_LOG_STYLE, markup=False, highlight=False, soft_wrap=True)
-
-
 ROWS = [
     [
         ("", ""),

@@ -11,6 +11,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from create_dlthub_workspace import strings
 from create_dlthub_workspace.config import VERSION
 from create_dlthub_workspace.display import (
     CREATED_TREE,
@@ -46,7 +47,7 @@ class PrintNextStepsTests(unittest.TestCase):
 
         self.assertNotIn("uv run dlthub run load_sample_shop", output)
         self.assertIn("Tell your agent to navigate to the directory you just ran", output)
-        self.assertIn("Build a dlt pipeline for the [API name] API and load [endpoint/data] into DuckDB", output)
+        self.assertIn(strings.CMD_BUILD_OWN_SOURCE_PROMPT, output)
         self.assertIn("Already copied to your clipboard", output)
 
     def test_unknown_scaffold_raises_key_error(self) -> None:

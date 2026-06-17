@@ -1,7 +1,7 @@
 """Sample Shop dlt pipeline.
 
 Loads customers, orders, items, products, supplies, and stores
-from a public sample online-shop REST API into a local warehouse.
+from a public sample online-shop REST API into the managed playground destination.
 """
 
 import dlt
@@ -39,7 +39,9 @@ def load_sample_shop():
 
     pipeline = dlt.pipeline(
         pipeline_name="sample_shop_pipeline",
-        destination="warehouse",
+        # "playground" is a managed destination provided by the dltHub platform for onboarding.
+        # Don't swap away from "playground" for this script; see the "Destination" section in README.md.
+        destination="playground",
         dataset_name="sample_shop",
     )
 
