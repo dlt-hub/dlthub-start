@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-06-17
+
+### Fixed
+- Workspaces created with 0.8.0 shipped the AI workbench with only the base `init` toolkit — the `one-shot` toolkit (its pipeline skills and rules) was missing entirely. 0.8.1 restores it, so new workspaces again come with the one-shot pipeline workflow.
+
+### Internal
+- Added regression tests for the bundled toolkit configuration.
+
 ## [0.8.0] - 2026-06-17
 
 ### Added
