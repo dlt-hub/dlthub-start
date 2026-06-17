@@ -77,10 +77,9 @@ MSG_LOGGED_IN = "Logged in to dltHub"
 MSG_CONNECTING_PLAYGROUND = "Connecting to a {workspace} workspace"
 MSG_CONNECTED_PLAYGROUND = "Connected to the {workspace} workspace"
 MSG_RUNNING_FIRST_PIPELINE = "Running your first pipeline"
-HINT_PIPELINE_STREAMING = "Streaming live logs — this can take a minute."
 MSG_RAN_FIRST_PIPELINE = "Ran your first pipeline"
-MSG_OPENING_OVERVIEW = "Opening your workspace overview in dltHub"
-MSG_OPENED_OVERVIEW = "Opened your workspace overview"
+MSG_SHOWING_RUN = "Showing your pipeline run and its logs"
+MSG_SHOWED_RUN = "Showed your pipeline run"
 # "What just happened" summary, shown after the first run and before the agent picker.
 MSG_PLAYGROUND_READY = (
     "\n[bold]1. The dltHub Pro playground experience on your local machine is set[/bold]"
@@ -158,4 +157,7 @@ CMD_UV_SYNC = "uv sync"
 CMD_DLTHUB_RUN_SAMPLE_SHOP = "uv run dlthub run load_sample_shop"
 CMD_DLTHUB_JOB_RUNS_SHOW_SAMPLE_SHOP = "uv run dlthub job runs show pipeline.load_sample_shop"
 CMD_CD = "cd {project_dir}"
-CMD_BUILD_OWN_SOURCE_PROMPT = "Build a dlt pipeline for the [API name] API and load [endpoint/data] into DuckDB."
+CMD_BUILD_OWN_SOURCE_PROMPT = (
+    "Load the 50 most recent GitHub issues from https://github.com/dlt-hub/dlt "
+    "and show me the data on the dltHub query editor"
+)

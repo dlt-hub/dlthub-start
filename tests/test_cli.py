@@ -250,15 +250,12 @@ class RunFlowTests(unittest.TestCase):
         show_args = run_uv_command.call_args_list[3].args[2]
         self.assertEqual(login_args, ["run", "dlthub", "login"])
         self.assertEqual(connect_args, ["run", "dlthub", "workspace", "connect", PLAYGROUND_WORKSPACE, "--create"])
-        self.assertEqual(run_args, ["run", "dlthub", "run", "--follow", "load_sample_shop"])
-        self.assertEqual(show_args, ["run", "dlthub", "show"])
-        # Login streams via verbose; the pipeline run streams via stream=True; the rest don't.
+        self.assertEqual(run_args, ["run", "dlthub", "run", "load_sample_shop"])
+        self.assertEqual(show_args, ["run", "dlthub", "job", "runs", "show", "pipeline.load_sample_shop"])
+        # Login surfaces output via verbose; nothing streams via stream=True anymore.
         self.assertTrue(run_uv_command.call_args_list[0].kwargs["verbose"])
         self.assertFalse(any(c.kwargs["verbose"] for c in run_uv_command.call_args_list[1:]))
-        self.assertTrue(run_uv_command.call_args_list[2].kwargs["stream"])
-        self.assertFalse(
-            any(c.kwargs.get("stream", False) for i, c in enumerate(run_uv_command.call_args_list) if i != 2)
-        )
+        self.assertFalse(any(c.kwargs.get("stream", False) for c in run_uv_command.call_args_list))
 
     def test_first_run_connects_without_create_when_playground_exists(self) -> None:
         self.m[

@@ -20,7 +20,6 @@ from .display import (
     print_dir_not_empty,
     print_next_steps,
     print_resume_steps,
-    print_streamed_line,
     substep,
     substep_detail,
     substep_streaming,
@@ -231,7 +230,7 @@ def _launch_agent(project_dir: Path, agent: str, *, prompt: str) -> bool:
 
 
 def _run_first_pipeline(uv_executable: str, project_dir: Path, *, verbose: bool) -> None:
-    """Log in, bind the playground workspace, run load_sample_shop, open the overview."""
+    """Log in, bind the playground workspace, run load_sample_shop, show the run."""
     # Login is the only interactive step, so stream it; it also authenticates the steps below.
     with substep_streaming(strings.MSG_LOGGING_IN, strings.MSG_LOGGED_IN):
         run_uv_command(uv_executable, project_dir, ["run", "dlthub", "login"], verbose=True)
@@ -247,21 +246,22 @@ def _run_first_pipeline(uv_executable: str, project_dir: Path, *, verbose: bool)
             connect_args.append("--create")
         run_uv_command(uv_executable, project_dir, connect_args, verbose=verbose)
 
-    # --follow blocks until the remote run completes; without it the overview below would be empty.
-    with substep_streaming(
-        strings.MSG_RUNNING_FIRST_PIPELINE, strings.MSG_RAN_FIRST_PIPELINE, note=strings.HINT_PIPELINE_STREAMING
-    ):
+    # No --follow: submit the run without blocking/streaming; the show step below surfaces its logs.
+    with substep(strings.MSG_RUNNING_FIRST_PIPELINE, strings.MSG_RAN_FIRST_PIPELINE, verbose=verbose):
         run_uv_command(
             uv_executable,
             project_dir,
-            ["run", "dlthub", "run", "--follow", "load_sample_shop"],
+            ["run", "dlthub", "run", "load_sample_shop"],
             verbose=verbose,
-            stream=True,
-            on_line=print_streamed_line,
         )
 
-    with substep(strings.MSG_OPENING_OVERVIEW, strings.MSG_OPENED_OVERVIEW, verbose=verbose):
-        run_uv_command(uv_executable, project_dir, ["run", "dlthub", "show"], verbose=verbose)
+    with substep(strings.MSG_SHOWING_RUN, strings.MSG_SHOWED_RUN, verbose=verbose):
+        run_uv_command(
+            uv_executable,
+            project_dir,
+            ["run", "dlthub", "job", "runs", "show", "pipeline.load_sample_shop"],
+            verbose=verbose,
+        )
 
 
 def _workspace_in_list(list_output: str, name: str) -> bool:

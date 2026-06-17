@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bumped `WORKBENCH_REF` to `eeacfb8a` and refreshed the bundled AI workbench scaffolds across all agents (claude/codex/cursor).
 - Widened the startup banner logo so it no longer renders compressed, and added a blank line above it for spacing.
 - The minimal workspace now loads into the managed, zero-config `playground` delta destination instead of local `warehouse` (duckdb), so data persists across ephemeral job runs. Bumps the `dlt` floor to `[hub,deltalake]>=1.27.2` (drops the unused `filesystem` extra, adds `deltalake` which pulls `deltalake`/`pyarrow`; `1.28.0` in `uv.lock`) and drops the orphaned `[destination.warehouse]` block.
+- After the first pipeline run, the CLI no longer streams the run's logs live or opens the workspace overview. It now submits the run without `--follow` and then surfaces it with `dlthub job runs show pipeline.load_sample_shop`, so the user sees the run and its logs instead of an overview page.
+- The starter prompt handed to the coding agent is now a concrete example — "Load the 50 most recent GitHub issues from https://github.com/dlt-hub/dlt and show me the data on the dltHub query editor" — instead of the fill-in-the-blanks "Build a dlt pipeline for the [API name] API and load [endpoint/data] into DuckDB."
 
 ## [0.7.0] - 2026-06-12
 
