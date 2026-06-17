@@ -38,7 +38,7 @@ def load_github():
 
     pipeline = dlt.pipeline(
         pipeline_name="github_pipeline",
-        destination="warehouse",
+        destination="playground",
         dataset_name="github",
     )
 
