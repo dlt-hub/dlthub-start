@@ -99,6 +99,9 @@ jobs:
       - name: Verify bundled workspace lockfile is in sync with its pyproject.toml
         run: make scaffold-lock-check
 
+      - name: Verify bundled workspace covers Batch/Marimo/Dashboard launcher deps
+        run: make scaffold-launcher-deps-check
+
   check-ai:
     name: AI workbench drift
     runs-on: ubuntu-latest
