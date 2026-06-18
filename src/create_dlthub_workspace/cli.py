@@ -61,7 +61,10 @@ def _ensure_utf8_io_on_windows() -> None:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="dlthub-start",
-        description="Scaffold a new dltHub workspace.",
+        description=(
+            "Create a dltHub workspace and run a guided first experience — scaffold, "
+            "install, run a sample pipeline, and open your coding agent."
+        ),
     )
     parser.add_argument(
         "project_dir",
