@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Reworded the `dlthub-start` description (in `--help` and on PyPI) from "Scaffold a new dltHub workspace." to reflect the full guided flow: "Create a dltHub workspace and run a guided first experience — scaffold, install, run a sample pipeline, and open your coding agent."
-- Refreshed the minimal workspace's `uv.lock` to the latest deps its constraints allow: `dlthub-client` 0.27.7→0.27.8, `cryptography` 48→49, `mcp` 1.27.2→1.28.0, `starlette` 1.2.1→1.3.1, `loro` 1.10.3→1.13.1, plus minor bumps to anyio, certifi, cyclopts, giturlparse, requirements-parser.
+- Refreshed the minimal workspace's `uv.lock` to the latest deps its constraints allow (includes a `cryptography` 48→49 major bump; `dlt`/`dlthub` unchanged).
 
 ## [0.8.1] - 2026-06-17
 
