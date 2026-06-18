@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help dev test test-integration compile build clean-dist publish-library ci workspace workspace-env workspace-local workspace-stage workspace-dev workspace-here lint lint-fix format format-check fl lint-ci generate-ai update-ai check-ai lock-upgrade lock-check scaffold-lock-upgrade scaffold-lock-check
+.PHONY: help dev test test-integration compile build clean-dist publish-library ci workspace workspace-env workspace-local workspace-stage workspace-dev workspace-here lint lint-fix format format-check fl lint-ci generate-ai update-ai check-ai lock-upgrade lock-check scaffold-lock-upgrade scaffold-lock-check scaffold-launcher-deps-check
 
 PYTHONPYCACHEPREFIX ?= /tmp/create-dlthub-pyc
 PACKAGE_MODULES := $(wildcard src/create_dlthub_workspace/*.py)
@@ -99,7 +99,7 @@ workspace-here: dev ## Init in place: make empty ./$(WORKSPACE_HERE_DIR), cd in,
 	mkdir -p -- "$(WORKSPACE_HERE_DIR)"
 	cd "$(WORKSPACE_HERE_DIR)" && "$(CURDIR)/.venv/bin/dlthub-start" $(ARGS)
 
-ci: compile lint-ci test test-integration lock-check scaffold-lock-check check-ai build ## Run all CI checks locally
+ci: compile lint-ci test test-integration lock-check scaffold-lock-check scaffold-launcher-deps-check check-ai build ## Run all CI checks locally
 
 #
 # Bundled AI workbench refresh
@@ -169,3 +169,7 @@ scaffold-lock-check: ## CI guard: fail if the bundled workspace uv.lock is out o
 		cat "$$log"; rm -f "$$log"; \
 		exit 1; \
 	fi
+
+scaffold-launcher-deps-check: ## CI guard: minimal_workspace pyproject.toml covers Batch/Marimo/Dashboard launcher deps
+	uv sync --frozen --project $(SCAFFOLD_DIR)
+	uv run --project $(SCAFFOLD_DIR) python scripts/check_scaffold_launcher_deps.py $(SCAFFOLD_DIR)
