@@ -1,4 +1,4 @@
-"""Scaffold dltHub workspaces."""
+"""Create a dltHub workspace and run a guided first experience."""
 
 from .config import VERSION
 

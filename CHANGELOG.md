@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Reworded the `dlthub-start` description (in `--help` and on PyPI) from "Scaffold a new dltHub workspace." to reflect the full guided flow: "Create a dltHub workspace and run a guided first experience — scaffold, install, run a sample pipeline, and open your coding agent."
+
 ## [0.8.1] - 2026-06-17
 
 ### Fixed
