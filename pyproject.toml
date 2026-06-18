@@ -32,6 +32,7 @@ dev = [
   "pytest>=8",
   "ruff>=0.6",
   "mypy>=1.10",
+  "dlt>=1.28.0",
 ]
 
 [tool.ruff]
