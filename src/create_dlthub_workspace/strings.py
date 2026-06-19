@@ -44,13 +44,13 @@ ERROR_READ_FAILED = "Couldn't read {path}: {reason}"
 
 
 # Status / info messages ------------------------------------------------
-# Printed to stderr when a hidden testing shortcut (--yes or --skip-uv-sync) is
-# used. Both are non-interactive testing/CI affordances only and cut the guided
+# Printed to stderr when a hidden testing shortcut (--setup-only or --scaffold-only)
+# is used. Both are non-interactive testing/CI affordances only and cut the guided
 # setup short — leaving the workspace scaffolded but not run (and, for
-# --skip-uv-sync, dependencies not installed). The normal, complete path is the
+# --scaffold-only, dependencies not installed). The normal, complete path is the
 # interactive one (no flag). Hidden from --help so it stays the sole documented path.
 MSG_TESTING_SHORTCUT_NOTE = (
-    "[yellow]Note:[/yellow] --yes / --skip-uv-sync are non-interactive shortcuts for testing/CI. "
+    "[yellow]Note:[/yellow] --setup-only / --scaffold-only are non-interactive shortcuts for testing/CI. "
     "They cut the guided setup short, so onboarding is incomplete. "
     "Run without them for the full interactive setup."
 )

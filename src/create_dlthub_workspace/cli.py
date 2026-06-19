@@ -81,26 +81,21 @@ def build_parser() -> argparse.ArgumentParser:
         choices=AGENTS,
         help=f"Coding agent to set up ({', '.join(AGENTS)}). If omitted, you'll be prompted to choose (default: {RECOMMENDED.agent}).",
     )
-    # Hidden, non-interactive shortcut for tests/CI only. Absent from --help so the
-    # interactive flow is the sole documented path. See MSG_TESTING_SHORTCUT_NOTE.
-    parser.add_argument(
-        "--yes",
-        "-y",
-        action="store_true",
-        help=argparse.SUPPRESS,
-    )
     parser.add_argument(
         "--verbose",
         "-v",
         action="store_true",
         help="Stream output from underlying subprocesses (uv, dlthub).",
     )
-    # Hidden, like --yes: a non-interactive shortcut for tests/CI that stops
-    # before dependency sync (and, with it, the guided first run), leaving an
-    # incomplete workspace. Kept functional but absent from --help so the
-    # interactive flow is the sole documented path. See MSG_TESTING_SHORTCUT_NOTE.
+    # Dev/CI only; hidden from --help. Both skip the first run.
+    # --setup-only installs deps; --scaffold-only skips deps too.
     parser.add_argument(
-        "--skip-uv-sync",
+        "--setup-only",
+        action="store_true",
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
+        "--scaffold-only",
         action="store_true",
         help=argparse.SUPPRESS,
     )
@@ -139,7 +134,7 @@ def run(args: argparse.Namespace) -> None:
         print_banner()
         console.print()
 
-    if args.yes or args.skip_uv_sync:
+    if args.setup_only or args.scaffold_only:
         err_console.print(strings.MSG_TESTING_SHORTCUT_NOTE)
 
     verbose = args.verbose
@@ -165,7 +160,7 @@ def run(args: argparse.Namespace) -> None:
 
     uv_executable = find_uv()
     if uv_executable is None:
-        if args.yes or confirm(strings.PROMPT_INSTALL_UV, recommended=RECOMMENDED.install_uv):
+        if args.setup_only or confirm(strings.PROMPT_INSTALL_UV, recommended=RECOMMENDED.install_uv):
             uv_executable = execute_uv_install(verbose=verbose)
         else:
             _finalize_agent(project_dir, scaffold, args, verbose=verbose)
@@ -173,7 +168,7 @@ def run(args: argparse.Namespace) -> None:
             print_resume_steps(project_dir, uv_installed=False)
             return
 
-    if args.skip_uv_sync:
+    if args.scaffold_only:
         _finalize_agent(project_dir, scaffold, args, verbose=verbose)
         console.print(strings.MSG_SKIPPED_SYNC)
         print_resume_steps(project_dir, uv_installed=True)
@@ -182,11 +177,11 @@ def run(args: argparse.Namespace) -> None:
     with substep(strings.MSG_INSTALLING_DEPS, strings.MSG_INSTALLED_DEPS, verbose=verbose):
         run_uv_sync(uv_executable, project_dir, verbose=verbose)
 
-    # Skipped under --yes: the first run's login is interactive. A run that exits
+    # Skipped under --setup-only: the first run's login is interactive. A run that exits
     # non-zero degrades to a warning so the rest of setup still completes.
     # LIMITATION: `dlthub run --follow` can exit 0 on a failed remote run, so a
     # genuine run failure isn't caught here — we'd still report success. Revisit.
-    first_pipeline_ran = not args.yes
+    first_pipeline_ran = not args.setup_only
     if first_pipeline_ran:
         try:
             _run_first_pipeline(uv_executable, project_dir, verbose=verbose)
@@ -206,8 +201,8 @@ def run(args: argparse.Namespace) -> None:
 
 
 def _finalize_agent(project_dir: Path, scaffold: str, args: argparse.Namespace, *, verbose: bool) -> str:
-    """Resolve the agent (prompting unless --agent/--yes set it) and lay down its AI files."""
-    agent = args.agent or (RECOMMENDED.agent if args.yes else choose_agent())
+    """Resolve the agent (prompting unless --agent/--setup-only set it) and lay down its AI files."""
+    agent = args.agent or (RECOMMENDED.agent if args.setup_only else choose_agent())
     with substep(
         strings.MSG_ADDING_AGENT_FILES.format(agent=agent),
         strings.MSG_ADDED_AGENT_FILES.format(agent=agent),

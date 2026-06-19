@@ -22,17 +22,17 @@ from .helpers import EXPECTED_AGENT_ROOT_ENTRIES, scaffold_has_ai_files, silence
 
 
 class WorkspaceCreationFastTests(unittest.TestCase):
-    """E2E paths that use --skip-uv-sync: no real `uv sync`, runs in ~1s.
+    """E2E paths that use --scaffold-only: no real `uv sync`, runs in ~1s.
 
     Validates the orchestration layer (argparse → run → copy_scaffold) end-to-end
     without paying the sync cost.
     """
 
-    def test_yes_skip_sync_creates_workspace_without_venv(self) -> None:
+    def test_scaffold_only_creates_workspace_without_venv(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             ws = Path(tmpdir) / "test_ws"
             with silenced():
-                exit_code = main([str(ws), "--yes", "--skip-uv-sync"])
+                exit_code = main([str(ws), "--setup-only", "--scaffold-only"])
 
             self.assertEqual(exit_code, 0)
             self.assertTrue(ws.is_dir())
@@ -40,7 +40,7 @@ class WorkspaceCreationFastTests(unittest.TestCase):
             self.assertTrue((ws / "pipeline.py").exists())
             self.assertFalse(
                 (ws / ".venv").exists(),
-                "--skip-uv-sync should prevent .venv creation",
+                "--scaffold-only should prevent .venv creation",
             )
 
     @unittest.skipUnless(
@@ -52,7 +52,7 @@ class WorkspaceCreationFastTests(unittest.TestCase):
             ws = Path(tmpdir) / "test_ws"
             with silenced():
                 exit_code = main(
-                    [str(ws), "--yes", "--skip-uv-sync", "--agent", "claude"],
+                    [str(ws), "--setup-only", "--scaffold-only", "--agent", "claude"],
                 )
 
             self.assertEqual(exit_code, 0)
@@ -76,14 +76,14 @@ class WorkspaceCreationFastTests(unittest.TestCase):
         scaffold_has_ai_files(),
         "AI workbench files not committed yet — run `make generate-ai` first.",
     )
-    def test_yes_default_brings_in_only_the_recommended_agent(self) -> None:
+    def test_setup_only_brings_in_only_the_recommended_agent(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             ws = Path(tmpdir) / "test_ws"
             with silenced():
-                exit_code = main([str(ws), "--yes", "--skip-uv-sync"])
+                exit_code = main([str(ws), "--setup-only", "--scaffold-only"])
 
             self.assertEqual(exit_code, 0)
-            # --yes uses the recommended agent (claude) and only that agent.
+            # --setup-only uses the recommended agent (claude) and only that agent.
             for entry in EXPECTED_AGENT_ROOT_ENTRIES["claude"]:
                 self.assertTrue((ws / entry).exists(), f"recommended agent's {entry!r} should be present")
             for entry in (*EXPECTED_AGENT_ROOT_ENTRIES["cursor"], *EXPECTED_AGENT_ROOT_ENTRIES["codex"]):
@@ -93,11 +93,11 @@ class WorkspaceCreationFastTests(unittest.TestCase):
 class WorkspaceCreationSlowTests(unittest.TestCase):
     """E2E paths that run a real `uv sync` (~30-60s, network needed)."""
 
-    def test_yes_default_runs_uv_sync_to_completion(self) -> None:
+    def test_setup_only_runs_uv_sync_to_completion(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             ws = Path(tmpdir) / "test_ws"
             with silenced():
-                exit_code = main([str(ws), "--yes"])
+                exit_code = main([str(ws), "--setup-only"])
 
             self.assertEqual(exit_code, 0)
             self.assertTrue((ws / ".venv").is_dir(), "uv sync should have created .venv")
@@ -112,12 +112,12 @@ class WorkspaceCollisionTests(unittest.TestCase):
             ws = Path(tmpdir) / "collision_test"
 
             with silenced():
-                first_exit = main([str(ws), "--yes", "--skip-uv-sync"])
+                first_exit = main([str(ws), "--setup-only", "--scaffold-only"])
             self.assertEqual(first_exit, 0, "First run should succeed")
             self.assertTrue(ws.is_dir())
 
             with silenced():
-                second_exit = main([str(ws), "--yes", "--skip-uv-sync"])
+                second_exit = main([str(ws), "--setup-only", "--scaffold-only"])
             self.assertEqual(second_exit, 0, "Second run should succeed by relocating, not fail")
 
             sibling = ws.with_name("collision_test-1")
@@ -129,7 +129,7 @@ class WorkspaceCollisionTests(unittest.TestCase):
 
 class InstalledEntryPointTests(unittest.TestCase):
     """Spawns the actual CLI binary via subprocess to validate the installed
-    entry point (`dlthub-start` on PATH). Uses --skip-uv-sync to stay fast —
+    entry point (`dlthub-start` on PATH). Uses --scaffold-only to stay fast —
     the sync itself is covered by WorkspaceCreationSlowTests.
     """
 
@@ -142,8 +142,8 @@ class InstalledEntryPointTests(unittest.TestCase):
                     "-m",
                     "create_dlthub_workspace",
                     str(ws),
-                    "--yes",
-                    "--skip-uv-sync",
+                    "--setup-only",
+                    "--scaffold-only",
                 ],
                 capture_output=True,
                 check=False,
@@ -170,8 +170,8 @@ class InstalledEntryPointTests(unittest.TestCase):
                     "-m",
                     "create_dlthub_workspace",
                     str(ws),
-                    "--yes",
-                    "--skip-uv-sync",
+                    "--setup-only",
+                    "--scaffold-only",
                 ],
                 capture_output=True,
                 check=False,
