@@ -301,77 +301,74 @@ def print_created_tree(scaffold: str) -> None:
         console.print(f"[dim]{branch}{entry}[/dim]")
 
 
+def _print_steps_panel(body: Text, *, title: str) -> None:
+    console.print(
+        Panel(
+            body,
+            title=title,
+            title_align="left",
+            border_style="#C6D300",
+            padding=(1, 2),
+        )
+    )
+
+
 def print_next_steps(
     project_dir: Path,
     *,
     scaffold: str,
-    first_pipeline_ran: bool = False,
+    ran: bool = False,
+    needs_uv_install: bool = False,
+    needs_deps: bool = False,
     prompt_copied: bool = False,
 ) -> None:
-    """Post-setup panel. After the first run, it's just the prompt to hand to the
-    agent; otherwise it lists the run/edit steps for the scaffold."""
+    """The build-your-own prompt when ``ran``, else any remaining setup commands
+    followed by the steps to run the sample pipeline."""
     body = Text()
-    if first_pipeline_ran:
+
+    if ran:
         body.append(f"{strings.STEPS_LABEL_BUILD_OWN_SOURCE}\n\n")
         body.append(f"  {strings.CMD_BUILD_OWN_SOURCE_PROMPT}", style="bold #59C1D5")
         if prompt_copied:
             body.append(f"\n\n  {strings.HINT_PROMPT_COPIED}", style="bold #C6D300")
         body.append(f"\n\n  {strings.LABEL_DOCS} ", style="dim")
         body.append(strings.LINK_DOCS_LABEL, style=f"underline #59C1D5 link {strings.LINK_DOCS_URL}")
+        _print_steps_panel(body, title=strings.TITLE_ALL_SET)
+        return
+
+    cd = _cd_target(project_dir)
+    cd_step: tuple[tuple[str, str | None], ...] = (
+        () if cd == "." else ((strings.STEPS_LABEL_CD, strings.CMD_CD.format(project_dir=cd)),)
+    )
+
+    sections: list[tuple[str, tuple[tuple[str, str | None], ...]]] = []
+    if needs_uv_install or needs_deps:
+        finish: list[tuple[str, str | None]] = [*cd_step]
+        if needs_uv_install:
+            finish.append((strings.STEPS_LABEL_INSTALL_UV, strings.CMD_INSTALL_UV_UNIX))
+        if needs_deps:
+            finish.append((strings.STEPS_LABEL_INSTALL_DEPS, strings.CMD_UV_SYNC))
+        sections.append((strings.LABEL_FINISH_SETUP, tuple(finish)))
+        sections.append((strings.LABEL_WHAT_TO_TRY, NEXT_STEPS[scaffold]))
     else:
-        # Lead with `cd` only for a subdirectory; in the cwd it's noise (`cd .`).
-        cd = _cd_target(project_dir)
-        cd_step: tuple[tuple[str, str | None], ...] = (
-            () if cd == "." else ((strings.STEPS_LABEL_CD, strings.CMD_CD.format(project_dir=cd)),)
-        )
-        steps: tuple[tuple[str, str | None], ...] = (*cd_step, *NEXT_STEPS[scaffold])
-        body.append(f"{strings.LABEL_WHAT_TO_TRY}\n\n", style="bold #C6D300")
-        for index, (label, command) in enumerate(steps, start=1):
-            body.append(f"  {index}. {label}\n", style="dim")
+        sections.append((strings.LABEL_WHAT_TO_TRY, (*cd_step, *NEXT_STEPS[scaffold])))
+
+    step = 1
+    for index, (header, steps) in enumerate(sections):
+        if index:
+            body.append("\n")
+        body.append(f"{header}\n\n", style="bold #C6D300")
+        for label, command in steps:
+            body.append(f"  {step}. {label}\n", style="dim")
             if command is not None:
                 body.append(f"     {command}\n", style="bold #59C1D5")
             body.append("\n")
+            step += 1
 
-    console.print(
-        Panel(
-            body,
-            title=strings.TITLE_NEXT_STEPS_PANEL,
-            title_align="left",
-            border_style="#C6D300",
-            padding=(1, 2),
-        )
-    )
-
-
-def print_resume_steps(project_dir: Path, *, uv_installed: bool) -> None:
-    """Remaining setup commands. AI workbench files are already in the
-    workspace (vendored into the scaffold), so the only thing the user still
-    needs to do is finish the uv setup."""
-    steps: list[tuple[str, str]] = []
-    cd = _cd_target(project_dir)
-    if cd != ".":
-        steps.append((strings.STEPS_LABEL_CD, strings.CMD_CD.format(project_dir=cd)))
-    if not uv_installed:
-        steps.append((strings.STEPS_LABEL_INSTALL_UV, strings.CMD_INSTALL_UV_UNIX))
-    steps.append((strings.STEPS_LABEL_INSTALL_DEPS, strings.CMD_UV_SYNC))
-
-    body = Text()
-    body.append(f"{strings.LABEL_FINISH_SETUP}\n\n", style="bold #C6D300")
-    for index, (label, command) in enumerate(steps, start=1):
-        body.append(f"  {index}. {label}\n", style="dim")
-        body.append(f"     {command}\n\n", style="bold #59C1D5")
     if cd != ".":
         body.append(f"  {strings.MSG_AGENT_WORKSPACE_NOTE}", style="dim")
 
-    console.print(
-        Panel(
-            body,
-            title=strings.TITLE_RESUME_PANEL,
-            title_align="left",
-            border_style="#C6D300",
-            padding=(1, 2),
-        )
-    )
+    _print_steps_panel(body, title=strings.TITLE_ALMOST_THERE)
 
 
 def print_dir_not_empty(project_dir: Path) -> None:

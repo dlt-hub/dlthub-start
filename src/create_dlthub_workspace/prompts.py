@@ -30,7 +30,7 @@ def _echo_selection(value: str) -> None:
     console.print(f"[{CURSOR_STYLE}]{TICK_CHAR}[/{CURSOR_STYLE}] [bold]{value}[/bold]")
 
 
-def choose_agent(default: str = RECOMMENDED.agent) -> str:
+def choose_agent(default: str = RECOMMENDED.agent, *, ran: bool = False) -> str:
     """Arrow-key select for the coding agent. Exactly one is chosen."""
     agents = list(AGENTS)
     options = [
@@ -41,7 +41,8 @@ def choose_agent(default: str = RECOMMENDED.agent) -> str:
     ]
     default_index = agents.index(default) if default in agents else 0
 
-    console.print(strings.PROMPT_AGENT_HEADER)
+    lead = strings.PROMPT_AGENT_LEAD_RAN if ran else strings.PROMPT_AGENT_LEAD_SETUP
+    console.print(strings.PROMPT_AGENT_HEADER.format(lead=lead))
     index = cast(
         int,
         beaupy.select(

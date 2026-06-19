@@ -134,7 +134,6 @@ _STEP_TARGETS = (
     "print_banner",
     "print_created_tree",
     "print_next_steps",
-    "print_resume_steps",
 )
 
 
@@ -177,7 +176,7 @@ class RunFlowTests(unittest.TestCase):
         self.m["overlay_agent"].assert_called_once()
         self.m["choose_agent"].assert_called_once()
         self.m["print_next_steps"].assert_called_once()
-        self.assertTrue(self.m["print_next_steps"].call_args.kwargs["first_pipeline_ran"])
+        self.assertTrue(self.m["print_next_steps"].call_args.kwargs["ran"])
 
     def test_launched_agent_replaces_the_next_steps_panel(self) -> None:
         self.m["_launch_agent"].return_value = True
@@ -198,7 +197,7 @@ class RunFlowTests(unittest.TestCase):
 
         self.m["overlay_agent"].assert_called_once()
         self.m["_launch_agent"].assert_not_called()
-        self.assertFalse(self.m["print_next_steps"].call_args.kwargs["first_pipeline_ran"])
+        self.assertFalse(self.m["print_next_steps"].call_args.kwargs["ran"])
 
     def test_explicit_agent_skips_the_prompt(self) -> None:
         self._run(agent="codex")
@@ -210,7 +209,7 @@ class RunFlowTests(unittest.TestCase):
         self.m["run_uv_command"].assert_not_called()
         self.m["choose_agent"].assert_not_called()
         self.assertEqual(self.m["overlay_agent"].call_args.kwargs["agent"], RECOMMENDED.agent)
-        self.assertFalse(self.m["print_next_steps"].call_args.kwargs["first_pipeline_ran"])
+        self.assertFalse(self.m["print_next_steps"].call_args.kwargs["ran"])
 
     def test_uv_declined_stops_at_scaffold_only_but_adds_agent_files(self) -> None:
         self.m["find_uv"].return_value = None
@@ -221,15 +220,21 @@ class RunFlowTests(unittest.TestCase):
         self.m["execute_uv_install"].assert_not_called()
         self.m["run_uv_sync"].assert_not_called()
         self.m["overlay_agent"].assert_called_once()
-        self.m["print_next_steps"].assert_not_called()
-        self.m["print_resume_steps"].assert_called_once_with(Path("/tmp/test_workspace"), uv_installed=False)
+        self.m["print_next_steps"].assert_called_once()
+        kwargs = self.m["print_next_steps"].call_args.kwargs
+        self.assertFalse(kwargs["ran"])
+        self.assertTrue(kwargs["needs_uv_install"])
+        self.assertTrue(kwargs["needs_deps"])
 
     def test_scaffold_only_stops_after_install_but_adds_agent_files(self) -> None:
         self._run(scaffold_only=True)
         self.m["run_uv_sync"].assert_not_called()
         self.m["overlay_agent"].assert_called_once()
-        self.m["print_next_steps"].assert_not_called()
-        self.m["print_resume_steps"].assert_called_once_with(Path("/tmp/test_workspace"), uv_installed=True)
+        self.m["print_next_steps"].assert_called_once()
+        kwargs = self.m["print_next_steps"].call_args.kwargs
+        self.assertFalse(kwargs["ran"])
+        self.assertTrue(kwargs["needs_deps"])
+        self.assertFalse(kwargs.get("needs_uv_install", False))
 
     def test_first_run_creates_playground_when_absent(self) -> None:
         self.m["capture_uv_command"].return_value = "Name\n----\nMy Workspace\n"
@@ -297,7 +302,6 @@ class RunNoticeTests(unittest.TestCase):
             patch("create_dlthub_workspace.cli._launch_agent", return_value=False),
             patch("create_dlthub_workspace.cli.choose_agent", return_value="claude"),
             patch("create_dlthub_workspace.cli.print_next_steps"),
-            patch("create_dlthub_workspace.cli.print_resume_steps"),
             patch("create_dlthub_workspace.cli.err_console") as err_console,
             _silenced(),
         ):

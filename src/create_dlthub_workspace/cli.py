@@ -19,7 +19,6 @@ from .display import (
     print_created_tree,
     print_dir_not_empty,
     print_next_steps,
-    print_resume_steps,
     substep,
     substep_detail,
     substep_streaming,
@@ -163,15 +162,15 @@ def run(args: argparse.Namespace) -> None:
         if args.setup_only or confirm(strings.PROMPT_INSTALL_UV, recommended=RECOMMENDED.install_uv):
             uv_executable = execute_uv_install(verbose=verbose)
         else:
-            _finalize_agent(project_dir, scaffold, args, verbose=verbose)
+            _finalize_agent(project_dir, scaffold, args, ran=False, verbose=verbose)
             console.print(strings.MSG_SKIPPED_UV_AND_SYNC)
-            print_resume_steps(project_dir, uv_installed=False)
+            print_next_steps(project_dir, scaffold=scaffold, ran=False, needs_uv_install=True, needs_deps=True)
             return
 
     if args.scaffold_only:
-        _finalize_agent(project_dir, scaffold, args, verbose=verbose)
+        _finalize_agent(project_dir, scaffold, args, ran=False, verbose=verbose)
         console.print(strings.MSG_SKIPPED_SYNC)
-        print_resume_steps(project_dir, uv_installed=True)
+        print_next_steps(project_dir, scaffold=scaffold, ran=False, needs_deps=True)
         return
 
     with substep(strings.MSG_INSTALLING_DEPS, strings.MSG_INSTALLED_DEPS, verbose=verbose):
@@ -190,19 +189,19 @@ def run(args: argparse.Namespace) -> None:
             first_pipeline_ran = False
             console.print(strings.MSG_FIRST_RUN_FAILED.format(message=exc))
 
-    agent = _finalize_agent(project_dir, scaffold, args, verbose=verbose)
+    agent = _finalize_agent(project_dir, scaffold, args, ran=first_pipeline_ran, verbose=verbose)
 
     if first_pipeline_ran and _launch_agent(project_dir, agent, prompt=strings.CMD_BUILD_OWN_SOURCE_PROMPT):
         return
 
     console.print()
     prompt_copied = first_pipeline_ran and copy_to_clipboard(strings.CMD_BUILD_OWN_SOURCE_PROMPT)
-    print_next_steps(project_dir, scaffold=scaffold, first_pipeline_ran=first_pipeline_ran, prompt_copied=prompt_copied)
+    print_next_steps(project_dir, scaffold=scaffold, ran=first_pipeline_ran, prompt_copied=prompt_copied)
 
 
-def _finalize_agent(project_dir: Path, scaffold: str, args: argparse.Namespace, *, verbose: bool) -> str:
+def _finalize_agent(project_dir: Path, scaffold: str, args: argparse.Namespace, *, ran: bool, verbose: bool) -> str:
     """Resolve the agent (prompting unless --agent/--setup-only set it) and lay down its AI files."""
-    agent = args.agent or (RECOMMENDED.agent if args.setup_only else choose_agent())
+    agent = args.agent or (RECOMMENDED.agent if args.setup_only else choose_agent(ran=ran))
     with substep(
         strings.MSG_ADDING_AGENT_FILES.format(agent=agent),
         strings.MSG_ADDED_AGENT_FILES.format(agent=agent),

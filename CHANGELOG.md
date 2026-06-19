@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replaced leftover "local DuckDB" copy (README, agent-picker prompt, sample pipeline docstring) with the managed `playground` destination, and dropped the misleading "on your local machine" claim from the first-run summary.
 - Standardized the product name to "dltHub platform" in the CLI copy (was "dltHub Pro" in a couple of strings).
 - The startup banner is now suppressed when output isn't a TTY (piped/CI/agent-run), where it was just noise in captured logs.
+- Reworked the post-setup panel so its framing matches the outcome: it now reads "You're all set" only after a successful first run, and "Almost there" when the run failed or setup stopped early. When setup is unfinished, the panel also points forward — listing the remaining install steps followed by the sample-run steps — instead of dead-ending at `uv sync`.
+- The coding-agent prompt now adapts to the outcome too: it invites you to "create your own pipeline" only after the demo run succeeded, and shows a neutral "set up your coding agent" line otherwise (e.g. after a failed run), so it no longer presumes a run that didn't happen.
 
 ## [0.8.2] - 2026-06-18
 
