@@ -252,21 +252,21 @@ def _run_first_pipeline(uv_executable: str, project_dir: Path, *, verbose: bool)
         run_uv_command(uv_executable, project_dir, connect_args, verbose=verbose)
 
     # No --follow: submit the run without blocking/streaming; the show step below surfaces its logs.
-    # with substep(strings.MSG_RUNNING_FIRST_PIPELINE, strings.MSG_RAN_FIRST_PIPELINE, verbose=verbose):
-    #     run_uv_command(
-    #         uv_executable,
-    #         project_dir,
-    #         ["run", "dlthub", "run", "load_sample_shop"],
-    #         verbose=verbose,
-    #     )
+    with substep(strings.MSG_RUNNING_FIRST_PIPELINE, strings.MSG_RAN_FIRST_PIPELINE, verbose=verbose):
+        run_uv_command(
+            uv_executable,
+            project_dir,
+            ["run", "dlthub", "run", "load_sample_shop"],
+            verbose=verbose,
+        )
 
-    # with substep(strings.MSG_SHOWING_RUN, strings.MSG_SHOWED_RUN, verbose=verbose):
-    #     run_uv_command(
-    #         uv_executable,
-    #         project_dir,
-    #         ["run", "dlthub", "job", "runs", "show", "pipeline.load_sample_shop"],
-    #         verbose=verbose,
-    #     )
+    with substep(strings.MSG_SHOWING_RUN, strings.MSG_SHOWED_RUN, verbose=verbose):
+        run_uv_command(
+            uv_executable,
+            project_dir,
+            ["run", "dlthub", "job", "runs", "show", "pipeline.load_sample_shop"],
+            verbose=verbose,
+        )
 
 
 def _workspace_in_list(list_output: str, name: str) -> bool:
