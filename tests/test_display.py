@@ -1,4 +1,4 @@
-"""Tests for display panels (next-steps + resume-steps + banner).
+"""Tests for display panels (next-steps + banner).
 
 Uses `console.capture()` to grab rendered text so we can assert on
 the content of rich panels.
@@ -21,7 +21,6 @@ from create_dlthub_workspace.display import (
     copy_to_clipboard,
     print_banner,
     print_next_steps,
-    print_resume_steps,
 )
 from create_dlthub_workspace.scaffold import SCAFFOLDS_DIR
 
@@ -40,7 +39,7 @@ class PrintNextStepsTests(unittest.TestCase):
         # After the first run, the panel drops the run/edit steps and shows just
         # the instruction + the verbatim prompt to hand to the agent.
         with console.capture() as cap:
-            print_next_steps(Path.cwd(), scaffold="minimal_workspace", first_pipeline_ran=True, prompt_copied=True)
+            print_next_steps(Path.cwd(), scaffold="minimal_workspace", ran=True, prompt_copied=True)
         # Strip panel borders (Unicode │ on POSIX, ASCII | on the Windows console)
         # and collapse line-wrapping so the prompt is one contiguous string.
         output = " ".join(cap.get().replace("│", " ").replace("|", " ").split())
@@ -111,10 +110,16 @@ class CreatedTreeTests(unittest.TestCase):
         self.assertEqual(set(CREATED_TREE), set(NEXT_STEPS))
 
 
-class PrintResumeStepsTests(unittest.TestCase):
+class ResumeStepsTests(unittest.TestCase):
     def test_uv_not_installed_includes_install_command(self) -> None:
         with console.capture() as cap:
-            print_resume_steps(Path("/tmp/my_workspace"), uv_installed=False)
+            print_next_steps(
+                Path("/tmp/my_workspace"),
+                scaffold="minimal_workspace",
+                ran=False,
+                needs_uv_install=True,
+                needs_deps=True,
+            )
         output = cap.get()
 
         self.assertIn("Install uv", output)
@@ -123,11 +128,28 @@ class PrintResumeStepsTests(unittest.TestCase):
 
     def test_uv_installed_omits_install_command(self) -> None:
         with console.capture() as cap:
-            print_resume_steps(Path("/tmp/my_workspace"), uv_installed=True)
+            print_next_steps(
+                Path("/tmp/my_workspace"),
+                scaffold="minimal_workspace",
+                ran=False,
+                needs_deps=True,
+            )
         output = cap.get()
 
         self.assertNotIn("curl -LsSf", output)
         self.assertIn("uv sync", output)
+
+    def test_finish_setup_still_points_to_the_sample_run(self) -> None:
+        with console.capture() as cap:
+            print_next_steps(
+                Path("/tmp/my_workspace"),
+                scaffold="minimal_workspace",
+                ran=False,
+                needs_deps=True,
+            )
+        output = cap.get()
+
+        self.assertIn("uv run dlthub run load_sample_shop", output)
 
 
 class PrintBannerTests(unittest.TestCase):

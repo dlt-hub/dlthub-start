@@ -22,10 +22,13 @@ from __future__ import annotations
 
 # Prompts ---------------------------------------------------------------
 PROMPT_AGENT_HEADER = (
-    "\n[bold]2. Claude/Cursor/Codex-native dlt pipeline building with dltHub platform[/bold]"
-    "\nNow create your own dlt pipeline to load data from a REST API source into the dltHub platform."
+    "\n[bold]Claude/Cursor/Codex-native dlt pipeline building with dltHub platform[/bold]"
+    "\n{lead}"
     "\n\n[bold]Which coding agent do you want to use?[/bold] [dim](↑/↓ to move, enter to confirm)[/dim]"
 )
+# The lead line swaps on whether the demo run succeeded.
+PROMPT_AGENT_LEAD_RAN = "Now create your own dlt pipeline to load data from a REST API source into your playground."
+PROMPT_AGENT_LEAD_SETUP = "Set up your coding agent to build dlt pipelines."
 PROMPT_INSTALL_UV = "uv is required but was not found. Install uv now?"
 
 
@@ -78,7 +81,7 @@ MSG_SHOWING_RUN = "Showing your pipeline run and its logs"
 MSG_SHOWED_RUN = "Showed your pipeline run"
 # "What just happened" summary, shown after the first run and before the agent picker.
 MSG_PLAYGROUND_READY = (
-    "\n[bold]1. The dltHub platform playground experience is set[/bold]"
+    "\n[bold]The dltHub platform playground experience is set[/bold]"
     "\nWe created a demo dlt pipeline and set up your dltHub playground."
 )
 MSG_FIRST_RUN_FAILED = (
@@ -89,8 +92,8 @@ MSG_FIRST_RUN_FAILED = (
 
 # Panel titles ----------------------------------------------------------
 TITLE_BANNER = "dlthub-start v{version} [bold #C6D300](beta)[/bold #C6D300]"
-TITLE_NEXT_STEPS_PANEL = "You're all set"
-TITLE_RESUME_PANEL = "Almost there"
+TITLE_ALL_SET = "You're all set"
+TITLE_ALMOST_THERE = "Almost there"
 TITLE_DIR_NOT_EMPTY = "Directory not empty"
 
 # Shown on the next-steps / resume panels only when scaffolding into a
