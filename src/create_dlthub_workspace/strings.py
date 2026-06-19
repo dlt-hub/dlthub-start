@@ -44,11 +44,7 @@ ERROR_READ_FAILED = "Couldn't read {path}: {reason}"
 
 
 # Status / info messages ------------------------------------------------
-# Printed to stderr when a hidden testing shortcut (--setup-only or --scaffold-only)
-# is used. Both are non-interactive testing/CI affordances only and cut the guided
-# setup short — leaving the workspace scaffolded but not run (and, for
-# --scaffold-only, dependencies not installed). The normal, complete path is the
-# interactive one (no flag). Hidden from --help so it stays the sole documented path.
+# Out-of-band stderr note shown when a hidden dev flag (--setup-only / --scaffold-only) is used.
 MSG_TESTING_SHORTCUT_NOTE = (
     "[yellow]Note:[/yellow] --setup-only / --scaffold-only are non-interactive shortcuts for testing/CI. "
     "They cut the guided setup short, so onboarding is incomplete. "
