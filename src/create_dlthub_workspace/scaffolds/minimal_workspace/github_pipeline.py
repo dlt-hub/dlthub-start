@@ -1,6 +1,6 @@
 """GitHub dlt pipeline.
 
-Loads the 50 most recent issues from dlt-hub/dlt into DuckDB.
+Loads the 50 most recent issues from dlt-hub/dlt into the playground destination.
 """
 
 import dlt

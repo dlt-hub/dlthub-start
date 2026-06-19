@@ -22,8 +22,8 @@ from __future__ import annotations
 
 # Prompts ---------------------------------------------------------------
 PROMPT_AGENT_HEADER = (
-    "\n[bold]2. Claude/Cursor/Codex-native dlt pipeline building with dltHub Pro[/bold]"
-    "\nNow create your own dlt pipeline to load data from a REST API source into a local DuckDB."
+    "\n[bold]2. Claude/Cursor/Codex-native dlt pipeline building with dltHub Platform[/bold]"
+    "\nNow create your own dlt pipeline to load data from a REST API source into the dltHub Platform."
     "\n\n[bold]Which coding agent do you want to use?[/bold] [dim](↑/↓ to move, enter to confirm)[/dim]"
 )
 PROMPT_INSTALL_UV = "uv is required but was not found. Install uv now?"
@@ -82,7 +82,7 @@ MSG_SHOWING_RUN = "Showing your pipeline run and its logs"
 MSG_SHOWED_RUN = "Showed your pipeline run"
 # "What just happened" summary, shown after the first run and before the agent picker.
 MSG_PLAYGROUND_READY = (
-    "\n[bold]1. The dltHub Pro playground experience on your local machine is set[/bold]"
+    "\n[bold]1. The dltHub Platform playground experience is set[/bold]"
     "\nWe created a demo dlt pipeline and set up your dltHub playground."
 )
 MSG_FIRST_RUN_FAILED = (

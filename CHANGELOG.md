@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Replaced leftover "local DuckDB" copy (README, agent-picker prompt, sample pipeline docstring) with the managed `playground` destination, and dropped the misleading "on your local machine" claim from the first-run summary.
+- Standardized the product name to "dltHub Platform" in the CLI copy (was "dltHub Pro" in a couple of strings).
+
 ## [0.8.2] - 2026-06-18
 
 ### Changed
