@@ -19,7 +19,7 @@ from . import strings
 from .config import VERSION
 
 console = Console()
-# Separate stderr stream for out-of-band notes (e.g. the hidden --yes warning),
+# Separate stderr stream for out-of-band notes (e.g. the hidden testing-shortcut warning),
 # so they don't interleave with the primary stdout output.
 err_console = Console(stderr=True)
 

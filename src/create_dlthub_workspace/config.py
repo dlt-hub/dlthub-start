@@ -37,7 +37,7 @@ WORKBENCH_REF: str | None = "a6a4b08eed5cf362e8ce8115188a7aa903279f32"
 
 @dataclass(frozen=True)
 class RecommendedPath:
-    """The path we recommend new users follow. Also the path `--yes` runs."""
+    """The path we recommend new users follow. Also the path `--setup-only` runs."""
 
     scaffold: str
     install_uv: bool

@@ -35,32 +35,26 @@ class BuildParserTests(unittest.TestCase):
         with _silenced(), self.assertRaises(SystemExit):
             parser.parse_args(["my_workspace", "--agent", "not-an-agent"])
 
-    def test_yes_flag_still_parses_to_true(self) -> None:
-        # --yes stays functional for tests/CI even though it's hidden from --help.
+    def test_setup_only_flag_parses_to_true(self) -> None:
+        # --setup-only stays functional for tests/CI even though it's hidden from --help.
         parser = build_parser()
-        args = parser.parse_args(["my_workspace", "--yes"])
-        self.assertTrue(args.yes)
+        args = parser.parse_args(["my_workspace", "--setup-only"])
+        self.assertTrue(args.setup_only)
 
-    def test_short_yes_flag_parses_to_true(self) -> None:
-        parser = build_parser()
-        args = parser.parse_args(["my_workspace", "-y"])
-        self.assertTrue(args.yes)
-
-    def test_yes_defaults_to_false(self) -> None:
+    def test_setup_only_defaults_to_false(self) -> None:
         parser = build_parser()
         args = parser.parse_args(["my_workspace"])
-        self.assertFalse(args.yes)
+        self.assertFalse(args.setup_only)
 
     def test_testing_shortcuts_are_hidden_from_help(self) -> None:
         help_text = build_parser().format_help()
-        self.assertNotIn("--yes", help_text)
-        self.assertNotIn("-y", help_text)
-        self.assertNotIn("--skip-uv-sync", help_text)
+        self.assertNotIn("--setup-only", help_text)
+        self.assertNotIn("--scaffold-only", help_text)
 
-    def test_skip_uv_sync_flag_parses_to_true(self) -> None:
+    def test_scaffold_only_flag_parses_to_true(self) -> None:
         parser = build_parser()
-        args = parser.parse_args(["my_workspace", "--skip-uv-sync"])
-        self.assertTrue(args.skip_uv_sync)
+        args = parser.parse_args(["my_workspace", "--scaffold-only"])
+        self.assertTrue(args.scaffold_only)
 
     def test_agent_parses_single_value(self) -> None:
         parser = build_parser()
@@ -114,9 +108,9 @@ def _make_args(**overrides: object) -> argparse.Namespace:
     defaults: dict[str, object] = {
         "project_dir": "/tmp/test_workspace",
         "agent": None,
-        "yes": False,
+        "setup_only": False,
         "verbose": False,
-        "skip_uv_sync": False,
+        "scaffold_only": False,
     }
     defaults.update(overrides)
     return argparse.Namespace(**defaults)
@@ -211,8 +205,8 @@ class RunFlowTests(unittest.TestCase):
         self.m["choose_agent"].assert_not_called()
         self.assertEqual(self.m["overlay_agent"].call_args.kwargs["agent"], "codex")
 
-    def test_yes_skips_first_run_and_prompt_but_still_adds_agent_files(self) -> None:
-        self._run(yes=True)
+    def test_setup_only_skips_first_run_and_prompt_but_still_adds_agent_files(self) -> None:
+        self._run(setup_only=True)
         self.m["run_uv_command"].assert_not_called()
         self.m["choose_agent"].assert_not_called()
         self.assertEqual(self.m["overlay_agent"].call_args.kwargs["agent"], RECOMMENDED.agent)
@@ -230,8 +224,8 @@ class RunFlowTests(unittest.TestCase):
         self.m["print_next_steps"].assert_not_called()
         self.m["print_resume_steps"].assert_called_once_with(Path("/tmp/test_workspace"), uv_installed=False)
 
-    def test_skip_uv_sync_stops_after_install_but_adds_agent_files(self) -> None:
-        self._run(skip_uv_sync=True)
+    def test_scaffold_only_stops_after_install_but_adds_agent_files(self) -> None:
+        self._run(scaffold_only=True)
         self.m["run_uv_sync"].assert_not_called()
         self.m["overlay_agent"].assert_called_once()
         self.m["print_next_steps"].assert_not_called()
@@ -311,14 +305,14 @@ class RunNoticeTests(unittest.TestCase):
             run(_make_args(**flags))
         return err_console
 
-    def test_yes_prints_testing_notice(self) -> None:
-        self._run_with(yes=True).print.assert_called_once()
+    def test_setup_only_prints_testing_notice(self) -> None:
+        self._run_with(setup_only=True).print.assert_called_once()
 
-    def test_skip_uv_sync_prints_testing_notice(self) -> None:
-        self._run_with(skip_uv_sync=True).print.assert_called_once()
+    def test_scaffold_only_prints_testing_notice(self) -> None:
+        self._run_with(scaffold_only=True).print.assert_called_once()
 
     def test_both_shortcuts_print_a_single_notice(self) -> None:
-        self._run_with(yes=True, skip_uv_sync=True).print.assert_called_once()
+        self._run_with(setup_only=True, scaffold_only=True).print.assert_called_once()
 
     def test_interactive_run_prints_no_notice(self) -> None:
         self._run_with().print.assert_not_called()
