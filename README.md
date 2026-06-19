@@ -47,8 +47,8 @@ official [`uv` installation guide](https://docs.astral.sh/uv/getting-started/ins
 - A Python dltHub workspace with project metadata customized to your directory name.
 - A bundled scaffold copied from this package, not downloaded at create time.
 - dltHub AI workbench files for your chosen coding agent (Claude, Cursor, or Codex).
-- Shared dltHub AI toolkit files for data exploration, dltHub Platform deployment, and REST API pipeline work.
-- A zero-setup `playground` destination, managed by the dltHub Platform — no credentials or config.
+- Shared dltHub AI toolkit files for data exploration, dltHub platform deployment, and REST API pipeline work.
+- A zero-setup `playground` destination, managed by the dltHub platform — no credentials or config.
 
 ## Usage
 
