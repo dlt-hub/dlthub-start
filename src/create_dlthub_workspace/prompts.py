@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from typing import cast
 
 import beaupy
@@ -15,6 +16,13 @@ CURSOR_STYLE = "#59C1D5"
 TICK_CHAR = "●"
 # Re-exported for tests + back-compat. Canonical value lives in strings.py.
 RECOMMENDED_SUFFIX = strings.HINT_RECOMMENDED_SUFFIX
+
+
+def stdin_is_interactive() -> bool:
+    """True when both stdin and stdout are TTYs, so arrow-key prompts can run."""
+    in_tty = getattr(sys.stdin, "isatty", None)
+    out_tty = getattr(sys.stdout, "isatty", None)
+    return bool(in_tty and out_tty and in_tty() and out_tty())
 
 
 def _echo_selection(value: str) -> None:

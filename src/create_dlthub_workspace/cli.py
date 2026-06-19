@@ -26,7 +26,7 @@ from .display import (
 )
 from .errors import UvError, WorkspaceDirectoryNotEmptyError, WorkspaceError
 from .project_metadata import apply_workspace_name
-from .prompts import choose_agent, confirm
+from .prompts import choose_agent, confirm, stdin_is_interactive
 from .scaffold import (
     copy_scaffold,
     overlay_agent,
@@ -134,8 +134,10 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def run(args: argparse.Namespace) -> None:
-    print_banner()
-    console.print()
+    # Banner is decorative — skip it in non-TTY runs where it's just log noise.
+    if stdin_is_interactive():
+        print_banner()
+        console.print()
 
     if args.yes or args.skip_uv_sync:
         err_console.print(strings.MSG_TESTING_SHORTCUT_NOTE)
