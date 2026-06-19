@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Replaced leftover "local DuckDB" copy (README, agent-picker prompt, sample pipeline docstring) with the managed `playground` destination, and dropped the misleading "on your local machine" claim from the first-run summary.
+- Standardized the product name to "dltHub platform" in the CLI copy (was "dltHub Pro" in a couple of strings).
+
 ## [0.8.2] - 2026-06-18
 
 ### Changed
@@ -67,7 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - Removed the `starter_workspace` scaffold along with the `--scaffold` flag and the interactive scaffold picker. `minimal_workspace` is now the only bundled scaffold.
-- The minimal workspace no longer ships `report_notebook.py`. On dltHub Platform the notebook had to re-run the whole pipeline to repopulate the worker-local DuckDB before charting, which made it slow and undercut the first-run experience. It's removed temporarily until shared workspace storage lands and the notebook speed issue is fixed; agents can still build notebooks on demand via the `data-exploration` toolkit.
+- The minimal workspace no longer ships `report_notebook.py`. On dltHub platform the notebook had to re-run the whole pipeline to repopulate the worker-local DuckDB before charting, which made it slow and undercut the first-run experience. It's removed temporarily until shared workspace storage lands and the notebook speed issue is fixed; agents can still build notebooks on demand via the `data-exploration` toolkit.
 
 ### Fixed
 - `python -m create_dlthub_workspace` now propagates the CLI exit code (it previously always exited `0` because `__main__` ignored `main()`'s return value).
