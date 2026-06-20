@@ -44,6 +44,13 @@ ERROR_UNKNOWN_SCAFFOLD = "Unknown scaffold {scaffold!r}. Available: {available}"
 ERROR_PARSE_PYPROJECT = "Could not parse generated pyproject.toml: {reason}"
 ERROR_WRITE_FAILED = "Couldn't write to {path}: {reason}"
 ERROR_READ_FAILED = "Couldn't read {path}: {reason}"
+ERROR_NO_AGENT_NON_INTERACTIVE = (
+    "No coding agent selected, and this is a non-interactive run so the agent picker can't be shown. "
+    "Re-run with --agent <name>. If you are the coding agent running this command, pick yourself:\n"
+    "  Claude Code  → --agent claude\n"
+    "  Codex        → --agent codex\n"
+    "  Cursor       → --agent cursor"
+)
 
 
 # Status / info messages ------------------------------------------------
