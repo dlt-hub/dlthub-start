@@ -125,6 +125,7 @@ _STEP_TARGETS = (
     "find_uv",
     "confirm",
     "choose_agent",
+    "stdin_is_interactive",
     "execute_uv_install",
     "run_uv_sync",
     "run_uv_command",
@@ -150,6 +151,7 @@ class RunFlowTests(unittest.TestCase):
         self.m["find_uv"].return_value = "/usr/local/bin/uv"
         self.m["confirm"].return_value = True
         self.m["choose_agent"].return_value = "claude"
+        self.m["stdin_is_interactive"].return_value = True
         self.m["execute_uv_install"].return_value = "/usr/local/bin/uv"
         self.m["copy_to_clipboard"].return_value = True
         self.m["_launch_agent"].return_value = False
@@ -203,6 +205,23 @@ class RunFlowTests(unittest.TestCase):
         self._run(agent="codex")
         self.m["choose_agent"].assert_not_called()
         self.assertEqual(self.m["overlay_agent"].call_args.kwargs["agent"], "codex")
+
+    def test_non_interactive_without_agent_fails_fast(self) -> None:
+        self.m["stdin_is_interactive"].return_value = False
+        with self.assertRaises(WorkspaceError):
+            self._run()
+        self.m["copy_scaffold"].assert_not_called()
+
+    def test_non_interactive_with_explicit_agent_proceeds(self) -> None:
+        self.m["stdin_is_interactive"].return_value = False
+        self._run(agent="claude")
+        self.m["choose_agent"].assert_not_called()
+        self.m["overlay_agent"].assert_called_once()
+
+    def test_non_interactive_setup_only_defaults_without_failing(self) -> None:
+        self.m["stdin_is_interactive"].return_value = False
+        self._run(setup_only=True)
+        self.assertEqual(self.m["overlay_agent"].call_args.kwargs["agent"], RECOMMENDED.agent)
 
     def test_setup_only_skips_first_run_and_prompt_but_still_adds_agent_files(self) -> None:
         self._run(setup_only=True)
@@ -288,6 +307,7 @@ class RunNoticeTests(unittest.TestCase):
     def _run_with(self, **flags: bool) -> MagicMock:
         with (
             patch("create_dlthub_workspace.cli.print_banner"),
+            patch("create_dlthub_workspace.cli.stdin_is_interactive", return_value=True),
             patch("create_dlthub_workspace.cli.resolve_workspace_target") as resolve,
             patch("create_dlthub_workspace.cli.validate_scaffold_name"),
             patch("create_dlthub_workspace.cli.copy_scaffold"),

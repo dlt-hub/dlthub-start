@@ -128,13 +128,18 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def run(args: argparse.Namespace) -> None:
+    interactive = stdin_is_interactive()
     # Banner is decorative — skip it in non-TTY runs where it's just log noise.
-    if stdin_is_interactive():
+    if interactive:
         print_banner()
         console.print()
 
     if args.setup_only or args.scaffold_only:
         err_console.print(strings.MSG_TESTING_SHORTCUT_NOTE)
+
+    # The agent picker can't run without a TTY, so a non-interactive run must name the agent.
+    if not interactive and args.agent is None and not args.setup_only:
+        raise WorkspaceError(strings.ERROR_NO_AGENT_NON_INTERACTIVE)
 
     verbose = args.verbose
     scaffold = RECOMMENDED.scaffold
