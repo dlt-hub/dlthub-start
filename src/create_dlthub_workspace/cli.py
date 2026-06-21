@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 import argparse
-import re
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 from . import strings
-from .config import AGENT_LAUNCH_COMMANDS, AGENTS, PLAYGROUND_WORKSPACE, RECOMMENDED
+from .config import AGENT_LAUNCH_COMMANDS, AGENTS, RECOMMENDED
 from .display import (
     console,
     copy_to_clipboard,
@@ -22,9 +21,8 @@ from .display import (
     print_resume_steps,
     substep,
     substep_detail,
-    substep_streaming,
 )
-from .errors import UvError, WorkspaceDirectoryNotEmptyError, WorkspaceError
+from .errors import WorkspaceDirectoryNotEmptyError, WorkspaceError
 from .project_metadata import apply_workspace_name
 from .prompts import choose_agent, confirm, stdin_is_interactive
 from .scaffold import (
@@ -34,7 +32,7 @@ from .scaffold import (
     validate_agent,
     validate_scaffold_name,
 )
-from .uv import capture_uv_command, execute_uv_install, find_uv, run_uv_command, run_uv_sync
+from .uv import execute_uv_install, find_uv, run_uv_sync
 
 
 def _ensure_utf8_io_on_windows() -> None:
@@ -182,27 +180,15 @@ def run(args: argparse.Namespace) -> None:
     with substep(strings.MSG_INSTALLING_DEPS, strings.MSG_INSTALLED_DEPS, verbose=verbose):
         run_uv_sync(uv_executable, project_dir, verbose=verbose)
 
-    # Skipped under --yes: the first run's login is interactive. A run that exits
-    # non-zero degrades to a warning so the rest of setup still completes.
-    # LIMITATION: `dlthub run --follow` can exit 0 on a failed remote run, so a
-    # genuine run failure isn't caught here — we'd still report success. Revisit.
-    first_pipeline_ran = not args.yes
-    if first_pipeline_ran:
-        try:
-            _run_first_pipeline(uv_executable, project_dir, verbose=verbose)
-            console.print(strings.MSG_PLAYGROUND_READY)
-        except UvError as exc:
-            first_pipeline_ran = False
-            console.print(strings.MSG_FIRST_RUN_FAILED.format(message=exc))
-
     agent = _finalize_agent(project_dir, scaffold, args, verbose=verbose)
+    console.print(strings.MSG_INVOKE_SKILL)
 
-    if first_pipeline_ran and _launch_agent(project_dir, agent, prompt=strings.CMD_BUILD_OWN_SOURCE_PROMPT):
+    if not args.yes and _launch_agent(project_dir, agent, prompt=strings.CMD_BUILD_OWN_SOURCE_PROMPT):
         return
 
     console.print()
-    prompt_copied = first_pipeline_ran and copy_to_clipboard(strings.CMD_BUILD_OWN_SOURCE_PROMPT)
-    print_next_steps(project_dir, scaffold=scaffold, first_pipeline_ran=first_pipeline_ran, prompt_copied=prompt_copied)
+    prompt_copied = not args.yes and copy_to_clipboard(strings.CMD_BUILD_OWN_SOURCE_PROMPT)
+    print_next_steps(project_dir, scaffold=scaffold, first_pipeline_ran=not args.yes, prompt_copied=prompt_copied)
 
 
 def _finalize_agent(project_dir: Path, scaffold: str, args: argparse.Namespace, *, verbose: bool) -> str:
@@ -232,85 +218,6 @@ def _launch_agent(project_dir: Path, agent: str, *, prompt: str) -> bool:
     except OSError:
         return False
     return True
-
-
-def _run_first_pipeline(uv_executable: str, project_dir: Path, *, verbose: bool) -> None:
-    """Log in, bind the playground workspace, run load_sample_shop, show the run."""
-    # Login is the only interactive step, so stream it; it also authenticates the steps below.
-    with substep_streaming(strings.MSG_LOGGING_IN, strings.MSG_LOGGED_IN):
-        run_uv_command(uv_executable, project_dir, ["run", "dlthub", "login"], verbose=True)
-
-    with substep(
-        strings.MSG_CONNECTING_PLAYGROUND.format(workspace=PLAYGROUND_WORKSPACE),
-        strings.MSG_CONNECTED_PLAYGROUND.format(workspace=PLAYGROUND_WORKSPACE),
-        verbose=verbose,
-    ):
-        # connect --create errors on an existing workspace, so pass it only when absent.
-        connect_args = ["run", "dlthub", "workspace", "connect", PLAYGROUND_WORKSPACE]
-        if not _playground_exists(uv_executable, project_dir):
-            connect_args.append("--create")
-        run_uv_command(uv_executable, project_dir, connect_args, verbose=verbose)
-
-    # No --follow: submit the run without blocking/streaming; the show step below surfaces its logs.
-    with substep(strings.MSG_RUNNING_FIRST_PIPELINE, strings.MSG_RAN_FIRST_PIPELINE, verbose=verbose):
-        run_uv_command(
-            uv_executable,
-            project_dir,
-            ["run", "dlthub", "run", "load_sample_shop"],
-            verbose=verbose,
-        )
-
-    with substep(strings.MSG_SHOWING_RUN, strings.MSG_SHOWED_RUN, verbose=verbose):
-        run_uv_command(
-            uv_executable,
-            project_dir,
-            ["run", "dlthub", "job", "runs", "show", "pipeline.load_sample_shop"],
-            verbose=verbose,
-        )
-
-
-def _workspace_in_list(list_output: str, name: str) -> bool:
-    """True if ``name`` appears in the Name column of `dlthub workspace list`.
-
-    The output is a space-padded table; workspace names can contain single
-    spaces (e.g. "My Workspace"), so columns are split on runs of 2+ spaces and
-    the first field is the name. The header row (before the dashed separator)
-    and the separator itself are skipped, so a workspace literally named like a
-    column header can't false-match.
-    """
-    seen_separator = False
-    for line in list_output.splitlines():
-        stripped = line.strip()
-        if not stripped:
-            continue
-        if set(stripped) <= {"-", " "}:
-            seen_separator = True
-            continue
-        if not seen_separator:
-            continue  # header row(s) above the separator
-        first_column = re.split(r"\s{2,}", stripped)[0]
-        if first_column == name:
-            return True
-    return False
-
-
-def _playground_exists(uv_executable: str, project_dir: Path) -> bool:
-    """Report whether the playground workspace already exists for the user.
-
-    Lists remote workspaces with --non-interactive so an unauthenticated user
-    fails fast (no hanging prompt) instead of blocking. On any failure we report
-    False, so the caller falls back to `connect --create` — and that connect
-    step then triggers the interactive login.
-    """
-    try:
-        output = capture_uv_command(
-            uv_executable,
-            project_dir,
-            ["run", "dlthub", "--non-interactive", "workspace", "list"],
-        )
-    except UvError:
-        return False
-    return _workspace_in_list(output, PLAYGROUND_WORKSPACE)
 
 
 if __name__ == "__main__":

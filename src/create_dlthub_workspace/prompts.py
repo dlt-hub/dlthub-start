@@ -41,7 +41,7 @@ def choose_agent(default: str = RECOMMENDED.agent) -> str:
     ]
     default_index = agents.index(default) if default in agents else 0
 
-    console.print(strings.PROMPT_AGENT_HEADER)
+    # console.print(strings.PROMPT_AGENT_HEADER)
     index = cast(
         int,
         beaupy.select(

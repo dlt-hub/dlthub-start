@@ -85,9 +85,9 @@ MSG_PLAYGROUND_READY = (
     "\n[bold]1. The dltHub platform playground experience is set[/bold]"
     "\nWe created a demo dlt pipeline and set up your dltHub playground."
 )
-MSG_FIRST_RUN_FAILED = (
-    "\n[yellow]Heads up:[/yellow] couldn't finish the first pipeline run ({message}). "
-    "Your workspace is set up — run it yourself with the steps below."
+MSG_INVOKE_SKILL = (
+    "\nWorkspace ready — invoke the [bold]deploy-run-sample-pipeline[/bold] skill "
+    "to log in to dltHub and run your first pipeline."
 )
 
 
