@@ -41,6 +41,6 @@ one-shot:
   agent: codex
   files:
     .agents/skills/deploy-run-sample-pipeline/SKILL.md:
-      sha3_256: 29dff24c13067d5516df26ed743a6c56914c5d7db2f820d6fb57994c9404b903
+      sha3_256: 249c1339238432bf69768bea308c23081075d52080dcb488ecb61e9112c79a23
     .agents/skills/one-shot-workflow/SKILL.md:
       sha3_256: ecbcf0b860b3720b7f856b522e0c521e22b10a052c9aca6163507c01aa583885
