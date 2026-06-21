@@ -32,7 +32,7 @@ WORKBENCH_REPO = "https://github.com/dlt-hub/dlthub-ai-workbench.git"
 # To bump: pick a new SHA (the workbench repo has no tags today), update the
 # constant below, run `make generate-ai`, commit the resulting scaffold diff
 # alongside this change.
-WORKBENCH_REF: str | None = "a6a4b08eed5cf362e8ce8115188a7aa903279f32"
+WORKBENCH_REF: str | None = "feat/number-onboarding-steps"
 
 
 @dataclass(frozen=True)
