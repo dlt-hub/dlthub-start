@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reworked the post-setup panel so its framing matches the outcome: it now reads "You're all set" only after a successful first run, and "Almost there" when the run failed or setup stopped early. When setup is unfinished, the panel also points forward — listing the remaining install steps followed by the sample-run steps — instead of dead-ending at `uv sync`.
 - The coding-agent prompt now adapts to the outcome too: it invites you to "create your own pipeline" only after the demo run succeeded, and shows a neutral "set up your coding agent" line otherwise (e.g. after a failed run), so it no longer presumes a run that didn't happen.
 - A non-interactive run (no TTY, e.g. invoked by a coding agent or in CI) now fails fast with a clear, agent-addressed message when no `--agent` is given — instead of hanging on the agent picker. The message tells the agent to re-run with `--agent claude|codex|cursor`. Nothing is scaffolded before the check.
+- Refreshed the bundled minimal workspace `uv.lock`, bumping `dlt` to 1.28.1.
 
 ## [0.8.2] - 2026-06-18
 
