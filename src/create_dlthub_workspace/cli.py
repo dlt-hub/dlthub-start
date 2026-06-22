@@ -24,7 +24,7 @@ from .display import (
     substep_streaming,
 )
 from .errors import UvError, WorkspaceDirectoryNotEmptyError, WorkspaceError
-from .project_metadata import apply_workspace_name
+from .project_metadata import apply_dlthub_client_source, apply_runtime_base_urls, apply_workspace_name
 from .prompts import choose_agent, confirm, stdin_is_interactive
 from .scaffold import (
     copy_scaffold,
@@ -79,6 +79,24 @@ def build_parser() -> argparse.ArgumentParser:
         "--agent",
         choices=AGENTS,
         help=f"Coding agent to set up ({', '.join(AGENTS)}). If omitted, you'll be prompted to choose (default: {RECOMMENDED.agent}).",
+    )
+    parser.add_argument(
+        "--api-base-url",
+        metavar="URL",
+        default=None,
+        help="Point the workspace at a non-prod dltHub runtime by writing api_base_url into .dlt/config.toml at scaffold time (omit for prod).",
+    )
+    parser.add_argument(
+        "--auth-base-url",
+        metavar="URL",
+        default=None,
+        help="Set auth_base_url in .dlt/config.toml for stacks that split auth onto its own host (e.g. local); omit when auth shares the api host (dev/prod).",
+    )
+    parser.add_argument(
+        "--dlthub-client-source",
+        metavar="PATH",
+        default=None,
+        help="Point dlthub-client at a local runtime checkout (editable) for dev/local stacks whose API can outrun the released client; omit for prod (PyPI client).",
     )
     parser.add_argument(
         "--verbose",
@@ -159,6 +177,10 @@ def run(args: argparse.Namespace) -> None:
     ):
         copy_scaffold(project_dir, scaffold=scaffold, agent=None)
         package_name = apply_workspace_name(project_dir, project_dir.name)
+        if args.api_base_url or args.auth_base_url:
+            apply_runtime_base_urls(project_dir, api_base_url=args.api_base_url, auth_base_url=args.auth_base_url)
+        if args.dlthub_client_source:
+            apply_dlthub_client_source(project_dir, args.dlthub_client_source)
     substep_detail(strings.MSG_PACKAGE_NAME.format(package_name=package_name))
     print_created_tree(scaffold)
 

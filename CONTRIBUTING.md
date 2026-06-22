@@ -56,8 +56,37 @@ pre-deletes that directory before running the CLI, so only use it for
 throwaway local workspaces. To target a different directory:
 
 ```bash
-make workspace REMOVE_PREV_WORKSPACE=examples/my-demo
+make workspace WORKSPACE_DIR=examples/my-demo
 ```
+
+### Testing against dev/local runtime stacks
+
+`make workspace` targets prod (the released `dlthub-client` from PyPI). To scaffold
+a throwaway workspace pointed at a non-prod runtime instead:
+
+| Target | Stack | Notes |
+|---|---|---|
+| `make workspace-dev` | `api.dlthub.dev` | editable `dlthub-client` from a local checkout |
+| `make workspace-local` | `api.dlthub.test` (+ `auth.dlthub.test`) | editable client; skips TLS verify (mkcert CA isn't in Python's bundle) |
+| `make workspace-stage` | `api.dlthub.net` | released client |
+
+`workspace-dev`/`workspace-local` pin the stack's `api_base_url` (and, for local,
+`auth_base_url` — it sits on its own host) into the workspace's `.dlt/config.toml`
+at scaffold time via the CLI's `--api-base-url` / `--auth-base-url` flags. They also
+point `dlthub-client` at a local runtime checkout (editable, via
+`--dlthub-client-source`) so the client matches an API that may be ahead of the
+released package. The checkout defaults to the sibling `../runtime/clients/cli`;
+override it:
+
+```bash
+DLTHUB_CLIENT_SOURCE=/path/to/runtime/clients/cli make workspace-dev
+```
+
+When running `dlthub` commands **by hand** in a local workspace, set
+`DLT_RUNTIME_INSECURE=true` (the mkcert cert isn't in Python's trust bundle), e.g.
+`DLT_RUNTIME_INSECURE=true uv run dlthub login`. Browser login against the local
+stack also needs the runtime's mock host resolvable — add `127.0.0.1 dev-mock-services`
+to `/etc/hosts`.
 
 ## Tests
 
@@ -91,6 +120,16 @@ Run a quick bytecode compile check:
 ```bash
 make compile
 ```
+
+### Asserting on rendered output
+
+`display.console` is a plain `Console()` that auto-detects color from stdout, so
+captured panel output is plain text when piped (CI) but carries ANSI styling and
+wraps to the terminal width in an interactive shell. A test that asserts on
+`console.capture()` output without normalizing will pass in one environment and
+fail in the other. Use `_panel_text()` in `tests/test_display.py` — it strips ANSI
+styling and panel borders and collapses whitespace, so substring checks don't
+depend on color or terminal width.
 
 ## Quality Checks
 
@@ -173,6 +212,18 @@ pair of make targets:
 
 ## Release Checklist
 
+Bump the version — this rewrites `pyproject.toml` and `uv.lock` together.
+`config.VERSION` is read from package metadata, so the version in `pyproject.toml`
+is the single source; nothing else needs editing.
+
+```bash
+make version-upgrade          # prompts for major / minor / patch
+make version-upgrade-patch    # non-interactive (also -minor / -major)
+```
+
+`version-upgrade` prompts interactively; the `version-upgrade-{patch,minor,major}`
+variants (or `make version-upgrade LEVEL=patch`) are non-interactive for CI/agents.
+
 Before publishing, verify:
 
 ```bash
@@ -189,6 +240,6 @@ dlthub-start
 Then build and publish to PyPI (prompts for a PyPI API token):
 
 ```bash
-make publish-library
+make publish
 ```
 

@@ -110,3 +110,123 @@ def _replace_lock_project_name(lock_path: Path, package_name: str) -> None:
             lines[name_index] = f'name = "{package_name}"{newline}'
             lock_path.write_text("".join(lines), encoding="utf-8")
             return
+
+
+def apply_runtime_base_urls(
+    project_dir: Path,
+    *,
+    api_base_url: str | None = None,
+    auth_base_url: str | None = None,
+) -> None:
+    """Pin the given base URLs under ``[runtime]`` in the workspace's ``.dlt/config.toml``.
+
+    ``auth_base_url`` is only needed for stacks that split auth onto its own host (local).
+    """
+    settings = {
+        key: value for key, value in (("api_base_url", api_base_url), ("auth_base_url", auth_base_url)) if value
+    }
+    if not settings:
+        return
+    config_path = project_dir / ".dlt" / "config.toml"
+    if not config_path.exists():
+        return
+    try:
+        content = config_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise ScaffoldError(strings.ERROR_READ_FAILED.format(path=config_path, reason=exc)) from exc
+    for key, value in settings.items():
+        content = _set_runtime_key(content, key, value)
+    try:
+        config_path.write_text(content, encoding="utf-8")
+    except OSError as exc:
+        raise ScaffoldError(strings.ERROR_WRITE_FAILED.format(path=config_path, reason=exc)) from exc
+
+
+def apply_dlthub_client_source(project_dir: Path, source: str) -> None:
+    """Point the workspace's ``dlthub-client`` at a local checkout via ``[tool.uv.sources]``.
+
+    Added as a direct dependency too — uv only honors a source for a direct dep.
+    """
+    source_path = Path(source).expanduser().resolve()
+    if not (source_path / "pyproject.toml").exists():
+        raise ScaffoldError(strings.ERROR_CLIENT_SOURCE_NOT_FOUND.format(path=source_path))
+    pyproject = project_dir / "pyproject.toml"
+    if not pyproject.exists():
+        return
+    try:
+        content = pyproject.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise ScaffoldError(strings.ERROR_READ_FAILED.format(path=pyproject, reason=exc)) from exc
+    content = _add_project_dependency(content, "dlthub-client")
+    content = _set_uv_source(content, "dlthub-client", f'{{ path = "{source_path}", editable = true }}')
+    try:
+        pyproject.write_text(content, encoding="utf-8")
+    except OSError as exc:
+        raise ScaffoldError(strings.ERROR_WRITE_FAILED.format(path=pyproject, reason=exc)) from exc
+
+
+def _add_project_dependency(content: str, dependency: str) -> str:
+    if re.search(rf'^\s*"{re.escape(dependency)}["\[<>=~!,]', content, re.MULTILINE):
+        return content
+    lines = content.splitlines(keepends=True)
+    for index, line in enumerate(lines):
+        if re.match(r"^dependencies\s*=\s*\[", line.strip()):
+            lines.insert(index + 1, f'    "{dependency}",\n')
+            return "".join(lines)
+    return content
+
+
+def _set_uv_source(content: str, name: str, spec: str) -> str:
+    entry = f"{name} = {spec}"
+    lines = content.splitlines(keepends=True)
+    in_sources = False
+    sources_index: int | None = None
+
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        if stripped == "[tool.uv.sources]":
+            in_sources = True
+            sources_index = index
+            continue
+        if in_sources:
+            if stripped.startswith("["):
+                break
+            if re.match(rf"^{re.escape(name)}\s*=", stripped):
+                newline = "\n" if line.endswith("\n") else ""
+                lines[index] = f"{entry}{newline}"
+                return "".join(lines)
+
+    if sources_index is not None:
+        lines.insert(sources_index + 1, f"{entry}\n")
+        return "".join(lines)
+
+    separator = "" if content == "" or content.endswith("\n") else "\n"
+    return f"{content}{separator}\n[tool.uv.sources]\n{entry}\n"
+
+
+def _set_runtime_key(content: str, key: str, value: str) -> str:
+    entry = f'{key} = "{value}"'
+    lines = content.splitlines(keepends=True)
+    in_runtime = False
+    runtime_index: int | None = None
+
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        if stripped == "[runtime]":
+            in_runtime = True
+            runtime_index = index
+            continue
+        if in_runtime:
+            if stripped.startswith("["):
+                break
+            if re.match(rf"^{re.escape(key)}\s*=", stripped):
+                newline = "\n" if line.endswith("\n") else ""
+                lines[index] = f"{entry}{newline}"
+                return "".join(lines)
+
+    if runtime_index is not None:
+        lines.insert(runtime_index + 1, f"{entry}\n")
+        return "".join(lines)
+
+    separator = "" if content == "" or content.endswith("\n") else "\n"
+    return f"{content}{separator}\n[runtime]\n{entry}\n"

@@ -5,7 +5,12 @@ import unittest
 from pathlib import Path
 
 from create_dlthub_workspace.errors import ScaffoldError
-from create_dlthub_workspace.project_metadata import apply_workspace_name, normalize_project_name
+from create_dlthub_workspace.project_metadata import (
+    apply_dlthub_client_source,
+    apply_runtime_base_urls,
+    apply_workspace_name,
+    normalize_project_name,
+)
 
 
 class ProjectMetadataTests(unittest.TestCase):
@@ -102,6 +107,58 @@ class ProjectMetadataTests(unittest.TestCase):
             apply_workspace_name(project_dir, "My Workspace")
 
             self.assertFalse((project_dir / "uv.lock").exists())
+
+
+class RuntimeBaseUrlsTests(unittest.TestCase):
+    def test_pins_both_base_urls_under_runtime(self) -> None:
+        # Mirrors the real scaffold (a [runtime] table, no base URLs) and the
+        # local case that needs both api and a split-out auth host.
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_dir = Path(tmpdir)
+            config_path = project_dir / ".dlt" / "config.toml"
+            config_path.parent.mkdir(parents=True)
+            config_path.write_text('[runtime]\nlog_level="WARNING"\n', encoding="utf-8")
+
+            apply_runtime_base_urls(
+                project_dir,
+                api_base_url="https://api.dlthub.test",
+                auth_base_url="https://auth.dlthub.test",
+            )
+
+            text = config_path.read_text(encoding="utf-8")
+            self.assertIn('api_base_url = "https://api.dlthub.test"', text)
+            self.assertIn('auth_base_url = "https://auth.dlthub.test"', text)
+            self.assertIn('log_level="WARNING"', text)
+
+
+class DlthubClientSourceTests(unittest.TestCase):
+    def test_adds_dependency_and_editable_source(self) -> None:
+        # Mirrors the real scaffold: a dependencies array + an empty [tool.uv.sources].
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_dir = Path(tmpdir) / "ws"
+            project_dir.mkdir()
+            (project_dir / "pyproject.toml").write_text(
+                '[project]\nname = "ws"\ndependencies = [\n    "dlthub[mcp]",\n]\n\n[tool.uv.sources]\n',
+                encoding="utf-8",
+            )
+            # The source must be a real path containing a pyproject.toml.
+            client_src = Path(tmpdir) / "clients" / "cli"
+            client_src.mkdir(parents=True)
+            (client_src / "pyproject.toml").write_text('[project]\nname = "dlthub-client"\n', encoding="utf-8")
+
+            apply_dlthub_client_source(project_dir, str(client_src))
+
+            text = (project_dir / "pyproject.toml").read_text(encoding="utf-8")
+            self.assertIn('"dlthub-client",', text)
+            self.assertIn(f'dlthub-client = {{ path = "{client_src.resolve()}", editable = true }}', text)
+
+    def test_missing_source_raises(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            project_dir = Path(tmpdir)
+            (project_dir / "pyproject.toml").write_text("[project]\ndependencies = [\n]\n", encoding="utf-8")
+
+            with self.assertRaises(ScaffoldError):
+                apply_dlthub_client_source(project_dir, str(Path(tmpdir) / "does-not-exist"))
 
 
 if __name__ == "__main__":

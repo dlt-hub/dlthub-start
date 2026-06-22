@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help dev test test-integration compile build clean-dist version-upgrade version-upgrade-patch version-upgrade-minor version-upgrade-major publish-library ci workspace workspace-env workspace-local workspace-stage workspace-dev workspace-here lint lint-fix format format-check fl lint-ci generate-ai update-ai check-ai lock-upgrade lock-check scaffold-lock-upgrade scaffold-lock-check scaffold-launcher-deps-check
+.PHONY: help dev test test-integration compile build clean-dist version-upgrade version-upgrade-patch version-upgrade-minor version-upgrade-major publish ci workspace workspace-env workspace-local workspace-stage workspace-dev workspace-here lint lint-fix format format-check fl lint-ci generate-ai update-ai check-ai lock-upgrade lock-check scaffold-lock-upgrade scaffold-lock-check scaffold-launcher-deps-check
 
 PYTHONPYCACHEPREFIX ?= /tmp/create-dlthub-pyc
 PACKAGE_MODULES := $(wildcard src/create_dlthub_workspace/*.py)
@@ -91,34 +91,41 @@ publish: clean-dist build ## Build and publish dlthub-start to PyPI
 	@bash -c 'read -s -p "Enter PyPI API token: " PYPI_API_TOKEN; echo; \
 	uv publish --token "$$PYPI_API_TOKEN"'
 
-REMOVE_PREV_WORKSPACE ?= examples/my-workspace
+WORKSPACE_DIR ?= examples/my-workspace
 
-workspace: ## Run dlthub-start at ./$(REMOVE_PREV_WORKSPACE) for a clean test workspace (pre-deletes existing)
-	@case "$(REMOVE_PREV_WORKSPACE)" in *..*|"") echo "invalid REMOVE_PREV_WORKSPACE: $(REMOVE_PREV_WORKSPACE)"; exit 1;; esac
-	rm -rf -- "$(REMOVE_PREV_WORKSPACE)"
-	uv run dlthub-start "$(REMOVE_PREV_WORKSPACE)"
+workspace: ## Run dlthub-start at ./$(WORKSPACE_DIR) for a clean test workspace (pre-deletes existing)
+	@case "$(WORKSPACE_DIR)" in *..*|"") echo "invalid WORKSPACE_DIR: $(WORKSPACE_DIR)"; exit 1;; esac
+	rm -rf -- "$(WORKSPACE_DIR)"
+	uv run dlthub-start "$(WORKSPACE_DIR)"
 
 WORKSPACE_HERE_DIR ?= examples/here-workspace
 
 API_BASE_URL ?= https://api.dlthub.test
+AUTH_BASE_URL ?=
+# Editable dlthub-client checkout for dev/local; empty = released PyPI client.
+DLTHUB_CLIENT_SOURCE ?=
 
-workspace-env: ## Like workspace, but pointed at $(API_BASE_URL); persists the URL into the workspace config
-	@case "$(REMOVE_PREV_WORKSPACE)" in *..*|"") echo "invalid REMOVE_PREV_WORKSPACE: $(REMOVE_PREV_WORKSPACE)"; exit 1;; esac
-	rm -rf -- "$(REMOVE_PREV_WORKSPACE)"
-	RUNTIME__API_BASE_URL=$(API_BASE_URL) DLT_RUNTIME_INSECURE=$(DLT_RUNTIME_INSECURE) uv run dlthub-start "$(REMOVE_PREV_WORKSPACE)"
-	@awk -v url='$(API_BASE_URL)' '1; $$0 == "[runtime]" {print "api_base_url = \"" url "\""}' \
-		"$(REMOVE_PREV_WORKSPACE)/.dlt/config.toml" > "$(REMOVE_PREV_WORKSPACE)/.dlt/config.toml.tmp"
-	@mv "$(REMOVE_PREV_WORKSPACE)/.dlt/config.toml.tmp" "$(REMOVE_PREV_WORKSPACE)/.dlt/config.toml"
-	@echo "workspace-env: pinned api_base_url = $(API_BASE_URL) in $(REMOVE_PREV_WORKSPACE)/.dlt/config.toml"
+workspace-env: ## Like workspace, but pins api_base_url (+ auth_base_url / dlthub-client source if set) into the workspace at scaffold time (validated; stays pinned even if the guided run fails)
+	@case "$(WORKSPACE_DIR)" in *..*|"") echo "invalid WORKSPACE_DIR: $(WORKSPACE_DIR)"; exit 1;; esac
+	rm -rf -- "$(WORKSPACE_DIR)"
+	-DLT_RUNTIME_INSECURE=$(DLT_RUNTIME_INSECURE) uv run dlthub-start "$(WORKSPACE_DIR)" --api-base-url "$(API_BASE_URL)" $(if $(AUTH_BASE_URL),--auth-base-url "$(AUTH_BASE_URL)") $(if $(strip $(DLTHUB_CLIENT_SOURCE)),--dlthub-client-source "$(DLTHUB_CLIENT_SOURCE)")
+	@cfg="$(WORKSPACE_DIR)/.dlt/config.toml"; \
+	if ! grep -qF 'api_base_url = "$(API_BASE_URL)"' "$$cfg" 2>/dev/null; then \
+		echo "workspace-env: FAILED — api_base_url not pinned in $$cfg"; exit 1; \
+	fi; \
+	if [ -n "$(AUTH_BASE_URL)" ] && ! grep -qF 'auth_base_url = "$(AUTH_BASE_URL)"' "$$cfg" 2>/dev/null; then \
+		echo "workspace-env: FAILED — auth_base_url not pinned in $$cfg"; exit 1; \
+	fi; \
+	echo "workspace-env: pinned + validated api_base_url = $(API_BASE_URL)$(if $(AUTH_BASE_URL), (auth_base_url = $(AUTH_BASE_URL))) in $$cfg"
 
-workspace-local: ## Scaffold a workspace pointed at the local runtime stack (api.dlthub.test); skips TLS verify (mkcert CA is not in Python's bundle)
-	$(MAKE) workspace-env API_BASE_URL=https://api.dlthub.test DLT_RUNTIME_INSECURE=true
+workspace-local: ## Scaffold a workspace pointed at the local stack (api + auth on *.dlthub.test) with an editable dlthub-client; skips TLS verify (mkcert CA is not in Python's bundle)
+	$(MAKE) workspace-env API_BASE_URL=https://api.dlthub.test AUTH_BASE_URL=https://auth.dlthub.test DLT_RUNTIME_INSECURE=true DLTHUB_CLIENT_SOURCE="$(or $(DLTHUB_CLIENT_SOURCE),$(CURDIR)/../runtime/clients/cli)"
 
 workspace-stage: ## Scaffold a workspace pointed at the staging stack (api.dlthub.net)
 	$(MAKE) workspace-env API_BASE_URL=https://api.dlthub.net
 
-workspace-dev: ## Scaffold a workspace pointed at the dev stack (api.dlthub.dev)
-	$(MAKE) workspace-env API_BASE_URL=https://api.dlthub.dev
+workspace-dev: ## Scaffold a workspace pointed at the dev stack (api.dlthub.dev) with an editable dlthub-client matching the dev API
+	$(MAKE) workspace-env API_BASE_URL=https://api.dlthub.dev DLTHUB_CLIENT_SOURCE="$(or $(DLTHUB_CLIENT_SOURCE),$(CURDIR)/../runtime/clients/cli)"
 
 workspace-here: dev ## Init in place: make empty ./$(WORKSPACE_HERE_DIR), cd in, run the local CLI with no positional (pass ARGS="--yes --skip-uv-sync")
 	@case "$(WORKSPACE_HERE_DIR)" in *..*|"") echo "invalid WORKSPACE_HERE_DIR: $(WORKSPACE_HERE_DIR)"; exit 1;; esac

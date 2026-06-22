@@ -108,6 +108,9 @@ def _make_args(**overrides: object) -> argparse.Namespace:
     defaults: dict[str, object] = {
         "project_dir": "/tmp/test_workspace",
         "agent": None,
+        "api_base_url": None,
+        "auth_base_url": None,
+        "dlthub_client_source": None,
         "setup_only": False,
         "verbose": False,
         "scaffold_only": False,
