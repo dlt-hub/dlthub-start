@@ -7,6 +7,7 @@ the content of rich panels.
 from __future__ import annotations
 
 import os
+import re
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -24,6 +25,14 @@ from create_dlthub_workspace.display import (
 )
 from create_dlthub_workspace.scaffold import SCAFFOLDS_DIR
 
+# Captured panels carry ANSI styling and wrap to the terminal width; strip styling
+# + borders and collapse whitespace so substring checks don't depend on either.
+_ANSI_RE = re.compile(r"\x1b\[[0-9;]*m|\x1b\][^\x1b\x07]*(?:\x07|\x1b\\)")
+
+
+def _panel_text(captured: str) -> str:
+    return " ".join(_ANSI_RE.sub("", captured).replace("│", " ").replace("|", " ").split())
+
 
 class PrintNextStepsTests(unittest.TestCase):
     def test_minimal_scaffold_renders_with_its_pipeline_command(self) -> None:
@@ -40,9 +49,7 @@ class PrintNextStepsTests(unittest.TestCase):
         # the instruction + the verbatim prompt to hand to the agent.
         with console.capture() as cap:
             print_next_steps(Path.cwd(), scaffold="minimal_workspace", ran=True, prompt_copied=True)
-        # Strip panel borders (Unicode │ on POSIX, ASCII | on the Windows console)
-        # and collapse line-wrapping so the prompt is one contiguous string.
-        output = " ".join(cap.get().replace("│", " ").replace("|", " ").split())
+        output = _panel_text(cap.get())
 
         self.assertNotIn("uv run dlthub run load_sample_shop", output)
         self.assertIn("Tell your agent to navigate to the directory you just ran", output)
