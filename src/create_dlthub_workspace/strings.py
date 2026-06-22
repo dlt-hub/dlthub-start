@@ -19,6 +19,8 @@ the argument definitions and needs default-value interpolation.
 
 from __future__ import annotations
 
+from . import config
+
 
 # Prompts ---------------------------------------------------------------
 PROMPT_AGENT_HEADER = (
@@ -98,7 +100,7 @@ MSG_FIRST_RUN_FAILED = (
 
 
 # Panel titles ----------------------------------------------------------
-TITLE_BANNER = "dlthub-start v{version} [bold #C6D300](beta)[/bold #C6D300]"
+TITLE_BANNER = f"{config.DISTRIBUTION_NAME} v{{version}} [bold #C6D300](beta)[/bold #C6D300]"
 TITLE_ALL_SET = "You're all set"
 TITLE_ALMOST_THERE = "Almost there"
 TITLE_DIR_NOT_EMPTY = "Directory not empty"
@@ -119,7 +121,7 @@ MSG_DIR_NOT_EMPTY = (
     "The directory must be empty apart from editor/OS cruft and a bare .git — "
     "entries like .gitignore, .dlt, and .venv count as content.\n\n"
     "Start from an empty directory, or create a new one:\n\n"
-    "  [bold #59C1D5]uvx dlthub-start@latest my-workspace[/bold #59C1D5]\n\n"
+    f"  [bold #59C1D5]uvx {config.DISTRIBUTION_NAME}@latest my-workspace[/bold #59C1D5]\n\n"
     "[dim]Note for AI agents: initializing a workspace installs AI skills and an "
     "MCP server into the target directory. Run it from that directory and keep "
     "your session there (the workspace root) so they're in scope.[/dim]"
@@ -133,8 +135,8 @@ LABEL_DOCS = "Docs:"
 
 
 # Links (URL + its display label) ---------------------------------------
-LINK_DOCS_URL = "https://github.com/dlt-hub/dlthub-ai-workbench/blob/master/README.md"
-LINK_DOCS_LABEL = "github.com/dlt-hub/dlthub-ai-workbench"
+LINK_DOCS_URL = f"https://github.com/{config.GITHUB_ORG}/{config.WORKBENCH_REPO_NAME}/blob/master/README.md"
+LINK_DOCS_LABEL = f"github.com/{config.GITHUB_ORG}/{config.WORKBENCH_REPO_NAME}"
 
 
 # Hint text / badges / taglines -----------------------------------------
@@ -149,9 +151,7 @@ STEPS_LABEL_CD = "Change into the workspace:"
 STEPS_LABEL_RUN_SAMPLE_SHOP = "Run the sample shop pipeline in dltHub (you'll be prompted to connect/login):"
 STEPS_LABEL_VIEW_SAMPLE_SHOP_RUNS = "View runs for the sample shop pipeline:"
 STEPS_LABEL_EDIT_PIPELINE = "Edit pipeline.py to swap in your own source, then re-run."
-STEPS_LABEL_BUILD_OWN_SOURCE = (
-    "Tell your agent to navigate to the directory you just ran the dlthub-start command in and paste this prompt:"
-)
+STEPS_LABEL_BUILD_OWN_SOURCE = f"Tell your agent to navigate to the directory you just ran the {config.DISTRIBUTION_NAME} command in and paste this prompt:"
 HINT_PROMPT_COPIED = "✓ Already copied to your clipboard — just paste it in."
 STEPS_LABEL_INSTALL_UV = "Install uv:"
 STEPS_LABEL_INSTALL_DEPS = "Install workspace dependencies:"

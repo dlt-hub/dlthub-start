@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help dev test test-integration compile build clean-dist publish-library ci workspace workspace-env workspace-local workspace-stage workspace-dev workspace-here lint lint-fix format format-check fl lint-ci generate-ai update-ai check-ai lock-upgrade lock-check scaffold-lock-upgrade scaffold-lock-check scaffold-launcher-deps-check
+.PHONY: help dev test test-integration compile build clean-dist version-upgrade version-upgrade-patch version-upgrade-minor version-upgrade-major publish-library ci workspace workspace-env workspace-local workspace-stage workspace-dev workspace-here lint lint-fix format format-check fl lint-ci generate-ai update-ai check-ai lock-upgrade lock-check scaffold-lock-upgrade scaffold-lock-check scaffold-launcher-deps-check
 
 PYTHONPYCACHEPREFIX ?= /tmp/create-dlthub-pyc
 PACKAGE_MODULES := $(wildcard src/create_dlthub_workspace/*.py)
@@ -58,6 +58,33 @@ build: dev ## Build the package wheel
 
 clean-dist: ## Remove dist/ directory
 	-@rm -r dist/
+
+version-upgrade: ## Bump version in pyproject.toml + uv.lock. Prompts when interactive, else pass LEVEL=major|minor|patch (or use version-upgrade-{patch,minor,major})
+	@level="$(LEVEL)"; \
+	if [ -z "$$level" ]; then \
+		if [ -t 0 ]; then \
+			echo "Current version: $$(uv version --short)"; \
+			printf "Bump which part? [major/minor/patch] "; \
+			read level; \
+		else \
+			echo "error: no TTY for the prompt — pass LEVEL=major|minor|patch or run 'make version-upgrade-patch'"; exit 1; \
+		fi; \
+	fi; \
+	case "$$level" in \
+		major|minor|patch) ;; \
+		*) echo "error: expected major, minor, or patch (got '$$level')"; exit 1;; \
+	esac; \
+	uv version --bump "$$level" --no-sync; \
+	echo "version-upgrade: updated pyproject.toml and uv.lock — review 'git diff pyproject.toml uv.lock' and commit."
+
+version-upgrade-patch: ## Bump the patch version non-interactively (AI/CI-friendly)
+	@$(MAKE) version-upgrade LEVEL=patch
+
+version-upgrade-minor: ## Bump the minor version non-interactively (AI/CI-friendly)
+	@$(MAKE) version-upgrade LEVEL=minor
+
+version-upgrade-major: ## Bump the major version non-interactively (AI/CI-friendly)
+	@$(MAKE) version-upgrade LEVEL=major
 
 publish: clean-dist build ## Build and publish dlthub-start to PyPI
 	ls -l dist/

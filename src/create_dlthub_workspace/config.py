@@ -3,8 +3,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from importlib.metadata import PackageNotFoundError, version
 
-VERSION = "0.8.2"
+DISTRIBUTION_NAME = "dlthub-start"
+
+try:
+    VERSION = version(DISTRIBUTION_NAME)
+except PackageNotFoundError:
+    VERSION = "0.0.0+unknown"
+
+GITHUB_ORG = "dlt-hub"
 
 AGENTS = ("claude", "codex", "cursor")
 
@@ -21,7 +29,8 @@ PLAYGROUND_WORKSPACE = "playground"
 TOOLKITS = ("one-shot",)
 
 # The dltHub AI workbench repo that `make generate-ai` / `make update-ai` pull from.
-WORKBENCH_REPO = "https://github.com/dlt-hub/dlthub-ai-workbench.git"
+WORKBENCH_REPO_NAME = "dlthub-ai-workbench"
+WORKBENCH_REPO = f"https://github.com/{GITHUB_ORG}/{WORKBENCH_REPO_NAME}.git"
 
 # Pinned commit of dlt-hub/dlthub-ai-workbench that `make generate-ai` fetches.
 # Setting a SHA keeps generation reproducible across machines and over time:

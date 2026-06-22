@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 from . import strings
-from .config import AGENT_LAUNCH_COMMANDS, AGENTS, PLAYGROUND_WORKSPACE, RECOMMENDED
+from .config import AGENT_LAUNCH_COMMANDS, AGENTS, DISTRIBUTION_NAME, PLAYGROUND_WORKSPACE, RECOMMENDED
 from .display import (
     console,
     copy_to_clipboard,
@@ -59,7 +59,7 @@ def _ensure_utf8_io_on_windows() -> None:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="dlthub-start",
+        prog=DISTRIBUTION_NAME,
         description=(
             "Create a dltHub workspace and run a guided first experience — scaffold, "
             "install, run a sample pipeline, and open your coding agent."
