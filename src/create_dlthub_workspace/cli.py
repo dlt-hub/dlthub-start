@@ -10,7 +10,15 @@ import sys
 from pathlib import Path
 
 from . import strings
-from .config import AGENT_LAUNCH_COMMANDS, AGENTS, DISTRIBUTION_NAME, PLAYGROUND_WORKSPACE, RECOMMENDED
+from .config import (
+    AGENT_LAUNCH_COMMANDS,
+    AGENT_SKILLS_DIR,
+    AGENTS,
+    DISTRIBUTION_NAME,
+    ONE_SHOT_ENTRY_SKILL,
+    PLAYGROUND_WORKSPACE,
+    RECOMMENDED,
+)
 from .display import (
     console,
     copy_to_clipboard,
@@ -21,7 +29,6 @@ from .display import (
     print_next_steps,
     substep,
     substep_detail,
-    substep_streaming,
 )
 from .errors import UvError, WorkspaceDirectoryNotEmptyError, WorkspaceError
 from .project_metadata import apply_dlthub_client_source, apply_runtime_base_urls, apply_workspace_name
@@ -61,8 +68,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog=DISTRIBUTION_NAME,
         description=(
-            "Create a dltHub workspace and run a guided first experience — scaffold, "
-            "install, run a sample pipeline, and open your coding agent."
+            "Create a dltHub workspace and hand off to your coding agent — scaffold, install, "
+            "log in, and connect a playground, then the agent deploys and runs the sample pipeline."
         ),
     )
     parser.add_argument(
@@ -104,7 +111,7 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Stream output from underlying subprocesses (uv, dlthub).",
     )
-    # Dev/CI only; hidden from --help. Both skip the first run.
+    # Dev/CI only; hidden from --help. Both skip login + playground connection.
     # --setup-only installs deps; --scaffold-only skips deps too.
     parser.add_argument(
         "--setup-only",
@@ -170,9 +177,14 @@ def run(args: argparse.Namespace) -> None:
     if resolution.relocated_from is not None:
         console.print(strings.MSG_RELOCATED.format(relocated_from=resolution.relocated_from, project_dir=project_dir))
 
+    uv_executable = find_uv()
+    if uv_executable is None and (args.setup_only or confirm(strings.PROMPT_INSTALL_UV, recommended=RECOMMENDED.install_uv)):
+        uv_executable = execute_uv_install(verbose=verbose)
+
+    install_deps = uv_executable is not None and not args.scaffold_only
     with substep(
-        strings.MSG_CREATING_WORKSPACE.format(project_dir=project_dir),
-        strings.MSG_CREATED.format(project_dir=project_dir),
+        strings.MSG_CREATING_WORKSPACE,
+        strings.MSG_WORKSPACE_READY if install_deps else strings.MSG_WORKSPACE_CREATED,
         verbose=verbose,
     ):
         copy_scaffold(project_dir, scaffold=scaffold, agent=None)
@@ -181,54 +193,70 @@ def run(args: argparse.Namespace) -> None:
             apply_runtime_base_urls(project_dir, api_base_url=args.api_base_url, auth_base_url=args.auth_base_url)
         if args.dlthub_client_source:
             apply_dlthub_client_source(project_dir, args.dlthub_client_source)
+        if uv_executable is not None and not args.scaffold_only:
+            run_uv_sync(uv_executable, project_dir, verbose=verbose)
     substep_detail(strings.MSG_PACKAGE_NAME.format(package_name=package_name))
     print_created_tree(scaffold)
 
-    uv_executable = find_uv()
     if uv_executable is None:
-        if args.setup_only or confirm(strings.PROMPT_INSTALL_UV, recommended=RECOMMENDED.install_uv):
-            uv_executable = execute_uv_install(verbose=verbose)
-        else:
-            _finalize_agent(project_dir, scaffold, args, ran=False, verbose=verbose)
-            console.print(strings.MSG_SKIPPED_UV_AND_SYNC)
-            print_next_steps(project_dir, scaffold=scaffold, ran=False, needs_uv_install=True, needs_deps=True)
-            return
+        _finalize_agent(project_dir, scaffold, args, verbose=verbose)
+        console.print(strings.MSG_SKIPPED_UV_AND_SYNC)
+        print_next_steps(project_dir, scaffold=scaffold, needs_uv_install=True, needs_deps=True)
+        return
 
     if args.scaffold_only:
-        _finalize_agent(project_dir, scaffold, args, ran=False, verbose=verbose)
+        _finalize_agent(project_dir, scaffold, args, verbose=verbose)
         console.print(strings.MSG_SKIPPED_SYNC)
-        print_next_steps(project_dir, scaffold=scaffold, ran=False, needs_deps=True)
+        print_next_steps(project_dir, scaffold=scaffold, needs_deps=True)
         return
 
-    with substep(strings.MSG_INSTALLING_DEPS, strings.MSG_INSTALLED_DEPS, verbose=verbose):
-        run_uv_sync(uv_executable, project_dir, verbose=verbose)
-
-    # Skipped under --setup-only: the first run's login is interactive. A run that exits
-    # non-zero degrades to a warning so the rest of setup still completes.
-    # LIMITATION: `dlthub run --follow` can exit 0 on a failed remote run, so a
-    # genuine run failure isn't caught here — we'd still report success. Revisit.
-    first_pipeline_ran = not args.setup_only
-    if first_pipeline_ran:
-        try:
-            _run_first_pipeline(uv_executable, project_dir, verbose=verbose)
-            console.print(strings.MSG_PLAYGROUND_READY)
-        except UvError as exc:
-            first_pipeline_ran = False
-            console.print(strings.MSG_FIRST_RUN_FAILED.format(message=exc))
-
-    agent = _finalize_agent(project_dir, scaffold, args, ran=first_pipeline_ran, verbose=verbose)
-
-    if first_pipeline_ran and _launch_agent(project_dir, agent, prompt=strings.CMD_BUILD_OWN_SOURCE_PROMPT):
+    if args.setup_only:
+        _finalize_agent(project_dir, scaffold, args, verbose=verbose)
+        console.print()
+        print_next_steps(project_dir, scaffold=scaffold)
         return
+
+    setup_ok = True
+    try:
+        _login_and_connect_playground(uv_executable, project_dir, verbose=verbose)
+    except UvError as exc:
+        setup_ok = False
+        console.print(strings.MSG_SETUP_FAILED.format(message=exc))
+
+    agent = _finalize_agent(project_dir, scaffold, args, verbose=verbose)
+    template = strings.CMD_DEPLOY_RUN_HANDOFF_PROMPT if setup_ok else strings.CMD_RESOLVE_HANDOFF_PROMPT
+    plan = strings.MSG_LAUNCH_PLAN if setup_ok else strings.MSG_LAUNCH_PLAN_RESOLVE
+    panel_title = strings.TITLE_ALL_SET if setup_ok else strings.TITLE_ALMOST_THERE
+    handoff_prompt = template.format(skill_path=_entry_skill_path(project_dir, agent))
+
+    if interactive and _agent_launchable(agent):
+        plan_prompt = template.format(skill_path=f"{AGENT_SKILLS_DIR[agent]}/{ONE_SHOT_ENTRY_SKILL}")
+        console.print(plan.format(agent=agent, project_dir=project_dir, prompt=plan_prompt))
+        launch = confirm(
+            strings.PROMPT_LAUNCH_AGENT,
+            yes_label=strings.PROMPT_LAUNCH_YES.format(agent=agent),
+            no_label=strings.PROMPT_LAUNCH_NO,
+        )
+        if launch and _launch_agent(project_dir, agent, prompt=handoff_prompt):
+            return
 
     console.print()
-    prompt_copied = first_pipeline_ran and copy_to_clipboard(strings.CMD_BUILD_OWN_SOURCE_PROMPT)
-    print_next_steps(project_dir, scaffold=scaffold, ran=first_pipeline_ran, prompt_copied=prompt_copied)
+    if not interactive:
+        console.print(handoff_prompt)
+        return
+    prompt_copied = copy_to_clipboard(handoff_prompt)
+    print_next_steps(
+        project_dir,
+        scaffold=scaffold,
+        agent_prompt=handoff_prompt,
+        panel_title=panel_title,
+        prompt_copied=prompt_copied,
+    )
 
 
-def _finalize_agent(project_dir: Path, scaffold: str, args: argparse.Namespace, *, ran: bool, verbose: bool) -> str:
+def _finalize_agent(project_dir: Path, scaffold: str, args: argparse.Namespace, *, verbose: bool) -> str:
     """Resolve the agent (prompting unless --agent/--setup-only set it) and lay down its AI files."""
-    agent = args.agent or (RECOMMENDED.agent if args.setup_only else choose_agent(ran=ran))
+    agent = args.agent or (RECOMMENDED.agent if args.setup_only else choose_agent())
     with substep(
         strings.MSG_ADDING_AGENT_FILES.format(agent=agent),
         strings.MSG_ADDED_AGENT_FILES.format(agent=agent),
@@ -236,6 +264,17 @@ def _finalize_agent(project_dir: Path, scaffold: str, args: argparse.Namespace, 
     ):
         overlay_agent(project_dir, scaffold=scaffold, agent=agent)
     return agent
+
+
+def _entry_skill_path(project_dir: Path, agent: str) -> Path:
+    """Absolute path to the bundled entry skill for ``agent`` in the workspace."""
+    return project_dir / AGENT_SKILLS_DIR[agent] / ONE_SHOT_ENTRY_SKILL
+
+
+def _agent_launchable(agent: str) -> bool:
+    """True if ``agent`` has a terminal CLI on PATH we can launch."""
+    base = AGENT_LAUNCH_COMMANDS.get(agent)
+    return base is not None and shutil.which(base[0]) is not None
 
 
 def _launch_agent(project_dir: Path, agent: str, *, prompt: str) -> bool:
@@ -247,7 +286,7 @@ def _launch_agent(project_dir: Path, agent: str, *, prompt: str) -> bool:
     executable = shutil.which(base[0])
     if executable is None:
         return False
-    console.print(strings.MSG_LAUNCHING_AGENT.format(agent=agent))
+    console.print(strings.MSG_LAUNCHING_AGENT.format(agent=agent, project_dir=project_dir))
     try:
         subprocess.run([executable, *base[1:], prompt], cwd=project_dir, check=False)
     except OSError:
@@ -255,39 +294,15 @@ def _launch_agent(project_dir: Path, agent: str, *, prompt: str) -> bool:
     return True
 
 
-def _run_first_pipeline(uv_executable: str, project_dir: Path, *, verbose: bool) -> None:
-    """Log in, bind the playground workspace, run load_sample_shop, show the run."""
-    # Login is the only interactive step, so stream it; it also authenticates the steps below.
-    with substep_streaming(strings.MSG_LOGGING_IN, strings.MSG_LOGGED_IN):
-        run_uv_command(uv_executable, project_dir, ["run", "dlthub", "login"], verbose=True)
-
-    with substep(
-        strings.MSG_CONNECTING_PLAYGROUND.format(workspace=PLAYGROUND_WORKSPACE),
-        strings.MSG_CONNECTED_PLAYGROUND.format(workspace=PLAYGROUND_WORKSPACE),
-        verbose=verbose,
-    ):
+def _login_and_connect_playground(uv_executable: str, project_dir: Path, *, verbose: bool) -> None:
+    """Log in and bind the playground workspace, the setup the entry skill assumes is done."""
+    with substep(strings.MSG_CONNECTING_DLTHUB, strings.MSG_CONNECTED_DLTHUB, verbose=verbose):
+        run_uv_command(uv_executable, project_dir, ["run", "dlthub", "login"], verbose=verbose)
         # connect --create errors on an existing workspace, so pass it only when absent.
         connect_args = ["run", "dlthub", "workspace", "connect", PLAYGROUND_WORKSPACE]
         if not _playground_exists(uv_executable, project_dir):
             connect_args.append("--create")
         run_uv_command(uv_executable, project_dir, connect_args, verbose=verbose)
-
-    # No --follow: submit the run without blocking/streaming; the show step below surfaces its logs.
-    with substep(strings.MSG_RUNNING_FIRST_PIPELINE, strings.MSG_RAN_FIRST_PIPELINE, verbose=verbose):
-        run_uv_command(
-            uv_executable,
-            project_dir,
-            ["run", "dlthub", "run", "load_sample_shop"],
-            verbose=verbose,
-        )
-
-    with substep(strings.MSG_SHOWING_RUN, strings.MSG_SHOWED_RUN, verbose=verbose):
-        run_uv_command(
-            uv_executable,
-            project_dir,
-            ["run", "dlthub", "job", "runs", "show", "pipeline.load_sample_shop"],
-            verbose=verbose,
-        )
 
 
 def _workspace_in_list(list_output: str, name: str) -> bool:

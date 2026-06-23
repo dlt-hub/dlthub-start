@@ -8,13 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
-- Replaced leftover "local DuckDB" copy (README, agent-picker prompt, sample pipeline docstring) with the managed `playground` destination, and dropped the misleading "on your local machine" claim from the first-run summary.
-- Standardized the product name to "dltHub platform" in the CLI copy (was "dltHub Pro" in a couple of strings).
-- The startup banner is now suppressed when output isn't a TTY (piped/CI/agent-run), where it was just noise in captured logs.
-- Reworked the post-setup panel so its framing matches the outcome: it now reads "You're all set" only after a successful first run, and "Almost there" when the run failed or setup stopped early. When setup is unfinished, the panel also points forward — listing the remaining install steps followed by the sample-run steps — instead of dead-ending at `uv sync`.
-- The coding-agent prompt now adapts to the outcome too: it invites you to "create your own pipeline" only after the demo run succeeded, and shows a neutral "set up your coding agent" line otherwise (e.g. after a failed run), so it no longer presumes a run that didn't happen.
-- A non-interactive run (no TTY, e.g. invoked by a coding agent or in CI) now fails fast with a clear, agent-addressed message when no `--agent` is given — instead of hanging on the agent picker. The message tells the agent to re-run with `--agent claude|codex|cursor`. Nothing is scaffolded before the check.
-- Refreshed the bundled minimal workspace `uv.lock`, bumping `dlt` to 1.28.1.
+- `dlthub-start` now hands off to your coding agent instead of running the sample pipeline or opening the dashboard itself. Once the workspace is scaffolded, dependencies are installed, and you're logged in to a `playground` workspace, you pick an agent and either launch it to deploy and run the sample pipeline (via the `deploy-run-sample-pipeline` skill) or skip and get the prompt copied to your clipboard to paste into an agent yourself. If a setup step fails, it still hands off — with a prompt to help you resolve it.
+- Cleaner, quieter setup output: scaffolding and dependency install show as one step and login and playground connection as another; login no longer prints its logs unless it errors.
+- The closing panel matches the outcome — "You're all set" on success, "Almost there" when setup stopped early or a step failed.
+- Replaced leftover "local DuckDB" copy with the managed `playground` destination, and standardized the product name to "dltHub platform".
+- The startup banner is hidden when output isn't a TTY (piped/CI/agent-run), where it was just log noise.
+- A non-interactive run with no `--agent` now fails fast with a clear, agent-addressed message instead of hanging on the agent picker.
+- Refreshed the bundled minimal workspace `uv.lock` (`dlt` 1.28.1).
+- Refreshed the bundled AI workbench (Claude/Cursor/Codex skills and rules): the `toolkit-dispatch` skill is now `dlthub-router`, which points you to the right workflow toolkit and installs it on demand.
 
 ## [0.8.2] - 2026-06-18
 

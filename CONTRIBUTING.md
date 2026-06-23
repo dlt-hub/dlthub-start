@@ -21,21 +21,21 @@ Run the CLI from the checkout:
 uv run dlthub-start --help
 ```
 
-Create a workspace non-interactively (for tests/CI). `--yes`/`-y` and
-`--skip-uv-sync` are hidden testing shortcuts — they cut the guided setup short
-(`--yes` skips the prompts and the first run; `--skip-uv-sync` also skips the
-dependency sync), so the workspace is scaffolded but not run. Both are
-deliberately absent from `--help`; the normal, complete path is interactive
-(no flag):
+Create a workspace non-interactively (for tests/CI). `--setup-only` and
+`--scaffold-only` are hidden testing shortcuts that cut the guided setup short —
+both skip login, playground connection, and the agent hand-off. `--setup-only`
+still installs dependencies (and uses the default agent); `--scaffold-only` stops
+right after scaffolding, before the dependency sync. Both are deliberately absent
+from `--help`; the normal, complete path is interactive (no flag):
 
 ```bash
-uv run dlthub-start my-workspace --yes
+uv run dlthub-start my-workspace --setup-only
 ```
 
-Create a workspace without running the generated workspace dependency sync:
+Create a workspace without installing the generated workspace's dependencies:
 
 ```bash
-uv run dlthub-start my-workspace --yes --skip-uv-sync
+uv run dlthub-start my-workspace --scaffold-only
 ```
 
 Choose an AI workbench explicitly:

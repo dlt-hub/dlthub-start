@@ -23,11 +23,13 @@ dlthub-start
 ```
 
 The CLI scaffolds the workspace, checks for `uv` (offering to install it if
-missing), installs dependencies with `uv sync`, runs your first pipeline on
-dltHub, then prompts for your coding agent and sets up its files. Finally it
-launches that agent in the workspace, seeded with a starter prompt — or, if the
-agent has no command-line launcher, prints the prompt and copies it to your
-clipboard so you can paste it in.
+missing), installs dependencies with `uv sync`, logs you in to dltHub and
+connects a `playground` workspace, then prompts for your coding agent and sets
+up its files. Finally it asks whether to launch that agent in the workspace —
+seeded with a prompt to deploy and run the sample pipeline, so the agent (not
+the CLI) runs it. Decline, or use an agent with no command-line launcher, and it
+prints that prompt (with the bundled skill's location) and copies it to your
+clipboard so you can paste it into an agent you start yourself.
 
 The full setup runs through the interactive prompts:
 
@@ -101,7 +103,7 @@ The workspace is initialized at the project root, shaped roughly like this:
 |-- README.md
 |-- .dlt/
 |-- .mcp.json
-`-- .claude/        # your selected agent (or .cursor/ / .codex/)
+`-- .claude/        # your selected agent (.cursor/, or .agents/ for codex)
 ```
 
 ## Next Steps
@@ -113,8 +115,7 @@ uv run dlthub run load_sample_shop
 uv run dlthub show
 ```
 
-If you created the workspace with `--skip-uv-sync`, finish setup first with
-`uv sync`. (If you scaffolded into a subdirectory, `cd` into it first.)
+(If you scaffolded into a subdirectory, `cd` into it first.)
 
 ## Troubleshooting
 
