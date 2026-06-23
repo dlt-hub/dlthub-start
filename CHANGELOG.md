@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-06-23
+
 ### Changed
 - `dlthub-start` now hands off to your coding agent instead of running the sample pipeline or opening the dashboard itself. Once the workspace is scaffolded, dependencies are installed, and you're logged in to a `playground` workspace, you pick an agent and either launch it to deploy and run the sample pipeline (via the `deploy-run-sample-pipeline` skill) or skip and get the prompt copied to your clipboard to paste into an agent yourself. If a setup step fails, it still hands off — with a prompt to help you resolve it.
 - Cleaner, quieter setup output: scaffolding and dependency install show as one step and login and playground connection as another; login no longer prints its logs unless it errors.
