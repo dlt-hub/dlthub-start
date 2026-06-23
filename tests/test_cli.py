@@ -200,9 +200,7 @@ class RunFlowTests(unittest.TestCase):
 
         self._run()
 
-        self.m["_launch_agent"].assert_called_once_with(
-            Path("/tmp/test_workspace"), "claude", prompt=_HANDOFF_PROMPT
-        )
+        self.m["_launch_agent"].assert_called_once_with(Path("/tmp/test_workspace"), "claude", prompt=_HANDOFF_PROMPT)
         # A successful launch is the hand-off; the manual fallback is skipped.
         self.m["copy_to_clipboard"].assert_not_called()
         self.m["print_next_steps"].assert_not_called()

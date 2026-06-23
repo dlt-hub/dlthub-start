@@ -178,7 +178,9 @@ def run(args: argparse.Namespace) -> None:
         console.print(strings.MSG_RELOCATED.format(relocated_from=resolution.relocated_from, project_dir=project_dir))
 
     uv_executable = find_uv()
-    if uv_executable is None and (args.setup_only or confirm(strings.PROMPT_INSTALL_UV, recommended=RECOMMENDED.install_uv)):
+    if uv_executable is None and (
+        args.setup_only or confirm(strings.PROMPT_INSTALL_UV, recommended=RECOMMENDED.install_uv)
+    ):
         uv_executable = execute_uv_install(verbose=verbose)
 
     install_deps = uv_executable is not None and not args.scaffold_only

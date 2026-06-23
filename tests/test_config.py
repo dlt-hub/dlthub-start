@@ -39,8 +39,13 @@ class ConfigTests(unittest.TestCase):
     def test_agent_skills_dir_points_at_the_generated_entry_skill(self) -> None:
         for agent in config.AGENTS:
             skill = (
-                SCAFFOLDS_DIR / RECOMMENDED.scaffold / PER_AGENT_DIR / agent
-                / config.AGENT_SKILLS_DIR[agent] / config.ONE_SHOT_ENTRY_SKILL / "SKILL.md"
+                SCAFFOLDS_DIR
+                / RECOMMENDED.scaffold
+                / PER_AGENT_DIR
+                / agent
+                / config.AGENT_SKILLS_DIR[agent]
+                / config.ONE_SHOT_ENTRY_SKILL
+                / "SKILL.md"
             )
             self.assertTrue(skill.is_file(), f"AGENT_SKILLS_DIR for {agent!r} is wrong: {skill} missing")
 
