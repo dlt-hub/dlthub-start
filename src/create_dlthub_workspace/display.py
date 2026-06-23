@@ -70,20 +70,6 @@ def substep(running: str, done: str, *, verbose: bool = False) -> Iterator[None]
     substep_done(done)
 
 
-@contextmanager
-def substep_streaming(running: str, done: str, *, note: str | None = None) -> Iterator[None]:
-    """Frame a streamed sub-step, then tick it. No spinner — a live one fights the child for the cursor."""
-    console.print(f"[dim]{running}…[/dim]")
-    if note:
-        console.print(f"[dim]{note}[/dim]")
-    console.print()
-    try:
-        yield
-    finally:
-        console.print()
-    substep_done(done)
-
-
 ROWS = [
     [
         ("", ""),
@@ -317,23 +303,24 @@ def print_next_steps(
     project_dir: Path,
     *,
     scaffold: str,
-    ran: bool = False,
+    agent_prompt: str | None = None,
+    panel_title: str = strings.TITLE_ALL_SET,
     needs_uv_install: bool = False,
     needs_deps: bool = False,
     prompt_copied: bool = False,
 ) -> None:
-    """The build-your-own prompt when ``ran``, else any remaining setup commands
-    followed by the steps to run the sample pipeline."""
+    """The agent hand-off prompt when ``agent_prompt`` is set, else any remaining setup
+    commands followed by the steps to run the sample pipeline."""
     body = Text()
 
-    if ran:
-        body.append(f"{strings.STEPS_LABEL_BUILD_OWN_SOURCE}\n\n")
-        body.append(f"  {strings.CMD_BUILD_OWN_SOURCE_PROMPT}", style="bold #59C1D5")
+    if agent_prompt is not None:
+        body.append(f"{strings.STEPS_LABEL_HANDOFF.format(project_dir=project_dir)}\n\n")
+        body.append(f"  {agent_prompt}", style="bold #59C1D5")
         if prompt_copied:
             body.append(f"\n\n  {strings.HINT_PROMPT_COPIED}", style="bold #C6D300")
         body.append(f"\n\n  {strings.LABEL_DOCS} ", style="dim")
         body.append(strings.LINK_DOCS_LABEL, style=f"underline #59C1D5 link {strings.LINK_DOCS_URL}")
-        _print_steps_panel(body, title=strings.TITLE_ALL_SET)
+        _print_steps_panel(body, title=panel_title)
         return
 
     cd = _cd_target(project_dir)

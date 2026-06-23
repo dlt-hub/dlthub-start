@@ -27,6 +27,28 @@ class ConfigTests(unittest.TestCase):
             for toolkit in config.TOOLKITS:
                 self.assertIn(toolkit, installed, f"{toolkit!r} not installed for agent {agent!r}")
 
+    def test_entry_skill_available_in_generated_skills(self) -> None:
+        for agent in config.AGENTS:
+            agent_dir = SCAFFOLDS_DIR / RECOMMENDED.scaffold / PER_AGENT_DIR / agent
+            matches = list(agent_dir.rglob(f"skills/{config.ONE_SHOT_ENTRY_SKILL}/SKILL.md"))
+            self.assertTrue(
+                matches,
+                f"entry skill {config.ONE_SHOT_ENTRY_SKILL!r} not found in generated skills for agent {agent!r}",
+            )
+
+    def test_agent_skills_dir_points_at_the_generated_entry_skill(self) -> None:
+        for agent in config.AGENTS:
+            skill = (
+                SCAFFOLDS_DIR
+                / RECOMMENDED.scaffold
+                / PER_AGENT_DIR
+                / agent
+                / config.AGENT_SKILLS_DIR[agent]
+                / config.ONE_SHOT_ENTRY_SKILL
+                / "SKILL.md"
+            )
+            self.assertTrue(skill.is_file(), f"AGENT_SKILLS_DIR for {agent!r} is wrong: {skill} missing")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -61,20 +61,11 @@ class ChooseAgentTests(unittest.TestCase):
         self.assertEqual(select.call_args.kwargs["cursor_index"], list(AGENTS).index(RECOMMENDED.agent))
 
     @patch("create_dlthub_workspace.prompts.beaupy.select", return_value=0)
-    def test_ran_header_uses_build_your_own_lead(self, _select: MagicMock) -> None:
+    def test_header_uses_setup_lead(self, _select: MagicMock) -> None:
         with console.capture() as cap:
-            choose_agent(ran=True)
-        output = " ".join(cap.get().split())
-        self.assertIn(strings.PROMPT_AGENT_LEAD_RAN, output)
-        self.assertNotIn(strings.PROMPT_AGENT_LEAD_SETUP, output)
-
-    @patch("create_dlthub_workspace.prompts.beaupy.select", return_value=0)
-    def test_no_run_header_uses_neutral_lead(self, _select: MagicMock) -> None:
-        with console.capture() as cap:
-            choose_agent(ran=False)
+            choose_agent()
         output = " ".join(cap.get().split())
         self.assertIn(strings.PROMPT_AGENT_LEAD_SETUP, output)
-        self.assertNotIn(strings.PROMPT_AGENT_LEAD_RAN, output)
 
 
 class ConfirmTests(unittest.TestCase):

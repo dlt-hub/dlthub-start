@@ -30,7 +30,7 @@ def _echo_selection(value: str) -> None:
     console.print(f"[{CURSOR_STYLE}]{TICK_CHAR}[/{CURSOR_STYLE}] [bold]{value}[/bold]")
 
 
-def choose_agent(default: str = RECOMMENDED.agent, *, ran: bool = False) -> str:
+def choose_agent(default: str = RECOMMENDED.agent) -> str:
     """Arrow-key select for the coding agent. Exactly one is chosen."""
     agents = list(AGENTS)
     options = [
@@ -41,8 +41,7 @@ def choose_agent(default: str = RECOMMENDED.agent, *, ran: bool = False) -> str:
     ]
     default_index = agents.index(default) if default in agents else 0
 
-    lead = strings.PROMPT_AGENT_LEAD_RAN if ran else strings.PROMPT_AGENT_LEAD_SETUP
-    console.print(strings.PROMPT_AGENT_HEADER.format(lead=lead))
+    console.print(strings.PROMPT_AGENT_HEADER.format(lead=strings.PROMPT_AGENT_LEAD_SETUP))
     index = cast(
         int,
         beaupy.select(
@@ -57,23 +56,31 @@ def choose_agent(default: str = RECOMMENDED.agent, *, ran: bool = False) -> str:
     return agents[index]
 
 
-def confirm(message: str, *, default: bool = True, recommended: bool | None = None) -> bool:
+def confirm(
+    message: str,
+    *,
+    default: bool = True,
+    recommended: bool | None = None,
+    yes_label: str = "Yes",
+    no_label: str = "No",
+) -> bool:
     """Arrow-key Yes/No confirmation.
 
     Pass ``recommended=True`` (or ``False``) to badge the recommended choice.
+    ``yes_label``/``no_label`` override the option text; the result is still yes=True.
     """
     console.print(f"\n[bold]{message}[/bold]")
-    yes_label = "Yes" + (RECOMMENDED_SUFFIX if recommended is True else "")
-    no_label = "No" + (RECOMMENDED_SUFFIX if recommended is False else "")
+    yes = yes_label + (RECOMMENDED_SUFFIX if recommended is True else "")
+    no = no_label + (RECOMMENDED_SUFFIX if recommended is False else "")
     choice = cast(
         str,
         beaupy.select(
-            [yes_label, no_label],
+            [yes, no],
             cursor=CURSOR,
             cursor_style=CURSOR_STYLE,
             cursor_index=0 if default else 1,
         ),
     )
-    result = choice == yes_label
-    _echo_selection("Yes" if result else "No")
+    result = choice == yes
+    _echo_selection(yes_label if result else no_label)
     return result

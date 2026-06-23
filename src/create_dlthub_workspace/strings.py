@@ -28,15 +28,26 @@ PROMPT_AGENT_HEADER = (
     "\n{lead}"
     "\n\n[bold]Which coding agent do you want to use?[/bold] [dim](↑/↓ to move, enter to confirm)[/dim]"
 )
-# The lead line swaps on whether the demo run succeeded.
-PROMPT_AGENT_LEAD_RAN = "Now create your own dlt pipeline to load data from a REST API source into your playground."
-PROMPT_AGENT_LEAD_SETUP = "Set up your coding agent to build dlt pipelines."
+PROMPT_AGENT_LEAD_SETUP = "Set up your coding agent — it takes over from here."
 PROMPT_INSTALL_UV = "uv is required but was not found. Install uv now?"
+PROMPT_LAUNCH_AGENT = "How do you want to continue?"
+PROMPT_LAUNCH_YES = "Launch {agent} now and hand it this prompt"
+PROMPT_LAUNCH_NO = "Skip — I'll paste the prompt into an agent myself"
+# Shown before the launch confirmation so the user sees where it runs and the exact prompt.
+MSG_LAUNCH_PLAN = (
+    "\n[bold]Next step: let {agent} deploy and run the sample pipeline on dltHub for you.[/bold]"
+    "\n  Workspace: {project_dir}"
+    "\n  Prompt:    {prompt}"
+)
+MSG_LAUNCH_PLAN_RESOLVE = (
+    "\n[bold]Setup hit an error — let {agent} help resolve it and finish onboarding.[/bold]"
+    "\n  Workspace: {project_dir}"
+    "\n  Prompt:    {prompt}"
+)
 
 
 # Errors (call sites use .format() with named placeholders) -------------
 ERROR_UNKNOWN_AGENT = "Unknown agent {agent!r} for scaffold {scaffold!r}. Available: {available}"
-ERROR_UV_REQUIRED = "uv is required. Install uv and run this command again."
 ERROR_UV_NOT_ON_PATH = "uv was installed, but it is not available on PATH yet. Open a new terminal and try again."
 ERROR_UV_COMMAND_FAILED = "Command failed with exit code {returncode}: {cmd}"
 ERROR_UV_COMMAND_NOT_FOUND = "Command not found: {cmd}"
@@ -71,38 +82,21 @@ MSG_ERROR_PREFIX = "[red]Error:[/red] {message}"
 MSG_UNEXPECTED_ERROR = "[red]Unexpected error:[/red] {message}"
 MSG_UNEXPECTED_ERROR_HINT = "[dim]Re-run with --verbose to see the full traceback.[/dim]"
 MSG_RELOCATED = "[yellow]Heads up:[/yellow] {relocated_from} isn't empty — scaffolding into {project_dir} instead."
-MSG_CREATING_WORKSPACE = "Creating workspace at {project_dir}"
-MSG_CREATED = "Created {project_dir}"
 MSG_PACKAGE_NAME = "Project package name: {package_name}"
 MSG_SKIPPED_UV_AND_SYNC = "\n[yellow]Skipped[/yellow] uv install and dependency sync.\n"
 MSG_SKIPPED_SYNC = "\n[yellow]Skipped[/yellow] dependency sync.\n"
-MSG_INSTALLING_DEPS = "Installing dependencies"
-MSG_INSTALLED_DEPS = "Installed dependencies into .venv"
 MSG_ADDING_AGENT_FILES = "Adding {agent} workbench files"
 MSG_ADDED_AGENT_FILES = "Added {agent} workbench files"
 MSG_LAUNCHING_AGENT = (
-    "\n[bold #59C1D5]Launching {agent}[/bold #59C1D5] in your workspace — your skills and MCP server are ready.\n"
+    "\n[bold #59C1D5]Launching {agent}[/bold #59C1D5] in {project_dir} — your skills and MCP server are ready.\n"
 )
-# First-run flow: each sub-step has a running (spinner/active) line and a "done" line it ticks to.
-MSG_LOGGING_IN = "Logging in to dltHub — follow the prompts below"
-MSG_LOGGED_IN = "Logged in to dltHub"
-MSG_CONNECTING_PLAYGROUND = "Connecting to a {workspace} workspace"
-MSG_CONNECTED_PLAYGROUND = "Connected to the {workspace} workspace"
-MSG_RUNNING_FIRST_PIPELINE = "Running your first pipeline"
-MSG_RAN_FIRST_PIPELINE = "Ran your first pipeline"
-MSG_SHOWING_RUN = "Showing your pipeline run and its logs"
-MSG_SHOWED_RUN = "Showed your pipeline run"
-# "What just happened" summary, shown after the first run and before the agent picker.
-MSG_PLAYGROUND_READY = (
-    "\n[bold]The dltHub platform playground experience is set[/bold]"
-    "\nWe created a demo dlt pipeline and set up your dltHub playground."
-)
-MSG_FIRST_RUN_FAILED = (
-    "\n[yellow]Heads up:[/yellow] couldn't finish the first pipeline run ({message}). "
-    "Your workspace is set up — run it yourself with the steps below."
-)
-
-
+# Setup flow: each sub-step has a running (spinner/active) line and a "done" line it ticks to.
+MSG_CREATING_WORKSPACE = "Creating your workspace"
+MSG_WORKSPACE_READY = "Workspace ready — dependencies installed in .venv"
+MSG_WORKSPACE_CREATED = "Workspace created"
+MSG_CONNECTING_DLTHUB = "Connecting to dltHub"
+MSG_CONNECTED_DLTHUB = "Logged in and connected to the playground workspace"
+MSG_SETUP_FAILED = "\n[yellow]Heads up:[/yellow] workspace setup hit an error ({message})."
 # Panel titles ----------------------------------------------------------
 TITLE_BANNER = f"{config.DISTRIBUTION_NAME} v{{version}} [bold #C6D300](beta)[/bold #C6D300]"
 TITLE_ALL_SET = "You're all set"
@@ -155,7 +149,7 @@ STEPS_LABEL_CD = "Change into the workspace:"
 STEPS_LABEL_RUN_SAMPLE_SHOP = "Run the sample shop pipeline in dltHub (you'll be prompted to connect/login):"
 STEPS_LABEL_VIEW_SAMPLE_SHOP_RUNS = "View runs for the sample shop pipeline:"
 STEPS_LABEL_EDIT_PIPELINE = "Edit pipeline.py to swap in your own source, then re-run."
-STEPS_LABEL_BUILD_OWN_SOURCE = f"Tell your agent to navigate to the directory you just ran the {config.DISTRIBUTION_NAME} command in and paste this prompt:"
+STEPS_LABEL_HANDOFF = "Start your coding agent in {project_dir} and paste this prompt:"
 HINT_PROMPT_COPIED = "✓ Already copied to your clipboard — just paste it in."
 STEPS_LABEL_INSTALL_UV = "Install uv:"
 STEPS_LABEL_INSTALL_DEPS = "Install workspace dependencies:"
@@ -167,7 +161,16 @@ CMD_UV_SYNC = "uv sync"
 CMD_DLTHUB_RUN_SAMPLE_SHOP = "uv run dlthub run load_sample_shop"
 CMD_DLTHUB_JOB_RUNS_SHOW_SAMPLE_SHOP = "uv run dlthub job runs show pipeline.load_sample_shop"
 CMD_CD = "cd {project_dir}"
-CMD_BUILD_OWN_SOURCE_PROMPT = (
-    "Load the 50 most recent GitHub issues from https://github.com/dlt-hub/dlt "
-    "and show me the data on the dltHub query editor"
+CMD_DEPLOY_RUN_HANDOFF_PROMPT = (
+    "Scaffolding, login, and playground connection are done, and the dltHub AI agent files "
+    "are installed in this workspace. To continue in this same session, use the "
+    f"`{config.ONE_SHOT_ENTRY_SKILL}` skill to deploy and run the sample pipeline. "
+    "The skill is located at {skill_path}."
+)
+CMD_RESOLVE_HANDOFF_PROMPT = (
+    "The dltHub workspace is scaffolded and dependencies are installed, but a setup step "
+    "(dltHub login or playground connection) failed. Use your dltHub tools and the `dlthub` CLI "
+    "to diagnose and fix it, then use the "
+    f"`{config.ONE_SHOT_ENTRY_SKILL}` skill to deploy and run the sample pipeline. "
+    "The skill is located at {skill_path}."
 )

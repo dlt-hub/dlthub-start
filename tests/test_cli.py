@@ -11,10 +11,17 @@ from typing import Iterator
 from unittest.mock import MagicMock, patch
 
 from create_dlthub_workspace import strings
-from create_dlthub_workspace.cli import _launch_agent, _workspace_in_list, build_parser, main, run
+from create_dlthub_workspace.cli import _entry_skill_path, _launch_agent, _workspace_in_list, build_parser, main, run
 from create_dlthub_workspace.config import PLAYGROUND_WORKSPACE, RECOMMENDED
 from create_dlthub_workspace.errors import UvError, WorkspaceDirectoryNotEmptyError, WorkspaceError
 from create_dlthub_workspace.scaffold import TargetResolution
+
+_HANDOFF_PROMPT = strings.CMD_DEPLOY_RUN_HANDOFF_PROMPT.format(
+    skill_path=_entry_skill_path(Path("/tmp/test_workspace"), "claude")
+)
+_RESOLVE_PROMPT = strings.CMD_RESOLVE_HANDOFF_PROMPT.format(
+    skill_path=_entry_skill_path(Path("/tmp/test_workspace"), "claude")
+)
 
 
 @contextlib.contextmanager
@@ -134,6 +141,7 @@ _STEP_TARGETS = (
     "run_uv_command",
     "capture_uv_command",
     "copy_to_clipboard",
+    "_agent_launchable",
     "_launch_agent",
     "print_banner",
     "print_created_tree",
@@ -142,7 +150,7 @@ _STEP_TARGETS = (
 
 
 class RunFlowTests(unittest.TestCase):
-    """run() orchestration: scaffold (shared) → uv → first run → agent files."""
+    """run() orchestration: uv → scaffold + deps → login/connect → agent files → hand-off."""
 
     def setUp(self) -> None:
         self.m: dict[str, MagicMock] = {}
@@ -157,6 +165,7 @@ class RunFlowTests(unittest.TestCase):
         self.m["stdin_is_interactive"].return_value = True
         self.m["execute_uv_install"].return_value = "/usr/local/bin/uv"
         self.m["copy_to_clipboard"].return_value = True
+        self.m["_agent_launchable"].return_value = True
         self.m["_launch_agent"].return_value = False
         self.m["capture_uv_command"].return_value = "Name\n----\n"
         self.m["resolve_workspace_target"].return_value = TargetResolution(Path("/tmp/test_workspace"), None)
@@ -165,7 +174,7 @@ class RunFlowTests(unittest.TestCase):
         with _silenced():
             run(_make_args(**overrides))
 
-    def test_agent_files_added_after_the_first_run(self) -> None:
+    def test_agent_files_added_then_handoff_prompt_shown(self) -> None:
         order = MagicMock()
         order.attach_mock(self.m["copy_scaffold"], "copy_scaffold")
         order.attach_mock(self.m["run_uv_command"], "run_uv_command")
@@ -181,28 +190,68 @@ class RunFlowTests(unittest.TestCase):
         self.m["overlay_agent"].assert_called_once()
         self.m["choose_agent"].assert_called_once()
         self.m["print_next_steps"].assert_called_once()
-        self.assertTrue(self.m["print_next_steps"].call_args.kwargs["ran"])
+        self.assertEqual(
+            self.m["print_next_steps"].call_args.kwargs["agent_prompt"],
+            _HANDOFF_PROMPT,
+        )
 
     def test_launched_agent_replaces_the_next_steps_panel(self) -> None:
         self.m["_launch_agent"].return_value = True
 
         self._run()
 
-        self.m["_launch_agent"].assert_called_once_with(
-            Path("/tmp/test_workspace"), "claude", prompt=strings.CMD_BUILD_OWN_SOURCE_PROMPT
-        )
+        self.m["_launch_agent"].assert_called_once_with(Path("/tmp/test_workspace"), "claude", prompt=_HANDOFF_PROMPT)
         # A successful launch is the hand-off; the manual fallback is skipped.
         self.m["copy_to_clipboard"].assert_not_called()
         self.m["print_next_steps"].assert_not_called()
 
-    def test_first_run_failure_degrades_but_finishes_setup(self) -> None:
-        self.m["run_uv_command"].side_effect = UvError("dlthub run blew up")
+    def test_declining_launch_copies_and_prints_the_handoff_prompt(self) -> None:
+        self.m["confirm"].return_value = False
+
+        self._run()
+
+        self.m["_launch_agent"].assert_not_called()
+        self.m["copy_to_clipboard"].assert_called_once_with(_HANDOFF_PROMPT)
+        kwargs = self.m["print_next_steps"].call_args.kwargs
+        self.assertEqual(kwargs["agent_prompt"], _HANDOFF_PROMPT)
+        self.assertEqual(kwargs["panel_title"], strings.TITLE_ALL_SET)
+
+    def test_unlaunchable_agent_skips_the_prompt_and_prints_the_handoff(self) -> None:
+        self.m["_agent_launchable"].return_value = False
+
+        self._run()
+
+        self.m["confirm"].assert_not_called()
+        self.m["_launch_agent"].assert_not_called()
+        self.assertEqual(
+            self.m["print_next_steps"].call_args.kwargs["agent_prompt"],
+            _HANDOFF_PROMPT,
+        )
+
+    def test_login_failure_still_hands_off_with_resolve_prompt(self) -> None:
+        self.m["run_uv_command"].side_effect = UvError("dlthub login blew up")
 
         self._run()
 
         self.m["overlay_agent"].assert_called_once()
+        self.assertEqual(self.m["_launch_agent"].call_args.kwargs["prompt"], _RESOLVE_PROMPT)
+        kwargs = self.m["print_next_steps"].call_args.kwargs
+        self.assertEqual(kwargs["agent_prompt"], _RESOLVE_PROMPT)
+        self.assertEqual(kwargs["panel_title"], strings.TITLE_ALMOST_THERE)
+
+    def test_non_interactive_login_failure_prints_resolve_prompt(self) -> None:
+        self.m["stdin_is_interactive"].return_value = False
+        self.m["run_uv_command"].side_effect = UvError("dlthub login blew up")
+
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            run(_make_args(agent="claude"))
+        out = buf.getvalue()
+
         self.m["_launch_agent"].assert_not_called()
-        self.assertFalse(self.m["print_next_steps"].call_args.kwargs["ran"])
+        self.m["print_next_steps"].assert_not_called()
+        self.m["copy_to_clipboard"].assert_not_called()
+        self.assertIn("diagnose", out)
 
     def test_explicit_agent_skips_the_prompt(self) -> None:
         self._run(agent="codex")
@@ -220,18 +269,21 @@ class RunFlowTests(unittest.TestCase):
         self._run(agent="claude")
         self.m["choose_agent"].assert_not_called()
         self.m["overlay_agent"].assert_called_once()
+        self.m["_launch_agent"].assert_not_called()
+        self.m["copy_to_clipboard"].assert_not_called()
+        self.m["print_next_steps"].assert_not_called()
 
     def test_non_interactive_setup_only_defaults_without_failing(self) -> None:
         self.m["stdin_is_interactive"].return_value = False
         self._run(setup_only=True)
         self.assertEqual(self.m["overlay_agent"].call_args.kwargs["agent"], RECOMMENDED.agent)
 
-    def test_setup_only_skips_first_run_and_prompt_but_still_adds_agent_files(self) -> None:
+    def test_setup_only_skips_handoff_but_adds_agent_files(self) -> None:
         self._run(setup_only=True)
         self.m["run_uv_command"].assert_not_called()
         self.m["choose_agent"].assert_not_called()
         self.assertEqual(self.m["overlay_agent"].call_args.kwargs["agent"], RECOMMENDED.agent)
-        self.assertFalse(self.m["print_next_steps"].call_args.kwargs["ran"])
+        self.assertIsNone(self.m["print_next_steps"].call_args.kwargs.get("agent_prompt"))
 
     def test_uv_declined_stops_at_scaffold_only_but_adds_agent_files(self) -> None:
         self.m["find_uv"].return_value = None
@@ -244,7 +296,7 @@ class RunFlowTests(unittest.TestCase):
         self.m["overlay_agent"].assert_called_once()
         self.m["print_next_steps"].assert_called_once()
         kwargs = self.m["print_next_steps"].call_args.kwargs
-        self.assertFalse(kwargs["ran"])
+        self.assertIsNone(kwargs.get("agent_prompt"))
         self.assertTrue(kwargs["needs_uv_install"])
         self.assertTrue(kwargs["needs_deps"])
 
@@ -254,31 +306,26 @@ class RunFlowTests(unittest.TestCase):
         self.m["overlay_agent"].assert_called_once()
         self.m["print_next_steps"].assert_called_once()
         kwargs = self.m["print_next_steps"].call_args.kwargs
-        self.assertFalse(kwargs["ran"])
+        self.assertIsNone(kwargs.get("agent_prompt"))
         self.assertTrue(kwargs["needs_deps"])
         self.assertFalse(kwargs.get("needs_uv_install", False))
 
-    def test_first_run_creates_playground_when_absent(self) -> None:
+    def test_login_connect_creates_playground_when_absent(self) -> None:
         self.m["capture_uv_command"].return_value = "Name\n----\nMy Workspace\n"
 
         self._run()
 
         run_uv_command = self.m["run_uv_command"]
-        self.assertEqual(run_uv_command.call_count, 4)
+        self.assertEqual(run_uv_command.call_count, 2)
         login_args = run_uv_command.call_args_list[0].args[2]
         connect_args = run_uv_command.call_args_list[1].args[2]
-        run_args = run_uv_command.call_args_list[2].args[2]
-        show_args = run_uv_command.call_args_list[3].args[2]
         self.assertEqual(login_args, ["run", "dlthub", "login"])
         self.assertEqual(connect_args, ["run", "dlthub", "workspace", "connect", PLAYGROUND_WORKSPACE, "--create"])
-        self.assertEqual(run_args, ["run", "dlthub", "run", "load_sample_shop"])
-        self.assertEqual(show_args, ["run", "dlthub", "job", "runs", "show", "pipeline.load_sample_shop"])
-        # Login surfaces output via verbose; nothing streams via stream=True anymore.
-        self.assertTrue(run_uv_command.call_args_list[0].kwargs["verbose"])
-        self.assertFalse(any(c.kwargs["verbose"] for c in run_uv_command.call_args_list[1:]))
+        # Login and connect run quietly (output surfaces only on error); nothing streams.
+        self.assertFalse(any(c.kwargs["verbose"] for c in run_uv_command.call_args_list))
         self.assertFalse(any(c.kwargs.get("stream", False) for c in run_uv_command.call_args_list))
 
-    def test_first_run_connects_without_create_when_playground_exists(self) -> None:
+    def test_login_connect_skips_create_when_playground_exists(self) -> None:
         self.m[
             "capture_uv_command"
         ].return_value = f"Name        Organization\n----------  ------------\n{PLAYGROUND_WORKSPACE}  Personal\n"
@@ -322,6 +369,7 @@ class RunNoticeTests(unittest.TestCase):
             patch("create_dlthub_workspace.cli.capture_uv_command", return_value="Name\n----\n"),
             patch("create_dlthub_workspace.cli.copy_to_clipboard", return_value=False),
             patch("create_dlthub_workspace.cli.print_created_tree"),
+            patch("create_dlthub_workspace.cli.confirm", return_value=False),
             patch("create_dlthub_workspace.cli._launch_agent", return_value=False),
             patch("create_dlthub_workspace.cli.choose_agent", return_value="claude"),
             patch("create_dlthub_workspace.cli.print_next_steps"),

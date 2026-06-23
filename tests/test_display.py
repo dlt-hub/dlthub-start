@@ -44,16 +44,22 @@ class PrintNextStepsTests(unittest.TestCase):
         # Minimal scaffold has an instruction-only step with no command.
         self.assertIn("Edit pipeline.py", output)
 
-    def test_first_pipeline_ran_shows_only_the_agent_prompt(self) -> None:
-        # After the first run, the panel drops the run/edit steps and shows just
-        # the instruction + the verbatim prompt to hand to the agent.
+    def test_agent_prompt_shows_only_the_handoff_prompt(self) -> None:
+        ws = Path("/tmp/ws")
+        skill = ws / ".claude/skills/deploy-run-sample-pipeline"
+        prompt = strings.CMD_DEPLOY_RUN_HANDOFF_PROMPT.format(skill_path=skill)
         with console.capture() as cap:
-            print_next_steps(Path.cwd(), scaffold="minimal_workspace", ran=True, prompt_copied=True)
+            print_next_steps(
+                ws,
+                scaffold="minimal_workspace",
+                agent_prompt=prompt,
+                prompt_copied=True,
+            )
         output = _panel_text(cap.get())
 
         self.assertNotIn("uv run dlthub run load_sample_shop", output)
-        self.assertIn("Tell your agent to navigate to the directory you just ran", output)
-        self.assertIn(strings.CMD_BUILD_OWN_SOURCE_PROMPT, output)
+        self.assertIn(strings.STEPS_LABEL_HANDOFF.format(project_dir=ws), output)
+        self.assertIn(str(skill), output)
         self.assertIn("Already copied to your clipboard", output)
 
     def test_unknown_scaffold_raises_key_error(self) -> None:
@@ -123,7 +129,6 @@ class ResumeStepsTests(unittest.TestCase):
             print_next_steps(
                 Path("/tmp/my_workspace"),
                 scaffold="minimal_workspace",
-                ran=False,
                 needs_uv_install=True,
                 needs_deps=True,
             )
@@ -138,7 +143,6 @@ class ResumeStepsTests(unittest.TestCase):
             print_next_steps(
                 Path("/tmp/my_workspace"),
                 scaffold="minimal_workspace",
-                ran=False,
                 needs_deps=True,
             )
         output = cap.get()
@@ -151,7 +155,6 @@ class ResumeStepsTests(unittest.TestCase):
             print_next_steps(
                 Path("/tmp/my_workspace"),
                 scaffold="minimal_workspace",
-                ran=False,
                 needs_deps=True,
             )
         output = cap.get()
