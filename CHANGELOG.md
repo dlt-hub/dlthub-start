@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-06-24
+
+### Changed
+- The minimal workspace now retries on HTTP rate limits (`request_max_attempts`/backoff in `.dlt/config.toml`) and runs the sample pipeline with `write_disposition="replace"` so re-runs don't duplicate rows.
+
+### Removed
+- Dropped the unused `github_pipeline.py` from the minimal workspace scaffold.
+
 ## [0.9.0] - 2026-06-23
 
 ### Changed
