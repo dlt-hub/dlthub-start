@@ -1,3 +1,7 @@
 [runtime]
 log_level="WARNING"
 dlthub_telemetry = true
+request_max_attempts = 10     # retries on 429 / 5xx before failing
+request_backoff_factor = 1.5  # multiplier for exponential backoff delay
+request_timeout = 120         # seconds before a single request times out
+request_max_retry_delay = 60  # caps the wait between retries

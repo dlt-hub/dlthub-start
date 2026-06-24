@@ -45,7 +45,7 @@ def load_sample_shop():
         dataset_name="sample_shop",
     )
 
-    load_info = pipeline.run(sample_shop().add_limit(1))
+    load_info = pipeline.run(sample_shop().add_limit(1), write_disposition="replace")
     print(load_info)
 
 
