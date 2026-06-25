@@ -41,9 +41,9 @@ one-shot:
   agent: claude
   files:
     .claude/skills/deploy-run-sample-pipeline/SKILL.md:
-      sha3_256: fc355154e58dc6ae740bc33b0ca051c19983ff89ac8ce3edc952007e1eb72cb7
+      sha3_256: 0b63aa185eb85d1405ad6a11abe6b427ddc45e6cfba74e9220e15570422d9d12
     .claude/rules/one-shot-workflow.md:
-      sha3_256: f687799d954a974d5c8991d6f3ea7fd14a3ab0087d90f3560d5679e4fd37fc9e
+      sha3_256: 22dc247ab9f00fb6aefb661fdc01126dde5e792d4cfa604988dceb178dce3ad7
   name: one-shot
 dlthub-init-skills:
   version: 0.1.0
@@ -60,6 +60,6 @@ dlthub-init-skills:
     .claude/skills/deploy-minimal-custom-source/SKILL.md:
       sha3_256: da429e7588855f880719093ec2bf7abade115dd1244689ca0e10fa6c7488a03d
     .claude/rules/dlthub-init-skills-workflow.md:
-      sha3_256: bb4a25b75c92ad0e9c851d4f44dbafa10aa19d0ca2ebecbdcf380cb3b627ccfb
+      sha3_256: 97c99e283f57f44ff89103fe5244bbbb0f292ecc8dfa797d1688b45033fdb0ff
   mcp_servers:
   - dlt-workspace-mcp
