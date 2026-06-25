@@ -34,7 +34,7 @@ AGENT_SKILLS_DIR = {
 # Adjust here to rename it everywhere (CLI command + user-facing messages).
 PLAYGROUND_WORKSPACE = "playground"
 
-TOOLKITS = ("one-shot",)
+TOOLKITS = ("one-shot","dlthub-init-skills")
 
 # Workflow entry skill of the one-shot toolkit. The non-TTY handoff points the calling
 # agent at it; test_config asserts it exists in the generated scaffold so it can't drift.
