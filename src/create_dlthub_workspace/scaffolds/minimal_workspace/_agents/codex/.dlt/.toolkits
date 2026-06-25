@@ -58,7 +58,7 @@ dlthub-init-skills:
   agent: codex
   files:
     .agents/skills/deploy-minimal-custom-source/SKILL.md:
-      sha3_256: da429e7588855f880719093ec2bf7abade115dd1244689ca0e10fa6c7488a03d
+      sha3_256: 0b02700a7c40a7be1e267444c897a9d540f69eca726d42334dcab623d86aabe0
     .agents/skills/dlthub-init-skills-workflow/SKILL.md:
       sha3_256: 81a56fbe157cf6f2904a30d17c6656fe84400755b374f4855544e80fc010f72b
   mcp_servers:
