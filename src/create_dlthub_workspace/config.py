@@ -53,7 +53,8 @@ WORKBENCH_REPO = f"https://github.com/{GITHUB_ORG}/{WORKBENCH_REPO_NAME}.git"
 # To bump: pick a new SHA (the workbench repo has no tags today), update the
 # constant below, run `make generate-ai`, commit the resulting scaffold diff
 # alongside this change.
-WORKBENCH_REF: str | None = "1853f504a88d018c9d47f62bcbdfa43aa3384a35"
+# WORKBENCH_REF: str | None = "1853f504a88d018c9d47f62bcbdfa43aa3384a35"
+WORKBENCH_REF: str | None = "feat/handover-after-onboarding"
 
 
 @dataclass(frozen=True)
