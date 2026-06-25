@@ -41,6 +41,25 @@ one-shot:
   agent: claude
   files:
     .claude/skills/deploy-run-sample-pipeline/SKILL.md:
-      sha3_256: 67ad7cd6d1140a3c5899d86b0daf25bf0e99c8742bb45c6d610cce5149fb591b
+      sha3_256: fc355154e58dc6ae740bc33b0ca051c19983ff89ac8ce3edc952007e1eb72cb7
     .claude/rules/one-shot-workflow.md:
       sha3_256: f687799d954a974d5c8991d6f3ea7fd14a3ab0087d90f3560d5679e4fd37fc9e
+  name: one-shot
+dlthub-init-skills:
+  version: 0.1.0
+  description: Build and deploy a minimal custom REST API pipeline to dltHub Platform
+    after uvx dlthub-init setup
+  tags:
+  - dlthub
+  dependencies:
+  - init
+  workflow_entry_skill: deploy-minimal-custom-source
+  installed_at: '1970-01-01T00:00:00+00:00'
+  agent: claude
+  files:
+    .claude/skills/deploy-minimal-custom-source/SKILL.md:
+      sha3_256: da429e7588855f880719093ec2bf7abade115dd1244689ca0e10fa6c7488a03d
+    .claude/rules/dlthub-init-skills-workflow.md:
+      sha3_256: bb4a25b75c92ad0e9c851d4f44dbafa10aa19d0ca2ebecbdcf380cb3b627ccfb
+  mcp_servers:
+  - dlt-workspace-mcp
