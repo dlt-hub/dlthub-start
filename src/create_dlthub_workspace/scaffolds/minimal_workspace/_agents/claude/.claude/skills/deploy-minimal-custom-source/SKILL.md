@@ -27,6 +27,7 @@ These are the mistakes an agent makes without this skill. Avoid them:
 - ❌ **`@dlt.resource` or a plain function** — not recognized as a platform job. Always use `@run.pipeline`.
 - ❌ **`destination_type` written via `secrets_update_fragment`** — the MCP secrets tool normalizes `destination_type` to `type`, which the cloud runtime does not recognize. Always write `destination_type` directly to the profile config file (`.dlt/dev.config.toml` or `.dlt/prod.config.toml`) using the Edit tool.
 - ❌ **Running `python <source>_pipeline.py` locally** — skip local runs; validate on the platform with the dev profile instead.
+- ❌ **Running `uvx dlthub-init` as a bash command** — running it from within this session would interfere with the new workspace's AI assistance setup. Always tell the user to run it themselves in a separate terminal.
 
 ## Preconditions
 
@@ -36,7 +37,23 @@ Before starting, verify the workspace is ready:
 uv run dlthub ai status
 ```
 
-Also confirm `__deployment__.py` exists in the project root — it is created by `uvx dlthub-init` and must be present before Step 7.
+Confirm `__deployment__.py` exists in the project root — it is created by `uvx dlthub-init` and must be present before Step 8.
+
+## Choose your path
+
+**Present this choice to the user before doing anything else:**
+
+> This workspace is a minimal test environment. You have two options:
+>
+> **A) Continue here** — build and deploy a minimal pipeline in this workspace. It will work end-to-end, but this environment is not meant to be extended. You won't be able to add endpoints, incremental loading, or use this as a production pipeline later.
+>
+> **B) Start fresh in a new directory** — run `uvx dlthub-init <your-project-name>` in a new directory. You'll get a proper workspace you can build on, extend, and take to production.
+>
+> Which would you like to do?
+
+**Stop and wait** for the user's answer. If they choose B, tell the user to open a new terminal, navigate to the parent directory, and run `uvx dlthub-init <dir>` themselves. Do **not** run this command — running it from within this session would interfere with the new workspace's AI assistance setup. Do not proceed.
+
+Only continue if the user explicitly chooses A.
 
 ## Step 0 — Collect source and destination
 
@@ -187,6 +204,8 @@ If no workspace is connected, connect to `playground`:
 uv run dlthub workspace connect playground
 ```
 
+**Limitation**: this skill only supports the personal `playground` workspace. If the user wants to deploy to their own or an org workspace, they should run `uvx dlthub-init` in a separate directory and work from there instead.
+
 ## Step 8 — Register, deploy, and run
 
 Add the pipeline to `__deployment__.py`:
@@ -203,17 +222,9 @@ __all__ = [..., "load_<source>"]
 uv run dlthub local run --profile dev load_<source>
 ```
 
-Do not proceed until this succeeds and reports rows loaded.
+Run this **once**. Check the exit code and whether rows were reported loaded — that is sufficient. Do not re-run to capture more output or inspect full logs; every pipeline run costs API calls. If it succeeded, move on. If it failed, debug using the troubleshooting table below, fix, then run once more.
 
-**Phase 2 — Run locally against your cloud destination (pre-flight check):**
-
-```bash
-uv run dlthub local run --profile prod load_<source>
-```
-
-Do not proceed until this succeeds.
-
-**Phase 3 — Deploy and run remotely:**
+**Phase 2 — Deploy and run remotely:**
 
 ```bash
 uv run dlthub deploy
@@ -237,3 +248,17 @@ Once successful:
 ```bash
 uv run dlthub show
 ```
+
+## What's next?
+
+Your pipeline is deployed and running. This workspace has served its purpose.
+
+To build a real pipeline you can extend, harden, and take to production, open a new terminal and run:
+
+```bash
+uvx dlthub-init@latest <your-project-name>
+```
+
+Do **not** run this command here — running it from within this session would interfere with the new workspace's AI assistance setup. The user must run it themselves in a separate terminal.
+
+That will scaffold a proper workspace where you can use the full `rest-api-pipeline` toolkit to add incremental loading, more endpoints, and production-grade configuration.

@@ -58,8 +58,8 @@ dlthub-init-skills:
   agent: claude
   files:
     .claude/skills/deploy-minimal-custom-source/SKILL.md:
-      sha3_256: 4d9c6aa5cc9f868891d54dce25450a88dcae906942f57359d048dd738eb51b96
+      sha3_256: 8e770db0d6555f11dfb03b12742946674ea5a8e9122dcb88e2c8c429bff022d9
     .claude/rules/dlthub-init-skills-workflow.md:
-      sha3_256: 97c99e283f57f44ff89103fe5244bbbb0f292ecc8dfa797d1688b45033fdb0ff
+      sha3_256: 8298f0e6b98ad0d17ae5c992d807f92e1b51fb4f05ba287bd1bca5ec7bba01dc
   mcp_servers:
   - dlt-workspace-mcp

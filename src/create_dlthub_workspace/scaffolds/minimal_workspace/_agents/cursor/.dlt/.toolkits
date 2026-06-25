@@ -58,8 +58,8 @@ dlthub-init-skills:
   agent: cursor
   files:
     .cursor/skills/deploy-minimal-custom-source/SKILL.md:
-      sha3_256: 4d9c6aa5cc9f868891d54dce25450a88dcae906942f57359d048dd738eb51b96
+      sha3_256: 8e770db0d6555f11dfb03b12742946674ea5a8e9122dcb88e2c8c429bff022d9
     .cursor/rules/dlthub-init-skills-workflow.mdc:
-      sha3_256: 42542ed464737746aa728a43c186fea3588a395f2e5b8c244720c1772a9113b7
+      sha3_256: 98b4e40dfa39efb35dedbef8429f59e2132801a3892f9d7fa15f2a0ce7b37287
   mcp_servers:
   - dlt-workspace-mcp
