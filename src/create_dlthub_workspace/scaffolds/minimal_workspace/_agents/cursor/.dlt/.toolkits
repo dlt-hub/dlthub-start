@@ -21,7 +21,7 @@ init:
     .cursorignore:
       sha3_256: 1aa4dc9286dd219dcb55399f388c5ee1f940ab5e399a42b644d488cba57a9ec0
     .cursor/rules/init-dlthub-workspace.mdc:
-      sha3_256: 16b3b75831f2f2b657ff3700e69611c39c4dd2cd14a4650be2002b3bea447c80
+      sha3_256: 9e079835fb49e4eb9bd2c9f26a3ae0b71a785131562961e4425d94687fca3eee
   mcp_servers:
   - dlt-workspace-mcp
   name: init
@@ -41,6 +41,6 @@ one-shot:
   agent: cursor
   files:
     .cursor/skills/deploy-run-sample-pipeline/SKILL.md:
-      sha3_256: bc0e47e6374e40e78c487b7aaee6eb4ee06577a87b5fdf58609374aad1965ba2
+      sha3_256: 67ad7cd6d1140a3c5899d86b0daf25bf0e99c8742bb45c6d610cce5149fb591b
     .cursor/rules/one-shot-workflow.mdc:
-      sha3_256: f256e4d61942f62a1b267b6eb472b1acf8e7a7380d4e5d58644a3d72304ef9dc
+      sha3_256: 6caf3bccf38a2e5c9b0dc28a0824846aeca4778158f12dbfca7574fb17ba0574
