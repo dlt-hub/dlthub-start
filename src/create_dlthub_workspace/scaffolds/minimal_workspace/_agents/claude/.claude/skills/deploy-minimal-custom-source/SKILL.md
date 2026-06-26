@@ -1,6 +1,6 @@
 ---
 name: deploy-minimal-custom-source
-description: Build and deploy a pipeline to dltHub Platform. Use when the user has just set up their dlthub workspace and wants to get a working pipeline running in the cloud for the first time.
+description: Build and deploy a minimal custom REST API pipeline to dltHub Platform. Use when the user says "Help me build and deploy a minimal pipeline".
 argument-hint: "[source-name]"
 ---
 
@@ -24,6 +24,8 @@ Build a minimal single-endpoint REST API pipeline and get it running on dltHub P
 
 These are the mistakes an agent makes without this skill. Avoid them:
 
+- ❌ **Reading any `*.secrets.toml` file directly** — this is NEVER allowed. Reading `.dlt/secrets.toml`, `.dlt/dev.secrets.toml`, or `.dlt/prod.secrets.toml` with the Read tool dumps credential values (API keys, tokens, private keys) into the conversation context. Use `secrets_view_redacted` with `path=` instead — it shows `***` for all values.
+- ❌ **Writing any `*.secrets.toml` file directly** — this is NEVER allowed. Never use the Write or Edit tool on any `*.secrets.toml` file. Use `secrets_update_fragment` with `path=` to write credential structure, and leave values empty (`""`) for the user to fill in.
 - ❌ **`@dlt.resource` or a plain function** — not recognized as a platform job. Always use `@run.pipeline`.
 - ❌ **`destination_type` written via `secrets_update_fragment`** — the MCP secrets tool normalizes `destination_type` to `type`, which the cloud runtime does not recognize. Always write `destination_type` directly to the profile config file (`.dlt/dev.config.toml` or `.dlt/prod.config.toml`) using the Edit tool.
 - ❌ **Running `python <source>_pipeline.py` locally** — skip local runs; validate on the platform with the dev profile instead.
@@ -131,9 +133,11 @@ Rules:
 
 ## Step 3 — Handle source credentials
 
+**Never read or write `.dlt/secrets.toml` directly with Read/Write/Edit tools.**
+
 Skip if the API is public.
 
-Check first — use `secrets_view_redacted` to see if `[sources.<source>]` already exists in `.dlt/secrets.toml`. If it does and the value is `***`, skip this step.
+Check first — use `secrets_view_redacted` (no `path=` needed for the default secrets file) to see if `[sources.<source>]` already exists. If it does and the value is `***`, skip this step.
 
 Otherwise use `secrets_update_fragment` to write the skeleton:
 
@@ -169,7 +173,7 @@ Add to `.dlt/prod.config.toml`:
 destination_type = "motherduck"  # or bigquery, snowflake, redshift
 ```
 
-Then write **only the credentials** to `.dlt/prod.secrets.toml` using `secrets_update_fragment` with `path=".dlt/prod.secrets.toml"`:
+Then write **only the credentials** to `.dlt/prod.secrets.toml` using `secrets_update_fragment` with `path=".dlt/prod.secrets.toml"`. **Never use Write/Edit/Read on this file directly.**
 
 ```toml
 [destination.warehouse.credentials]
@@ -182,7 +186,7 @@ Tell the user:
 
 **Stop and wait** for confirmation.
 
-> **Note**: `.dlt/prod.secrets.toml` is not tracked by `secrets_list`. To verify without exposing values, use `secrets_view_redacted` with `path=".dlt/prod.secrets.toml"` — confirm credentials show as `***` before continuing.
+> **Note**: `.dlt/prod.secrets.toml` is not tracked by `secrets_list`. To verify without exposing values, use `secrets_view_redacted` with `path=".dlt/prod.secrets.toml"` — confirm credentials show as `***` before continuing. Never read this file on disk.
 
 ## Step 6 — Install destination package
 
@@ -206,7 +210,7 @@ uv run dlthub workspace connect playground
 
 **Limitation**: this skill only supports the personal `playground` workspace. If the user wants to deploy to their own or an org workspace, they should run `uvx dlthub-init` in a separate directory and work from there instead.
 
-## Step 8 — Register, deploy, and run
+## Step 8 — Register and validate locally
 
 Add the pipeline to `__deployment__.py`:
 
@@ -216,7 +220,7 @@ from <source>_pipeline import load_<source>
 __all__ = [..., "load_<source>"]
 ```
 
-**Phase 1 — Run locally against DuckDB (quick validation):**
+Run locally against DuckDB:
 
 ```bash
 uv run dlthub local run --profile dev load_<source>
@@ -224,24 +228,26 @@ uv run dlthub local run --profile dev load_<source>
 
 Run this **once**. Check the exit code and whether rows were reported loaded — that is sufficient. Do not re-run to capture more output or inspect full logs; every pipeline run costs API calls. If it succeeded, move on. If it failed, debug using the troubleshooting table below, fix, then run once more.
 
-**Phase 2 — Deploy and run remotely:**
-
-```bash
-uv run dlthub deploy
-uv run dlthub job run -f load_<source>
-```
-
-If any phase fails, inspect logs:
-
-```bash
-uv run dlthub job logs load_<source>
-```
+**Warnings are not failures.** Warnings about untyped columns, missing hints, or inferred schemas are expected on a first run and do not require investigation or a re-run. Only a non-zero exit code or zero rows loaded is a failure.
 
 | Error | Fix |
 |---|---|
 | Job not recognized | Ensure `load_<source>` uses `@run.pipeline` and is listed in `__all__` |
 | `Unknown DestinationModule` | Check `destination_type` is in `.dlt/dev.config.toml` or `.dlt/prod.config.toml`, not written via `secrets_update_fragment` |
 | Auth / credential error | Use `secrets_view_redacted` with `path=".dlt/prod.secrets.toml"` to confirm credentials show as `***` |
+
+## Step 9 — Deploy and run remotely
+
+```bash
+uv run dlthub deploy
+uv run dlthub job run -f load_<source>
+```
+
+If it fails, inspect logs:
+
+```bash
+uv run dlthub job logs load_<source>
+```
 
 Once successful:
 
@@ -251,14 +257,11 @@ uv run dlthub show
 
 ## What's next?
 
-Your pipeline is deployed and running. This workspace has served its purpose.
+Your pipeline is deployed and running on dltHub Platform.
 
-To build a real pipeline you can extend, harden, and take to production, open a new terminal and run:
+You can now extend it using the **rest-api-pipeline** toolkit — for example:
+- Add more endpoints to load additional resources from the same API
+- Add incremental loading so only new or updated records are fetched on each run
+- Add pagination to handle APIs that return large result sets across multiple pages
 
-```bash
-uvx dlthub-init@latest <your-project-name>
-```
-
-Do **not** run this command here — running it from within this session would interfere with the new workspace's AI assistance setup. The user must run it themselves in a separate terminal.
-
-That will scaffold a proper workspace where you can use the full `rest-api-pipeline` toolkit to add incremental loading, more endpoints, and production-grade configuration.
+To continue, tell the agent: `"Help me extend my pipeline"`

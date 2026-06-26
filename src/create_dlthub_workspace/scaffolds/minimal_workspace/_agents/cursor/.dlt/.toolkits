@@ -41,9 +41,9 @@ one-shot:
   agent: cursor
   files:
     .cursor/skills/deploy-run-sample-pipeline/SKILL.md:
-      sha3_256: 0b63aa185eb85d1405ad6a11abe6b427ddc45e6cfba74e9220e15570422d9d12
+      sha3_256: b4ae69748c37b6bdf957f1ac046302b2153bb768e1cc447ad6358a140aa54dd0
     .cursor/rules/one-shot-workflow.mdc:
-      sha3_256: 341a94ac7a3553032897b51927a932a11640f85987a4688442a6b26220004c86
+      sha3_256: 0c2a37b663ca989266a4aaf940e134e1652e82eb78a7c6783ad223bde842aab7
   name: one-shot
 dlthub-init-skills:
   version: 0.1.0
@@ -58,8 +58,8 @@ dlthub-init-skills:
   agent: cursor
   files:
     .cursor/skills/deploy-minimal-custom-source/SKILL.md:
-      sha3_256: 8e770db0d6555f11dfb03b12742946674ea5a8e9122dcb88e2c8c429bff022d9
+      sha3_256: 305c9cbe0604fbaf55d7739b4ffb1415b0d265ec4d1a01d4341362cae2810564
     .cursor/rules/dlthub-init-skills-workflow.mdc:
-      sha3_256: 98b4e40dfa39efb35dedbef8429f59e2132801a3892f9d7fa15f2a0ce7b37287
+      sha3_256: 4eeddc3535c42a341516da698272f82aeb9d8dbbe1f31aa772fce149edfcd73d
   mcp_servers:
   - dlt-workspace-mcp
