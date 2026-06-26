@@ -41,7 +41,7 @@ one-shot:
   agent: claude
   files:
     .claude/skills/deploy-run-sample-pipeline/SKILL.md:
-      sha3_256: b4ae69748c37b6bdf957f1ac046302b2153bb768e1cc447ad6358a140aa54dd0
+      sha3_256: b95f995a94a1c085c959904f469a72447a1517e775c1b79012ee34b803a4b6d6
     .claude/rules/one-shot-workflow.md:
       sha3_256: 3fe54ea8bca8e297915fb50a4fa41382d929703e79da3ba36c97f6fa6b75ff53
   name: one-shot

@@ -41,7 +41,7 @@ one-shot:
   agent: cursor
   files:
     .cursor/skills/deploy-run-sample-pipeline/SKILL.md:
-      sha3_256: b4ae69748c37b6bdf957f1ac046302b2153bb768e1cc447ad6358a140aa54dd0
+      sha3_256: b95f995a94a1c085c959904f469a72447a1517e775c1b79012ee34b803a4b6d6
     .cursor/rules/one-shot-workflow.mdc:
       sha3_256: 0c2a37b663ca989266a4aaf940e134e1652e82eb78a7c6783ad223bde842aab7
   name: one-shot
