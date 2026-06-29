@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- The minimal workspace scaffold now ships an interactive onboarding notebook (`notebooks/onboarding_success/`) — a marimo app deployed alongside the pipeline (via `__deployment__.py`) that reads the loaded `sample_shop` data back from `playground` to browse the schema and run a first query.
+
+### Changed
+- Refreshed the bundled minimal workspace `uv.lock` (`dlthub-client` 0.28.0, `marimo` 0.23.11) and added the notebook's dependencies (`anywidget`, `pandas`, `numpy`).
+
 ## [0.9.1] - 2026-06-24
 
 ### Changed

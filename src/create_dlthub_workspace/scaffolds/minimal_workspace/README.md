@@ -1,10 +1,18 @@
 # Sample Shop — your first dltHub workspace
 
 A runnable dlt REST API pipeline (`pipeline.py`) that loads a sample online-shop
-API to dltHub platform — your coding agent deploys and runs it during onboarding.
+API to dltHub platform, plus an interactive onboarding notebook
+(`notebooks/onboarding_success/`) that reads the loaded data back — your coding
+agent deploys and runs these during onboarding.
 
 To make it your own, edit `pipeline.py` or ask your coding agent to build a
 pipeline for your own source.
+
+## Onboarding notebook
+
+`notebooks/onboarding_success/` is a marimo app, deployed alongside the pipeline
+via `__deployment__.py`. It reads the loaded `sample_shop` data back from
+`playground` so you can browse the schema and run your first query.
 
 ## Destination
 

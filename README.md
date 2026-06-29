@@ -89,7 +89,7 @@ uvx dlthub-start@latest my-workspace            # alternative: create + initiali
 ## Workspace contents
 
 The bundled workspace is a quick, runnable first look: a sample online-shop
-pipeline, local warehouse config, and a generated deployment module.
+pipeline, an interactive onboarding notebook, and a generated deployment module.
 
 ## Generated Workspace
 
@@ -100,6 +100,7 @@ The workspace is initialized at the project root, shaped roughly like this:
 |-- pyproject.toml
 |-- pipeline.py
 |-- __deployment__.py
+|-- notebooks/
 |-- README.md
 |-- .dlt/
 |-- .mcp.json

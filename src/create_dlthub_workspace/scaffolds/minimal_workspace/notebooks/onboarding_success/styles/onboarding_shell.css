@@ -1,0 +1,255 @@
+/* Onboarding chrome + brand theme. Injected after the shared styles/app.css
+   (only on this page), so the :root block below re-points the --dlt-* tokens to
+   the official dltHub palette without affecting app.py. Values mirror the web
+   client's design tokens (runtime/clients/web globals.css). */
+:root {
+  /* dltHub brand */
+  --dlt-aqua: oklch(0.7 0.1 215);            /* #59c1d5 */
+  --dlt-lime: oklch(0.81 0.18 115);          /* #c6d300 */
+  --dlt-green: oklch(0.65 0.15 135);         /* action / "run" */
+  --dlt-dark-purple: oklch(0.16 0.06 285);   /* #191937 */
+  --dlt-medium-purple: oklch(0.28 0.09 285);
+  --dlt-light-purple: #5c57c6;               /* primary */
+  --dlt-lightest-purple: oklch(0.73 0.08 285);
+
+  /* semantic — same names the rest of this file & app.css already reference */
+  --dlt-bg: #f9f9fb;
+  --dlt-card: oklch(1 0 0);
+  --dlt-border: oklch(0.92 0.004 286.32);
+  --dlt-border-soft: oklch(0.95 0.003 286);
+  --dlt-secondary: #ecedf1;
+  --dlt-danger: #ee5a51;
+  --dlt-accent: var(--dlt-light-purple);
+  --dlt-accent-soft: color-mix(in oklch, var(--dlt-lightest-purple) 22%, transparent);
+  --dlt-accent-ink: var(--dlt-light-purple);
+  --dlt-accent-fg: oklch(0.985 0 0);
+  --dlt-text: var(--dlt-dark-purple);
+  --dlt-muted: oklch(0.45 0.04 285);
+  --dlt-radius: 6px;
+  --dlt-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --dlt-card-border: 1px solid var(--dlt-border);
+  --dlt-font: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --dlt-font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+#App.config-width-full > div > div { padding-left: 0 !important; padding-right: 0 !important; }
+#App { padding-left: 0; padding-top: 0; background: var(--dlt-bg); box-sizing: border-box; }
+#App .marimo-cell { background: transparent !important; border-radius: 0 !important; box-shadow: none !important; margin: 0 !important; }
+
+/* ---- Page dots (3-step wizard progress) ---- */
+.page-dots { display: flex; justify-content: center; gap: 6px; margin: 0 0 12px; }
+.page-dot {
+  height: 6px; border-radius: 999px;
+  background: color-mix(in oklch, var(--dlt-text) 12%, transparent);
+  transition: width 0.2s ease, background 0.2s ease;
+}
+.page-dot.idle { width: 6px; }
+.page-dot.active { width: 18px; background: var(--dlt-accent); }
+
+/* ---- Page header (centered title + subtitle) ---- */
+.page-head { text-align: center; margin: 0; }
+.page-title {
+  font-family: var(--dlt-font);
+  font-size: 30px; font-weight: 500; line-height: 1.3;
+  color: var(--dlt-text); letter-spacing: -0.02em;
+  margin: 0 auto; max-width: 700px;
+}
+.page-subtitle {
+  font-family: var(--dlt-font);
+  font-size: 18px; font-weight: 400; line-height: 1.55;
+  color: var(--dlt-muted); margin: 14px auto 0; max-width: 560px;
+}
+.page-trial {
+  font-family: var(--dlt-font);
+  font-size: 16px; font-weight: 400; color: var(--dlt-muted);
+  text-align: center; margin: 0;
+}
+
+/* ---- Results (rendered inside the query card once a query runs) ---- */
+.dlt-section-label {
+  font-family: var(--dlt-font);
+  font-size: 16px; font-weight: 600; color: var(--dlt-text);
+  margin: 4px 0 10px;
+}
+.res-block { padding: 2px 2px 0; }
+.res-empty {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 300px; text-align: center;
+  font: 400 14px/1.5 var(--dlt-font); color: var(--dlt-muted);
+}
+.run-hint {
+  display: inline-flex; align-items: center; gap: 7px;
+  font: 600 13px/1 var(--dlt-font); color: var(--dlt-accent-ink);
+  white-space: nowrap;
+  background: var(--dlt-accent-soft); padding: 7px 11px; border-radius: 6px;
+}
+.run-arrow {
+  font-size: 16px; font-weight: 700;
+  animation: nudge 1.1s ease-in-out infinite;
+}
+@keyframes nudge {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-5px); }
+}
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .run-arrow { animation: none; }
+}
+
+/* ---- loading skeleton (page 2, while the playground read resolves) ---- */
+.dlt-skeleton {
+  display: flex; gap: 16px; align-items: stretch; flex-wrap: wrap;
+  animation: fade-in .25s ease;
+}
+.sk-pane {
+  background: var(--dlt-card); border: var(--dlt-card-border);
+  border-radius: var(--dlt-radius); box-shadow: var(--dlt-shadow);
+  padding: 18px 20px; box-sizing: border-box;
+}
+.sk-schema { flex: 1 1 300px; min-width: 260px; }
+.sk-workspace { flex: 3 1 480px; min-width: 320px; }
+.sk-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 2px; border-bottom: 1px solid var(--dlt-border-soft);
+}
+.sk-row:last-child { border-bottom: none; }
+.sk-dot { width: 16px; height: 16px; border-radius: 5px; flex: none; }
+.sk-line { height: 11px; border-radius: 5px; }
+.sk-w30 { width: 30%; } .sk-w40 { width: 40%; } .sk-w55 { width: 55%; } .sk-w70 { width: 70%; }
+.sk-block { height: 120px; border-radius: 8px; margin-bottom: 14px; }
+.sk-block.tall { height: 220px; margin-bottom: 0; }
+.sk-dot, .sk-line, .sk-block {
+  background: linear-gradient(90deg,
+    var(--dlt-border-soft) 25%, var(--dlt-border) 38%, var(--dlt-border-soft) 63%);
+  background-size: 400% 100%;
+  animation: sk-shimmer 1.4s ease infinite;
+}
+@keyframes sk-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: 0 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sk-dot, .sk-line, .sk-block { animation: none; }
+}
+
+/* ---- floating scroll-down cue ---- */
+.dlt-next-anchor { height: 0; }
+.dlt-scroll-cue {
+  position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(8px);
+  z-index: 50; display: grid; place-items: center;
+  width: 40px; height: 40px; padding: 0;
+  border: none; border-radius: 999px;
+  background: var(--dlt-accent-soft); color: var(--dlt-accent-ink);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.12); cursor: pointer;
+  opacity: 0; pointer-events: none;
+  transition: opacity .2s ease, transform .2s ease;
+}
+.dlt-scroll-cue.show {
+  opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0);
+  animation: cue-bob 1.4s ease-in-out infinite;
+}
+.dlt-scroll-cue:hover { background: color-mix(in oklch, var(--dlt-accent-soft) 75%, var(--dlt-accent)); }
+.dlt-scroll-cue svg { width: 20px; height: 20px; }
+@keyframes cue-bob {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(4px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dlt-scroll-cue.show { animation: none; }
+}
+
+/* ---- copy-for-agent prompt box (page 3) ---- */
+.pb-eyebrow {
+  font-family: var(--dlt-font);
+  font-size: 16px; font-weight: 600; color: var(--dlt-text);
+  text-align: left; margin: 4px 0 10px;
+}
+.pbo-a {
+  --agb-fill: var(--dlt-card);
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  border-radius: var(--dlt-radius); padding: 14px 16px;
+}
+.pbo-a .pb-text {
+  flex: 1; min-width: 0; font-size: 16px; line-height: 1.55;
+  color: var(--dlt-text); text-align: left;
+  font-family: var(--dlt-font);
+}
+.dlt-prompt-copy {
+  flex: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--dlt-accent); border: 1px solid var(--dlt-accent); border-radius: 6px;
+  padding: 12px 24px; cursor: pointer; color: var(--dlt-accent-fg);
+  font: 600 16px/1 var(--dlt-font); transition: background .12s ease, border-color .12s ease;
+}
+.dlt-prompt-copy:hover { background: color-mix(in oklch, var(--dlt-accent) 86%, black); border-color: color-mix(in oklch, var(--dlt-accent) 86%, black); }
+.dlt-prompt-copy svg { width: 18px; height: 18px; }
+.dlt-prompt-copy svg path[stroke="none"] { fill: var(--dlt-accent-fg); }
+.dlt-prompt-copy.copied { background: color-mix(in oklch, var(--dlt-accent) 86%, black); border-color: color-mix(in oklch, var(--dlt-accent) 86%, black); }
+
+/* Animated "AI" gradient border — brand conic gradient (purple→aqua→lime) drawn
+   in the border-box, with the fill in the padding-box. Override --agb-fill to
+   tint the inner surface. Mirrors the web client's signature onboarding effect. */
+@property --gradient-border-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+@keyframes gradient-border-rotate {
+  to { --gradient-border-angle: 360deg; }
+}
+.animated-gradient-border {
+  --agb-fill: var(--dlt-card);
+  border: 2px solid transparent;
+  background:
+    linear-gradient(var(--agb-fill), var(--agb-fill)) padding-box,
+    conic-gradient(
+      from var(--gradient-border-angle),
+      var(--dlt-light-purple), var(--dlt-aqua), var(--dlt-lime),
+      var(--dlt-aqua), var(--dlt-light-purple)
+    ) border-box;
+  animation: gradient-border-rotate 3s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animated-gradient-border { animation: none; }
+}
+
+/* ---- Results table ---- */
+.dlt-table-wrap { overflow: auto; height: 264px; box-sizing: border-box; padding: 10px 12px; }
+.dlt-table {
+  width: 100%; border-collapse: collapse; font: 400 13px/1.5 var(--dlt-font);
+}
+.dlt-table thead tr { border-bottom: 1px solid var(--dlt-border); }
+.dlt-table th {
+  padding: 0 12px 8px; text-align: left;
+  font: 600 11px/1 var(--dlt-font); color: var(--dlt-muted);
+  letter-spacing: 0.05em; text-transform: uppercase;
+  vertical-align: bottom; white-space: nowrap;
+}
+.dlt-table td { padding: 7px 12px; color: var(--dlt-text); white-space: nowrap; }
+.dlt-table tbody tr { border-bottom: 1px solid var(--dlt-border-soft); }
+.dlt-table tbody tr:hover { background: var(--dlt-accent-soft); }
+.dlt-table tbody tr:last-child { border-bottom: none; }
+.th-name { margin-bottom: 4px; }
+/* mini distribution bar chart above column header label */
+.spark { display: flex; align-items: flex-end; height: 20px; gap: 1px; margin-bottom: 4px; }
+.spark-bar { flex: 1; background: #b5a9f0; border-radius: 1px 1px 0 0; min-height: 2px; }
+/* collapsible results — show 8 rows by default, expand on toggle */
+.res-expand-cb { display: none; }
+.res-collapsible tbody tr:nth-child(n+9) { display: none; }
+.res-expand-cb:checked ~ .res-collapsible tbody tr:nth-child(n+9) { display: table-row; }
+.res-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 10px; font: 400 12px/1 var(--dlt-font); color: var(--dlt-muted);
+}
+.res-toggle {
+  font: 500 12px/1 var(--dlt-font); color: var(--dlt-accent);
+  cursor: pointer; user-select: none;
+}
+.res-toggle .lbl-less { display: none; }
+.res-expand-cb:checked ~ * .lbl-more,
+.res-expand-cb:checked + * .lbl-more { display: none; }
+.res-expand-cb:checked ~ * .lbl-less,
+.res-expand-cb:checked + * .lbl-less { display: inline; }
+.dlt-muted { color: var(--dlt-muted); }

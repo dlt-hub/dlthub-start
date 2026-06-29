@@ -7,11 +7,27 @@ dependencies = [
     "dlt[hub,deltalake]>=1.27.2",
     "dlthub[mcp]",
     "duckdb<1.4.3",
+    # uv.lock pins marimo; the deploy exports pinned versions from the lock, so the
+    # served version matches the one the session cache was built with.
     "marimo>=0.23.8",
     "altair",
     "pyarrow>=24.0.0",
     "ibis-framework[duckdb]>=12.0.0",
     "s3fs",
+    # onboarding_success notebook
+    "anywidget>=0.11.0",
+    "pandas",
+    "numpy",
 ]
 
+[tool.uv]
+# deltalake 1.6.1 ships no Windows wheel; cap until it does.
+constraint-dependencies = ["deltalake<1.6.1"]
+
 [tool.uv.sources]
+
+# Serve pre-built marimo session caches read-only in `marimo run` (RUN mode).
+# On connect, cached cell outputs are replayed instantly; a missing/stale cache
+# (code or marimo-version mismatch) silently falls back to a live kernel run.
+[tool.marimo.runtime]
+serve_cached_sessions_in_apps = true

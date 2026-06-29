@@ -1,0 +1,244 @@
+/* dlthub-app-inspired design system for the onboarding prototype.
+   Tokens approximated from the dlthub Overview / Get-started screenshots. */
+
+:root {
+  --dlt-bg: #f7f8fa;
+  --dlt-card: #ffffff;
+  --dlt-border: #ececf0;
+  --dlt-border-soft: #f2f3f5;
+  --dlt-accent: #6c5ce7;
+  --dlt-accent-soft: #f2f0fd;
+  --dlt-accent-ink: #4b3fb0;
+  --dlt-text: #101828;
+  --dlt-muted: #667085;
+  --dlt-radius: 12px;
+  --dlt-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --dlt-font: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+body,
+.marimo,
+.markdown {
+  font-family: var(--dlt-font);
+  background: var(--dlt-bg);
+  color: var(--dlt-text);
+}
+
+/* Roomier app feel; hide notebook chrome left over in app mode. */
+.marimo .cm-editor .cm-gutters { background: transparent; }
+
+/* SQL query editor — white input field inside its card, delineated by a border. */
+.cm-editor {
+  border-radius: 8px;
+  border: 1px solid var(--dlt-border);
+  background: #fff;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 16px;
+  line-height: 1.6;
+  min-height: 124px;
+}
+/* internal breathing room so the code isn't squeezed against the box edges */
+.cm-editor .cm-scroller { padding: 10px 8px; }
+.cm-editor .cm-content { line-height: 1.6; }
+.cm-editor .cm-gutters {
+  background: #fff;
+  border-right: 1px solid var(--dlt-border-soft);
+  color: #aab0bd;
+}
+/* no code-folding affordance — hide the fold gutter (the little collapse chevron)
+   and disable its click target so blocks can't be collapsed */
+.cm-editor .cm-foldGutter { display: none !important; }
+.cm-editor .cm-foldPlaceholder { display: none !important; }
+.cm-editor.cm-focused { outline: none; border-color: var(--dlt-accent); }
+/* calmer indigo highlights */
+.cm-editor .cm-activeLine { background: #faf9ff !important; }
+.cm-editor .cm-activeLineGutter { background: #f2f0fd !important; color: #6c5ce7 !important; }
+.cm-editor .cm-selectionBackground { background: #e4def9 !important; }
+.cm-editor.cm-focused .cm-selectionBackground { background: #d9d1f6 !important; }
+.cm-editor .cm-content ::selection { background: #d9d1f6 !important; }
+.cm-editor .cm-cursor, .cm-editor .cm-dropCursor { border-left-color: #6c5ce7 !important; }
+.cm-editor .cm-matchingBracket { background: #ece8fb !important; color: inherit !important; }
+
+/* SQL syntax palette - calm indigo/neutral, scoped to the editor.
+   This marimo build uses CodeMirror 6's minified highlight classes (no .tok-*).
+   Strategy: neutralize every token to body ink first - this kills the rainbow
+   default AND degrades gracefully (calm, not rainbow) if the minified class
+   letters ever change - then accent the three main SQL categories. */
+.cm-editor .cm-line span        { color: #101828; }              /* identifiers, operators, * */
+.cm-editor .cm-line span.ͼb     { color: #4b3fb0; font-weight: 600; }  /* keywords  */
+.cm-editor .cm-line span.ͼf     { color: #2c7a8c; }                    /* strings   */
+.cm-editor .cm-line span.ͼd     { color: #9a5b1f; }                    /* numbers   */
+.cm-editor .cm-line span.ͼc     { color: #98a0ad; font-style: italic; } /* comments */
+/* forward-compat: if a future marimo emits stable .tok-* classes */
+.cm-editor .tok-keyword { color: #4b3fb0; font-weight: 600; }
+.cm-editor .tok-string, .cm-editor .tok-string2 { color: #2c7a8c; }
+.cm-editor .tok-number, .cm-editor .tok-atom, .cm-editor .tok-bool { color: #9a5b1f; }
+.cm-editor .tok-comment { color: #98a0ad; font-style: italic; }
+
+/* line-number gutter shares the editor mono so digits align with code */
+.cm-editor .cm-gutters { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+
+/* thin neutral scrollbar so the well stays calm */
+.cm-editor .cm-scroller::-webkit-scrollbar { width: 9px; height: 9px; }
+.cm-editor .cm-scroller::-webkit-scrollbar-thumb {
+  background: #d7dae0; border-radius: 8px; border: 2px solid #fff;
+}
+.cm-editor .cm-scroller::-webkit-scrollbar-track { background: transparent; }
+
+/* ---- Top bar ---------------------------------------------------------- */
+.dlt-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 4px 0 14px;
+}
+.dlt-title { font-size: 22px; font-weight: 700; color: var(--dlt-text); }
+.dlt-pill {
+  border: 1px solid var(--dlt-border);
+  background: #fff;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 14px;
+  color: var(--dlt-muted);
+  box-shadow: var(--dlt-shadow);
+  white-space: nowrap;
+}
+.dlt-dest-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--dlt-border);
+  background: #fff;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--dlt-text);
+  box-shadow: var(--dlt-shadow);
+  white-space: nowrap;
+}
+.dlt-dest-chip .dest-icon { color: var(--dlt-accent); }
+.dlt-dest-chip .dest-label {
+  color: var(--dlt-muted);
+  font-weight: 500;
+}
+.dlt-dest-chip .dest-name { font-weight: 700; color: var(--dlt-text); }
+
+/* ---- Section labels --------------------------------------------------- */
+/* section heading — same as the schema explorer's "Loaded tables" title (16/600) */
+.dlt-section-label {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--dlt-text);
+  margin: 2px 0 6px;
+}
+.dlt-info { color: var(--dlt-muted); font-weight: 400; }
+.dlt-muted { color: var(--dlt-muted); font-size: 14px; }
+
+/* ---- Cards ------------------------------------------------------------ */
+.dlt-card {
+  background: var(--dlt-card);
+  border: 1px solid var(--dlt-border);
+  border-radius: var(--dlt-radius);
+  box-shadow: var(--dlt-shadow);
+  padding: 18px 20px;
+}
+
+/* ---- Schema explorer -------------------------------------------------- */
+/* The live schema explorer uses its own shadow DOM CSS in widgets/schema_explorer.py.
+   Only keep the fallback empty-state card style used by app.py for the "Select a node"
+   placeholder. */
+.schema-card { height: 528px; box-sizing: border-box; }
+
+/* ---- DAG widget as a card -------------------------------------------- */
+.dag-widget {
+  background: #fff;
+  border: 1px solid var(--dlt-border);
+  border-radius: var(--dlt-radius);
+  box-shadow: var(--dlt-shadow);
+  padding: 8px;
+}
+.dag-widget .dag-canvas { background: #fff; }
+
+/* ---- Status badges (reusable helper) --------------------------------- */
+.dlt-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 999px;
+}
+.dlt-badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+/* ---- Results table (matches the schema explorer rows) ---------------- */
+.dlt-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--dlt-border);
+  border-radius: 10px;
+}
+/* Collapsed by default to a short preview; the checkbox-hack toggle expands it. */
+.res-expand-cb { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+.dlt-table-wrap.res-collapsible { max-height: 260px; overflow-y: auto; }
+.res-expand-cb:checked ~ .dlt-table-wrap.res-collapsible { max-height: 640px; }
+.res-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 10px;
+}
+.res-toggle {
+  font-size: 14px; font-weight: 500; color: var(--dlt-accent);
+  cursor: pointer; user-select: none;
+}
+.res-toggle:hover { text-decoration: underline; }
+.res-toggle .lbl-less { display: none; }
+.res-expand-cb:checked ~ .res-foot .res-toggle .lbl-more { display: none; }
+.res-expand-cb:checked ~ .res-foot .res-toggle .lbl-less { display: inline; }
+.dlt-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--dlt-font);
+  font-size: 16px;
+}
+.dlt-table th {
+  text-align: left;
+  vertical-align: top;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--dlt-muted);
+  background: #fafafe;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--dlt-border);
+  white-space: nowrap;
+}
+/* per-column distribution mini bar chart */
+.dlt-table th .spark {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 24px;
+  margin-top: 7px;
+}
+.dlt-table th .spark-bar {
+  flex: 1;
+  min-width: 3px;
+  min-height: 2px;
+  background: #b5a9f0;
+  border-radius: 1px 1px 0 0;
+}
+.dlt-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--dlt-border-soft);
+  color: var(--dlt-text);
+  white-space: nowrap;
+}
+.dlt-table tbody tr:last-child td { border-bottom: none; }
+.dlt-table tbody tr:hover { background: #faf9ff; }
