@@ -1,0 +1,69 @@
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap" rel="stylesheet">
+<script>
+/* Global copy handler: any element with data-copy="<text>" copies it on click and
+   shows a brief toast. Used by the command cards in the completion section. */
+(function () {
+  function toast(label) {
+    var t = document.createElement("div");
+    t.textContent = "Copied " + (label || "to clipboard");
+    t.style.cssText = "position:fixed;left:50%;bottom:24px;transform:translateX(-50%);" +
+      "background:#1e1b3a;color:#fff;font:600 12px/1 Inter,system-ui,sans-serif;" +
+      "padding:9px 14px;border-radius:8px;box-shadow:0 6px 16px rgba(16,24,40,.25);" +
+      "z-index:4000;opacity:0;transition:opacity .2s ease;pointer-events:none;";
+    document.body.appendChild(t);
+    requestAnimationFrame(function () { t.style.opacity = "1"; });
+    setTimeout(function () { t.style.opacity = "0"; setTimeout(function () { t.remove(); }, 250); }, 1500);
+  }
+  document.addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-copy]");
+    if (!btn) return;
+    var text = btn.getAttribute("data-copy");
+    if (text && navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        toast(btn.getAttribute("data-copy-label") || "to clipboard");
+      }).catch(function () {});
+    }
+  });
+})();
+
+/* Onboarding auto-complete via MutationObserver.
+   Reactive marimo cells output hidden [data-ob-auto="browse"|"query"] elements
+   when a real interaction occurs. This observer watches the whole document for
+   those signals and sets the matching real checkbox — CSS :has() re-evaluates
+   immediately, gating sidebar nav swap and final-section reveal. */
+(function () {
+  function handleNode(node) {
+    if (!node || node.nodeType !== 1) return;
+    var sig = node.getAttribute && node.getAttribute("data-ob-auto");
+    if (sig) {
+      if (sig === "browse") {
+        var b = document.getElementById("ob-check-browse");
+        if (b && !b.checked) b.checked = true;
+      } else if (sig === "query") {
+        var q = document.getElementById("ob-check-query");
+        if (q && !q.checked) q.checked = true;
+      }
+    }
+    /* also scan children in case the element was added as a subtree */
+    if (node.querySelectorAll) {
+      node.querySelectorAll("[data-ob-auto]").forEach(handleNode);
+    }
+  }
+  var obs = new MutationObserver(function (mutations) {
+    mutations.forEach(function (m) {
+      m.addedNodes.forEach(handleNode);
+    });
+  });
+  function attach() {
+    obs.observe(document.body, { childList: true, subtree: true });
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", attach);
+  } else {
+    attach();
+  }
+})();
+</script>

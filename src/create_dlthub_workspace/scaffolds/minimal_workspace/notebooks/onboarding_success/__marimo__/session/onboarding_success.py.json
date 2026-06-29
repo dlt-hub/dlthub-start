@@ -1,0 +1,113 @@
+{
+  "version": "1",
+  "metadata": {
+    "marimo_version": "0.23.11",
+    "script_metadata_hash": null
+  },
+  "cells": [
+    {
+      "id": "Hbol",
+      "code_hash": "1a27776b2040b0805f75b129ec9774e4",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "MJUe",
+      "code_hash": "7ad9a3d419427dce2e8bbd1d217ebd9e",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<style>/* Onboarding chrome + brand theme. Injected after the shared styles/app.css\n   (only on this page), so the :root block below re-points the --dlt-* tokens to\n   the official dltHub palette without affecting app.py. Values mirror the web\n   client's design tokens (runtime/clients/web globals.css). */\n:root {\n  /* dltHub brand */\n  --dlt-aqua: oklch(0.7 0.1 215);            /* #59c1d5 */\n  --dlt-lime: oklch(0.81 0.18 115);          /* #c6d300 */\n  --dlt-green: oklch(0.65 0.15 135);         /* action / \"run\" */\n  --dlt-dark-purple: oklch(0.16 0.06 285);   /* #191937 */\n  --dlt-medium-purple: oklch(0.28 0.09 285);\n  --dlt-light-purple: #5c57c6;               /* primary */\n  --dlt-lightest-purple: oklch(0.73 0.08 285);\n\n  /* semantic \u2014 same names the rest of this file & app.css already reference */\n  --dlt-bg: #f9f9fb;\n  --dlt-card: oklch(1 0 0);\n  --dlt-border: oklch(0.92 0.004 286.32);\n  --dlt-border-soft: oklch(0.95 0.003 286);\n  --dlt-secondary: #ecedf1;\n  --dlt-danger: #ee5a51;\n  --dlt-accent: var(--dlt-light-purple);\n  --dlt-accent-soft: color-mix(in oklch, var(--dlt-lightest-purple) 22%, transparent);\n  --dlt-accent-ink: var(--dlt-light-purple);\n  --dlt-accent-fg: oklch(0.985 0 0);\n  --dlt-text: var(--dlt-dark-purple);\n  --dlt-muted: oklch(0.45 0.04 285);\n  --dlt-radius: 6px;\n  --dlt-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);\n  --dlt-card-border: 1px solid var(--dlt-border);\n  --dlt-font: \"Geist\", ui-sans-serif, system-ui, sans-serif;\n  --dlt-font-mono: \"Geist Mono\", ui-monospace, SFMono-Regular, Menlo, monospace;\n}\n\n#App.config-width-full > div > div { padding-left: 0 !important; padding-right: 0 !important; }\n#App { padding-left: 0; padding-top: 0; background: var(--dlt-bg); box-sizing: border-box; }\n#App .marimo-cell { background: transparent !important; border-radius: 0 !important; box-shadow: none !important; margin: 0 !important; }\n\n/* ---- Page dots (3-step wizard progress) ---- */\n.page-dots { display: flex; justify-content: center; gap: 6px; margin: 0 0 12px; }\n.page-dot {\n  height: 6px; border-radius: 999px;\n  background: color-mix(in oklch, var(--dlt-text) 12%, transparent);\n  transition: width 0.2s ease, background 0.2s ease;\n}\n.page-dot.idle { width: 6px; }\n.page-dot.active { width: 18px; background: var(--dlt-accent); }\n\n/* ---- Page header (centered title + subtitle) ---- */\n.page-head { text-align: center; margin: 0; }\n.page-title {\n  font-family: var(--dlt-font);\n  font-size: 30px; font-weight: 500; line-height: 1.3;\n  color: var(--dlt-text); letter-spacing: -0.02em;\n  margin: 0 auto; max-width: 700px;\n}\n.page-subtitle {\n  font-family: var(--dlt-font);\n  font-size: 18px; font-weight: 400; line-height: 1.55;\n  color: var(--dlt-muted); margin: 14px auto 0; max-width: 560px;\n}\n.page-trial {\n  font-family: var(--dlt-font);\n  font-size: 16px; font-weight: 400; color: var(--dlt-muted);\n  text-align: center; margin: 0;\n}\n\n/* ---- Results (rendered inside the query card once a query runs) ---- */\n.dlt-section-label {\n  font-family: var(--dlt-font);\n  font-size: 16px; font-weight: 600; color: var(--dlt-text);\n  margin: 4px 0 10px;\n}\n.res-block { padding: 2px 2px 0; }\n.res-empty {\n  display: flex; align-items: center; justify-content: center;\n  min-height: 300px; text-align: center;\n  font: 400 14px/1.5 var(--dlt-font); color: var(--dlt-muted);\n}\n.run-hint {\n  display: inline-flex; align-items: center; gap: 7px;\n  font: 600 13px/1 var(--dlt-font); color: var(--dlt-accent-ink);\n  white-space: nowrap;\n  background: var(--dlt-accent-soft); padding: 7px 11px; border-radius: 6px;\n}\n.run-arrow {\n  font-size: 16px; font-weight: 700;\n  animation: nudge 1.1s ease-in-out infinite;\n}\n@keyframes nudge {\n  0%, 100% { transform: translateX(0); }\n  50% { transform: translateX(-5px); }\n}\n@keyframes fade-in {\n  from { opacity: 0; transform: translateY(4px); }\n  to { opacity: 1; transform: translateY(0); }\n}\n@media (prefers-reduced-motion: reduce) {\n  .run-arrow { animation: none; }\n}\n\n/* ---- loading skeleton (page 2, while the playground read resolves) ---- */\n.dlt-skeleton {\n  display: flex; gap: 16px; align-items: stretch; flex-wrap: wrap;\n  animation: fade-in .25s ease;\n}\n.sk-pane {\n  background: var(--dlt-card); border: var(--dlt-card-border);\n  border-radius: var(--dlt-radius); box-shadow: var(--dlt-shadow);\n  padding: 18px 20px; box-sizing: border-box;\n}\n.sk-schema { flex: 1 1 300px; min-width: 260px; }\n.sk-workspace { flex: 3 1 480px; min-width: 320px; }\n.sk-row {\n  display: flex; align-items: center; gap: 10px;\n  padding: 11px 2px; border-bottom: 1px solid var(--dlt-border-soft);\n}\n.sk-row:last-child { border-bottom: none; }\n.sk-dot { width: 16px; height: 16px; border-radius: 5px; flex: none; }\n.sk-line { height: 11px; border-radius: 5px; }\n.sk-w30 { width: 30%; } .sk-w40 { width: 40%; } .sk-w55 { width: 55%; } .sk-w70 { width: 70%; }\n.sk-block { height: 120px; border-radius: 8px; margin-bottom: 14px; }\n.sk-block.tall { height: 220px; margin-bottom: 0; }\n.sk-dot, .sk-line, .sk-block {\n  background: linear-gradient(90deg,\n    var(--dlt-border-soft) 25%, var(--dlt-border) 38%, var(--dlt-border-soft) 63%);\n  background-size: 400% 100%;\n  animation: sk-shimmer 1.4s ease infinite;\n}\n@keyframes sk-shimmer {\n  from { background-position: 100% 0; }\n  to { background-position: 0 0; }\n}\n@media (prefers-reduced-motion: reduce) {\n  .sk-dot, .sk-line, .sk-block { animation: none; }\n}\n\n/* ---- floating scroll-down cue ---- */\n.dlt-next-anchor { height: 0; }\n.dlt-scroll-cue {\n  position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(8px);\n  z-index: 50; display: grid; place-items: center;\n  width: 40px; height: 40px; padding: 0;\n  border: none; border-radius: 999px;\n  background: var(--dlt-accent-soft); color: var(--dlt-accent-ink);\n  box-shadow: 0 4px 14px rgb(0 0 0 / 0.12); cursor: pointer;\n  opacity: 0; pointer-events: none;\n  transition: opacity .2s ease, transform .2s ease;\n}\n.dlt-scroll-cue.show {\n  opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0);\n  animation: cue-bob 1.4s ease-in-out infinite;\n}\n.dlt-scroll-cue:hover { background: color-mix(in oklch, var(--dlt-accent-soft) 75%, var(--dlt-accent)); }\n.dlt-scroll-cue svg { width: 20px; height: 20px; }\n@keyframes cue-bob {\n  0%, 100% { transform: translateX(-50%) translateY(0); }\n  50% { transform: translateX(-50%) translateY(4px); }\n}\n@media (prefers-reduced-motion: reduce) {\n  .dlt-scroll-cue.show { animation: none; }\n}\n\n/* ---- copy-for-agent prompt box (page 3) ---- */\n.pb-eyebrow {\n  font-family: var(--dlt-font);\n  font-size: 16px; font-weight: 600; color: var(--dlt-text);\n  text-align: left; margin: 4px 0 10px;\n}\n.pbo-a {\n  --agb-fill: var(--dlt-card);\n  display: flex; align-items: center; justify-content: space-between; gap: 16px;\n  border-radius: var(--dlt-radius); padding: 14px 16px;\n}\n.pbo-a .pb-text {\n  flex: 1; min-width: 0; font-size: 16px; line-height: 1.55;\n  color: var(--dlt-text); text-align: left;\n  font-family: var(--dlt-font);\n}\n.dlt-prompt-copy {\n  flex: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px;\n  background: var(--dlt-accent); border: 1px solid var(--dlt-accent); border-radius: 6px;\n  padding: 12px 24px; cursor: pointer; color: var(--dlt-accent-fg);\n  font: 600 16px/1 var(--dlt-font); transition: background .12s ease, border-color .12s ease;\n}\n.dlt-prompt-copy:hover { background: color-mix(in oklch, var(--dlt-accent) 86%, black); border-color: color-mix(in oklch, var(--dlt-accent) 86%, black); }\n.dlt-prompt-copy svg { width: 18px; height: 18px; }\n.dlt-prompt-copy svg path[stroke=\"none\"] { fill: var(--dlt-accent-fg); }\n.dlt-prompt-copy.copied { background: color-mix(in oklch, var(--dlt-accent) 86%, black); border-color: color-mix(in oklch, var(--dlt-accent) 86%, black); }\n\n/* Animated \"AI\" gradient border \u2014 brand conic gradient (purple\u2192aqua\u2192lime) drawn\n   in the border-box, with the fill in the padding-box. Override --agb-fill to\n   tint the inner surface. Mirrors the web client's signature onboarding effect. */\n@property --gradient-border-angle {\n  syntax: \"<angle>\";\n  inherits: false;\n  initial-value: 0deg;\n}\n@keyframes gradient-border-rotate {\n  to { --gradient-border-angle: 360deg; }\n}\n.animated-gradient-border {\n  --agb-fill: var(--dlt-card);\n  border: 2px solid transparent;\n  background:\n    linear-gradient(var(--agb-fill), var(--agb-fill)) padding-box,\n    conic-gradient(\n      from var(--gradient-border-angle),\n      var(--dlt-light-purple), var(--dlt-aqua), var(--dlt-lime),\n      var(--dlt-aqua), var(--dlt-light-purple)\n    ) border-box;\n  animation: gradient-border-rotate 3s linear infinite;\n}\n@media (prefers-reduced-motion: reduce) {\n  .animated-gradient-border { animation: none; }\n}\n\n/* ---- Results table ---- */\n.dlt-table-wrap { overflow: auto; height: 264px; box-sizing: border-box; padding: 10px 12px; }\n.dlt-table {\n  width: 100%; border-collapse: collapse; font: 400 13px/1.5 var(--dlt-font);\n}\n.dlt-table thead tr { border-bottom: 1px solid var(--dlt-border); }\n.dlt-table th {\n  padding: 0 12px 8px; text-align: left;\n  font: 600 11px/1 var(--dlt-font); color: var(--dlt-muted);\n  letter-spacing: 0.05em; text-transform: uppercase;\n  vertical-align: bottom; white-space: nowrap;\n}\n.dlt-table td { padding: 7px 12px; color: var(--dlt-text); white-space: nowrap; }\n.dlt-table tbody tr { border-bottom: 1px solid var(--dlt-border-soft); }\n.dlt-table tbody tr:hover { background: var(--dlt-accent-soft); }\n.dlt-table tbody tr:last-child { border-bottom: none; }\n.th-name { margin-bottom: 4px; }\n/* mini distribution bar chart above column header label */\n.spark { display: flex; align-items: flex-end; height: 20px; gap: 1px; margin-bottom: 4px; }\n.spark-bar { flex: 1; background: #b5a9f0; border-radius: 1px 1px 0 0; min-height: 2px; }\n/* collapsible results \u2014 show 8 rows by default, expand on toggle */\n.res-expand-cb { display: none; }\n.res-collapsible tbody tr:nth-child(n+9) { display: none; }\n.res-expand-cb:checked ~ .res-collapsible tbody tr:nth-child(n+9) { display: table-row; }\n.res-foot {\n  display: flex; align-items: center; justify-content: space-between;\n  padding-top: 10px; font: 400 12px/1 var(--dlt-font); color: var(--dlt-muted);\n}\n.res-toggle {\n  font: 500 12px/1 var(--dlt-font); color: var(--dlt-accent);\n  cursor: pointer; user-select: none;\n}\n.res-toggle .lbl-less { display: none; }\n.res-expand-cb:checked ~ * .lbl-more,\n.res-expand-cb:checked + * .lbl-more { display: none; }\n.res-expand-cb:checked ~ * .lbl-less,\n.res-expand-cb:checked + * .lbl-less { display: inline; }\n.dlt-muted { color: var(--dlt-muted); }\n</style>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "vblA",
+      "code_hash": "5860d2445a93961997024114aca58422",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "0e5322ac59ec6cf41ba0ace724a95b63",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "fc5cc3a3825dbd0b761646a633faf768",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "PKri",
+      "code_hash": "61a58b61ecbe515ccb58123f7ed7ebdc",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Xref",
+      "code_hash": "28e7aaedab4c496499d18c7019a7f6b1",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<div style='max-width:1120px;margin:0 auto;padding:44px 24px 72px;box-sizing:border-box'><div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 1.25rem'><div class=\"page-dots\"><span class=\"page-dot active\"></span><span class=\"page-dot idle\"></span></div><div class=\"page-head\"><h2 class=\"page-title\">Congrats! Your first pipeline successfully loaded data from the sample shop API into playground.</h2><p class=\"page-subtitle\">Take a quick look at your data, then run your first query.</p></div><div class=\"dlt-skeleton\"><div class=\"sk-pane sk-schema\"><div class=\"sk-row\"><span class=\"sk-dot\"></span><span class=\"sk-line sk-w55\"></span></div><div class=\"sk-row\"><span class=\"sk-dot\"></span><span class=\"sk-line sk-w40\"></span></div><div class=\"sk-row\"><span class=\"sk-dot\"></span><span class=\"sk-line sk-w70\"></span></div><div class=\"sk-row\"><span class=\"sk-dot\"></span><span class=\"sk-line sk-w30\"></span></div><div class=\"sk-row\"><span class=\"sk-dot\"></span><span class=\"sk-line sk-w55\"></span></div><div class=\"sk-row\"><span class=\"sk-dot\"></span><span class=\"sk-line sk-w40\"></span></div></div><div class=\"sk-pane sk-workspace\"><div class=\"sk-block\"></div><div class=\"sk-block tall\"></div></div></div></div></div>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "SFPL",
+      "code_hash": "e96d82827d930a062921c84a40f3b1d7",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    }
+  ]
+}
