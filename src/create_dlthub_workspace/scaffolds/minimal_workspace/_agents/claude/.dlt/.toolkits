@@ -21,7 +21,7 @@ init:
     .claudeignore:
       sha3_256: 1aa4dc9286dd219dcb55399f388c5ee1f940ab5e399a42b644d488cba57a9ec0
     .claude/rules/init-dlthub-workspace.md:
-      sha3_256: 31056f08fa68a6ee52d71f86d3e4cfd0a01157465482f62f7687648566d9cef4
+      sha3_256: b8c191ee69ac67ee2aea8ef9b63fa2f9dae4c95349a601bf77e39c33f0224e33
   mcp_servers:
   - dlt-workspace-mcp
   name: init
@@ -41,6 +41,6 @@ one-shot:
   agent: claude
   files:
     .claude/skills/deploy-run-sample-pipeline/SKILL.md:
-      sha3_256: bc0e47e6374e40e78c487b7aaee6eb4ee06577a87b5fdf58609374aad1965ba2
+      sha3_256: 219fed9913cb2d3a9538847762564b782aa969b40689917805631baaaffe0779
     .claude/rules/one-shot-workflow.md:
-      sha3_256: a477647f9e7a3da9f9276c10fbddb83dfe2851443617d5615328e2b1a0f3edad
+      sha3_256: 3fe54ea8bca8e297915fb50a4fa41382d929703e79da3ba36c97f6fa6b75ff53
