@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Refreshed the bundled minimal workspace `uv.lock` (`dlthub-client` 0.28.0, `marimo` 0.23.11) and added the notebook's dependencies (`anywidget`, `pandas`, `numpy`).
+- Bumped the bundled AI workbench (`WORKBENCH_REF` → `f290a9b`) and regenerated the agent scaffolds.
 
 ## [0.9.1] - 2026-06-24
 
