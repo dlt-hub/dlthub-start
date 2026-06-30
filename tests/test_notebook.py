@@ -2,12 +2,17 @@ from __future__ import annotations
 
 import json
 import py_compile
+import sys
 import tempfile
-import tomllib
 import unittest
 from pathlib import Path
 
 from create_dlthub_workspace.scaffold import SCAFFOLDS_DIR, copy_scaffold
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
 
 WORKSPACE = SCAFFOLDS_DIR / "minimal_workspace"
 NOTEBOOK = WORKSPACE / "notebooks" / "onboarding_success"

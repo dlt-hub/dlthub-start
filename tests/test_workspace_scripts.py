@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import os
+import re
 import runpy
 import sys
 import tempfile
@@ -24,10 +25,12 @@ def _run(script: Path, argv: list[str], app_url: str | None = None):
         env["DLTHUB_APP_URL"] = app_url
     out = io.StringIO()
     code, msg = 0, None
-    with mock.patch.object(sys, "argv", argv), \
-            mock.patch.dict(os.environ, env, clear=True), \
-            mock.patch("webbrowser.open") as browser, \
-            redirect_stdout(out):
+    with (
+        mock.patch.object(sys, "argv", argv),
+        mock.patch.dict(os.environ, env, clear=True),
+        mock.patch("webbrowser.open") as browser,
+        redirect_stdout(out),
+    ):
         try:
             runpy.run_path(str(script), run_name="__main__")
         except SystemExit as exc:
@@ -63,13 +66,12 @@ class ScriptsRequireRefTests(unittest.TestCase):
 
 class ExampleJobRefTests(unittest.TestCase):
     def test_scripts_reference_a_deployed_job(self) -> None:
-        import re
-
         deployment = (SCAFFOLDS_DIR / "minimal_workspace" / "__deployment__.py").read_text()
         for script in SCRIPTS.glob("*.py"):
             for name in set(re.findall(r"jobs\.([a-z_]+)", script.read_text())):
                 self.assertIn(
-                    name, deployment,
+                    name,
+                    deployment,
                     f"{script.name} references jobs.{name}, not deployed in __deployment__.py",
                 )
 
@@ -80,8 +82,9 @@ class ShowNotebookUrlTests(unittest.TestCase):
     def test_builds_show_url_and_opens_browser(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             ws = _workspace_with_config(Path(d), self.CONFIG)
-            code, out, _, browser = _run(ws / ".scripts" / "show_notebook.py",
-                                         ["show_notebook.py", "jobs.onboarding_success"])
+            code, out, _, browser = _run(
+                ws / ".scripts" / "show_notebook.py", ["show_notebook.py", "jobs.onboarding_success"]
+            )
         url = "https://app.dlthub.com/w/ws-123/notebooks/jobs.onboarding_success/show"
         self.assertEqual(code, 0)
         self.assertIn(url, out)
@@ -90,17 +93,20 @@ class ShowNotebookUrlTests(unittest.TestCase):
     def test_respects_app_url_override(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             ws = _workspace_with_config(Path(d), self.CONFIG)
-            code, out, _, browser = _run(ws / ".scripts" / "show_notebook.py",
-                                         ["show_notebook.py", "jobs.onboarding_success"],
-                                         app_url="https://app.dlthub.test/")
+            code, out, _, browser = _run(
+                ws / ".scripts" / "show_notebook.py",
+                ["show_notebook.py", "jobs.onboarding_success"],
+                app_url="https://app.dlthub.test/",
+            )
         self.assertEqual(code, 0)
         self.assertIn("https://app.dlthub.test/w/ws-123/", out)
 
     def test_errors_when_workspace_id_missing(self) -> None:
         with tempfile.TemporaryDirectory() as d:
-            ws = _workspace_with_config(Path(d), "[runtime]\nlog_level = \"INFO\"\n")
-            code, _, msg, browser = _run(ws / ".scripts" / "show_notebook.py",
-                                         ["show_notebook.py", "jobs.onboarding_success"])
+            ws = _workspace_with_config(Path(d), '[runtime]\nlog_level = "INFO"\n')
+            code, _, msg, browser = _run(
+                ws / ".scripts" / "show_notebook.py", ["show_notebook.py", "jobs.onboarding_success"]
+            )
         self.assertEqual(code, 1)
         self.assertIn("workspace_id", msg or "")
         browser.assert_not_called()
