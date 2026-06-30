@@ -145,6 +145,21 @@ uvx dlthub-start@latest my-workspace --verbose
 If the scaffold was created successfully, you can also enter the workspace and
 run `uv sync` directly after fixing the underlying dependency or network issue.
 
+## Telemetry
+
+`dlthub-start` sends anonymous usage events so we can improve our onboarding and
+refine the user experience.
+
+No personal data is collected, no workspace is ever sent.
+
+Telemetry is controlled by the following, in order of precedence:
+
+1. the `--no-telemetry` flag,
+2. `DLTHUB_START_TELEMETRY=0` (or `false`/`off`),
+3. `DO_NOT_TRACK=1`,
+4. an existing dlt opt-out (`~/.dlt/config.toml` `[runtime] dlthub_telemetry = false`,
+   or `RUNTIME__DLTHUB_TELEMETRY=false`).
+
 ## Development
 
 For local setup, tests, build commands, `make workspace`, and AI workbench

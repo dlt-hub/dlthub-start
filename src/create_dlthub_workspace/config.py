@@ -12,6 +12,8 @@ try:
 except PackageNotFoundError:
     VERSION = "0.0.0+unknown"
 
+POSTHOG_HOST = "https://eu.i.posthog.com"
+
 GITHUB_ORG = "dlt-hub"
 
 AGENTS = ("claude", "codex", "cursor")
