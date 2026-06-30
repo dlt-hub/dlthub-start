@@ -1,10 +1,3 @@
-"""Contract tests for the bundled `.scripts/` helpers.
-
-Run each script in-process via runpy with `webbrowser.open` mocked, so no real
-browser opens and the tests stay cross-platform. The scripts only use stdlib, so
-they run without the scaffold's runtime deps (dlt/marimo) installed.
-"""
-
 from __future__ import annotations
 
 import io
@@ -46,7 +39,6 @@ def _run(script: Path, argv: list[str], app_url: str | None = None):
 
 
 def _workspace_with_config(tmp: Path, body: str) -> Path:
-    """Lay down `<tmp>/.scripts/<scripts>` + `<tmp>/.dlt/config.toml` and return tmp."""
     (tmp / ".dlt").mkdir(parents=True)
     (tmp / ".dlt" / "config.toml").write_text(body)
     (tmp / ".scripts").mkdir()
@@ -71,8 +63,6 @@ class ScriptsRequireRefTests(unittest.TestCase):
 
 class ExampleJobRefTests(unittest.TestCase):
     def test_scripts_reference_a_deployed_job(self) -> None:
-        # Every `jobs.<name>` the scripts show as an example must be a job the
-        # workspace actually deploys (guards against stale refs).
         import re
 
         deployment = (SCAFFOLDS_DIR / "minimal_workspace" / "__deployment__.py").read_text()

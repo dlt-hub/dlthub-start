@@ -1,10 +1,3 @@
-"""Structural tests for the bundled onboarding notebook and its session cache.
-
-These guard the invariants that make the pre-built marimo snapshot actually load
-on deploy (version match, no inlined anywidget module), without running marimo or
-the notebook's runtime deps.
-"""
-
 from __future__ import annotations
 
 import json
