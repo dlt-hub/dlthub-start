@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - The minimal workspace scaffold now ships an interactive onboarding notebook (`notebooks/onboarding_success/`) — a marimo app deployed alongside the pipeline (via `__deployment__.py`) that reads the loaded `sample_shop` data back from `playground` to browse the schema and run a first query.
-- Anonymous usage telemetry: `dlthub-start` now emits a telemetry event on a command execution. Opt out with `--no-telemetry`, `DLTHUB_START_TELEMETRY=0`, `DO_NOT_TRACK=1`, or an existing dlt opt-out. See the README "Telemetry" section.
+- `dlthub-start` now collects anonymous usage data to help us improve the onboarding experience. No personal data or workspace contents are ever collected, and you can opt out at any time — see the README "Telemetry" section.
 
 ### Changed
 - Refreshed the bundled minimal workspace `uv.lock` (`dlthub-client` 0.28.0, `marimo` 0.23.11) and added the notebook's dependencies (`anywidget`, `pandas`, `numpy`).
