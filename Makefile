@@ -1,10 +1,13 @@
 .DEFAULT_GOAL := help
 
-.PHONY: help dev test test-integration compile build clean-dist version-upgrade version-upgrade-patch version-upgrade-minor version-upgrade-major publish ci workspace workspace-env workspace-local workspace-stage workspace-dev workspace-here lint lint-fix format format-check fl lint-ci generate-ai update-ai check-ai lock-upgrade lock-check scaffold-lock-upgrade scaffold-lock-check scaffold-launcher-deps-check
+.PHONY: help dev test test-integration compile build clean-dist version-upgrade version-upgrade-patch version-upgrade-minor version-upgrade-major require-posthog-key publish ci workspace workspace-env workspace-local workspace-stage workspace-dev workspace-here lint lint-fix format format-check fl lint-ci generate-ai update-ai check-ai lock-upgrade lock-check scaffold-lock-upgrade scaffold-lock-check scaffold-launcher-deps-check
 
 PYTHONPYCACHEPREFIX ?= /tmp/create-dlthub-pyc
 PACKAGE_MODULES := $(wildcard src/create_dlthub_workspace/*.py)
 PYTHON_SOURCES := src tests tests_integration scripts
+
+-include .make.env
+export DLTHUB_START_POSTHOG_KEY
 
 help: ## Show this help message
 	@echo "Available targets:"
@@ -86,7 +89,13 @@ version-upgrade-minor: ## Bump the minor version non-interactively (AI/CI-friend
 version-upgrade-major: ## Bump the major version non-interactively (AI/CI-friendly)
 	@$(MAKE) version-upgrade LEVEL=major
 
-publish: clean-dist build ## Build and publish dlthub-start to PyPI
+require-posthog-key:
+	@case "$(DLTHUB_START_POSTHOG_KEY)" in \
+		phc_*) ;; \
+		*) echo "publish: DLTHUB_START_POSTHOG_KEY not set (or not a phc_ key) — add it to .make.env"; exit 1;; \
+	esac
+
+publish: require-posthog-key clean-dist build ## Build and publish dlthub-start to PyPI
 	ls -l dist/
 	@bash -c 'read -s -p "Enter PyPI API token: " PYPI_API_TOKEN; echo; \
 	uv publish --token "$$PYPI_API_TOKEN"'
