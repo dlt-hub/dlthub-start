@@ -21,7 +21,7 @@ init:
     .codexignore:
       sha3_256: 1aa4dc9286dd219dcb55399f388c5ee1f940ab5e399a42b644d488cba57a9ec0
     .agents/skills/init-dlthub-workspace/SKILL.md:
-      sha3_256: c800e78936e6d11404498e4504f5341ba723f28b86b2c3b5c9422df26fb57628
+      sha3_256: 049543af4bf8621ef57dc708aa600a76e6181773f995b60d916a23ef0531c445
   mcp_servers:
   - dlt-workspace-mcp
   name: init
@@ -41,6 +41,6 @@ one-shot:
   agent: codex
   files:
     .agents/skills/deploy-run-sample-pipeline/SKILL.md:
-      sha3_256: bc0e47e6374e40e78c487b7aaee6eb4ee06577a87b5fdf58609374aad1965ba2
+      sha3_256: 0d318282b0c0e848e43c99978f4e95be29154b6f19a06883186f9518cae5f1d3
     .agents/skills/one-shot-workflow/SKILL.md:
-      sha3_256: ecbcf0b860b3720b7f856b522e0c521e22b10a052c9aca6163507c01aa583885
+      sha3_256: 0f985a1242bd241020f1ff4b8e56ccc157004314f164e483186b238bd0860a9d
