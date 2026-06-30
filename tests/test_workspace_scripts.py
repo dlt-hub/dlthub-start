@@ -69,6 +69,21 @@ class ScriptsRequireRefTests(unittest.TestCase):
         self.assertIn("usage", (msg or "").lower())
 
 
+class ExampleJobRefTests(unittest.TestCase):
+    def test_scripts_reference_a_deployed_job(self) -> None:
+        # Every `jobs.<name>` the scripts show as an example must be a job the
+        # workspace actually deploys (guards against stale refs).
+        import re
+
+        deployment = (SCAFFOLDS_DIR / "minimal_workspace" / "__deployment__.py").read_text()
+        for script in SCRIPTS.glob("*.py"):
+            for name in set(re.findall(r"jobs\.([a-z_]+)", script.read_text())):
+                self.assertIn(
+                    name, deployment,
+                    f"{script.name} references jobs.{name}, not deployed in __deployment__.py",
+                )
+
+
 class ShowNotebookUrlTests(unittest.TestCase):
     CONFIG = '[runtime]\nworkspace_id = "ws-123"\n'
 
