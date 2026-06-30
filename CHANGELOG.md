@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-06-30
+
 ### Added
 - The minimal workspace scaffold now ships an interactive onboarding notebook (`notebooks/onboarding_success/`) — a marimo app deployed alongside the pipeline (via `__deployment__.py`) that reads the loaded `sample_shop` data back from `playground` to browse the schema and run a first query.
 - `dlthub-start` now collects anonymous usage data to help us improve the onboarding experience. No personal data or workspace contents are ever collected, and you can opt out at any time — see the README "Telemetry" section.
