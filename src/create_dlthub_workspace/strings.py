@@ -174,3 +174,10 @@ CMD_RESOLVE_HANDOFF_PROMPT = (
     f"`{config.ONE_SHOT_ENTRY_SKILL}` skill to deploy and run the sample pipeline. "
     "The skill is located at {skill_path}."
 )
+
+
+# Telemetry -------------------------------------------------------------
+MSG_TELEMETRY_NOTICE = (
+    "[dim]dlthub-start sends anonymous usage events to help us improve user experience. "
+    "Opt out with --no-telemetry, DLTHUB_START_TELEMETRY=0, or DO_NOT_TRACK=1."
+)

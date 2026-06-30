@@ -88,6 +88,33 @@ When running `dlthub` commands **by hand** in a local workspace, set
 stack also needs the runtime's mock host resolvable — add `127.0.0.1 dev-mock-services`
 to `/etc/hosts`.
 
+## Telemetry
+
+The CLI sends anonymous usage events to PostHog. Users opt out with `--no-telemetry`,
+`DLTHUB_START_TELEMETRY=0`, or `DO_NOT_TRACK=1`, and an existing dlt opt-out
+(`runtime.dlthub_telemetry = false` in dlt's global `config.toml`, or
+`RUNTIME__DLTHUB_TELEMETRY=0`) is honored.
+
+For development and testing, three environment variables override the defaults:
+
+| Variable | Effect |
+|---|---|
+| `DLTHUB_START_TELEMETRY` | Force telemetry on (`1`/`true`/`yes`/`on`) or off (any other value). |
+| `DLTHUB_START_POSTHOG_KEY` | Override the bundled PostHog project key. |
+| `DLTHUB_START_POSTHOG_HOST` | Override the PostHog host (default `https://eu.i.posthog.com`). |
+
+Released builds bake the project key into a gitignored `_telemetry_key.py`; a dev
+checkout has no key, so telemetry stays disabled until you set
+`DLTHUB_START_POSTHOG_KEY`. To exercise the full path against a throwaway PostHog
+project:
+
+```bash
+DLTHUB_START_TELEMETRY=1 \
+DLTHUB_START_POSTHOG_KEY=phc_your_test_key \
+DLTHUB_START_POSTHOG_HOST=https://eu.i.posthog.com \
+  uv run dlthub-start my-workspace --setup-only
+```
+
 ## Tests
 
 Run the fast unit test suite:

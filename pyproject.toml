@@ -18,6 +18,7 @@ classifiers = [
 dependencies = [
   "rich>=13.7",
   "beaupy>=3.9",
+  "posthog>=3.7",
   "tomli>=2.0; python_version < '3.11'",
 ]
 
@@ -72,6 +73,10 @@ warn_return_any = false
 module = "beaupy.*"
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = "posthog.*"
+ignore_missing_imports = true
+
 # `tomli` is only installed on Python <3.11 (we fall back to stdlib `tomllib`
 # on >=3.11), so it's absent from the dev env when running on newer pythons.
 # Suppress missing-stub errors there; the runtime path is short and stable.
@@ -81,6 +86,9 @@ ignore_missing_imports = true
 
 [project.scripts]
 dlthub-start = "create_dlthub_workspace.cli:main"
+
+[tool.hatch.build.hooks.custom]
+path = "hatch_build.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/create_dlthub_workspace"]
