@@ -22,16 +22,16 @@ Usage (run from the workspace root so the run context resolves):
 
 import sys
 
+if len(sys.argv) < 2:
+    sys.exit("usage: uv run .scripts/serve_headless.py <job-ref>   e.g. jobs.onboarding_success")
+ref = sys.argv[1]
+
 import dlt_runtime._runtime_command as rc
 
 # The only browser-open in serve's flow (_runtime_command.py: _do_launch). serve
 # is decorated with @requires_login/@requires_workspace, which inject
 # auth_service + api_client, so calling it directly runs the full flow.
 rc._open_app_url = lambda *args, **kwargs: None
-
-if len(sys.argv) < 2:
-    sys.exit("usage: uv run .scripts/serve_headless.py <job-ref>   e.g. jobs.onboarding_success")
-ref = sys.argv[1]
 
 # `interactive` selects all interactive jobs as candidates (regardless of
 # trigger); `job_ref=ref` narrows to exactly this one without prompting.
