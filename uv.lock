@@ -51,6 +51,15 @@ wheels = [
 ]
 
 [[package]]
+name = "backoff"
+version = "2.2.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/47/d7/5bbeb12c44d7c4f2fb5b56abce497eb5ed9f34d85701de869acedd602619/backoff-2.2.1.tar.gz", hash = "sha256:03f829f5bb1923180821643f8753b0502c3b682293992485b0eef2807afa5cba", size = 17001, upload-time = "2022-10-05T19:19:32.061Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/df/73/b6e24bd22e6720ca8ee9a85a0c4a2971af8497d8f3193fa05390cbd46e09/backoff-2.2.1-py3-none-any.whl", hash = "sha256:63579f9a0628e06278f7e47b7d7d5b6ce20dc65c5e96a6f3ca99a6adca0396e8", size = 15148, upload-time = "2022-10-05T19:19:30.546Z" },
+]
+
+[[package]]
 name = "beaupy"
 version = "3.11.0"
 source = { registry = "https://pypi.org/simple" }
@@ -201,6 +210,15 @@ wheels = [
 ]
 
 [[package]]
+name = "distro"
+version = "1.9.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/fc/f8/98eea607f65de6527f8a2e8885fc8015d3e6f5775df186e443e0964a11c3/distro-1.9.0.tar.gz", hash = "sha256:2fa77c6fd8940f116ee1d6b94a2f90b13b5ea8d019b98bc8bafdcabcdd9bdbed", size = 60722, upload-time = "2023-12-24T09:54:32.31Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/12/b3/231ffd4ab1fc9d679809f356cebee130ac7daa00d6d6f3206dd4fd137e9e/distro-1.9.0-py3-none-any.whl", hash = "sha256:7bffd925d65168f85027d8da9af6bddab658135b840670a223589bc0c8ef02b2", size = 20277, upload-time = "2023-12-24T09:54:30.421Z" },
+]
+
+[[package]]
 name = "dlt"
 version = "1.28.0"
 source = { registry = "https://pypi.org/simple" }
@@ -243,6 +261,7 @@ version = "0.9.1"
 source = { editable = "." }
 dependencies = [
     { name = "beaupy" },
+    { name = "posthog" },
     { name = "rich" },
     { name = "tomli", marker = "python_full_version < '3.11'" },
 ]
@@ -260,6 +279,7 @@ requires-dist = [
     { name = "beaupy", specifier = ">=3.9" },
     { name = "dlt", marker = "extra == 'dev'", specifier = ">=1.28.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
+    { name = "posthog", specifier = ">=3.7" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8" },
     { name = "rich", specifier = ">=13.7" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.6" },
@@ -736,6 +756,21 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/e5/69/882ee5c9d017149285cab114ebeab373308ef0f874fcdac9beb90e0ac4da/ply-3.11.tar.gz", hash = "sha256:00c7c1aaa88358b9c765b6d3000c6eec0ba42abca5351b095321aef446081da3", size = 159130, upload-time = "2018-02-15T19:01:31.097Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a3/58/35da89ee790598a0700ea49b2a66594140f44dec458c07e8e3d4979137fc/ply-3.11-py2.py3-none-any.whl", hash = "sha256:096f9b8350b65ebd2fd1346b12452efe5b9607f7482813ffca50c22722a807ce", size = 49567, upload-time = "2018-02-15T19:01:27.172Z" },
+]
+
+[[package]]
+name = "posthog"
+version = "7.21.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "backoff" },
+    { name = "distro" },
+    { name = "requests" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/98/65/a2b08d16e7b3b6518762f67d0c51c17aa6d02b08e0fe4260257eada02ee7/posthog-7.21.1.tar.gz", hash = "sha256:c8f7cd3eb3704fcd944c31c887801bf263dff39505d3531ecd0113e059d33bf8", size = 309024, upload-time = "2026-06-29T09:48:35.69Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/bf/15/69e03271c251a039f767e4f1ea5d77e16c986de4c7134aedcbdd836b2493/posthog-7.21.1-py3-none-any.whl", hash = "sha256:30764b751b111fcd3b7056ee84468832c2d6bf6b495b06f56aa5c09bb7cf23fc", size = 371198, upload-time = "2026-06-29T09:48:34.057Z" },
 ]
 
 [[package]]

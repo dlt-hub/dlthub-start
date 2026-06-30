@@ -9,7 +9,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from . import strings
+from . import strings, telemetry
 from .config import (
     AGENT_LAUNCH_COMMANDS,
     AGENT_SKILLS_DIR,
@@ -111,6 +111,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Stream output from underlying subprocesses (uv, dlthub).",
     )
+    parser.add_argument(
+        "--no-telemetry",
+        action="store_true",
+        help="Disable usage telemetry for this run.",
+    )
     # Dev/CI only; hidden from --help. Both skip login + playground connection.
     # --setup-only installs deps; --scaffold-only skips deps too.
     parser.add_argument(
@@ -130,25 +135,31 @@ def main(argv: list[str] | None = None) -> int:
     _ensure_utf8_io_on_windows()
     parser = build_parser()
     args = parser.parse_args(argv)
+    telemetry.init(no_telemetry=args.no_telemetry, interactive=stdin_is_interactive())
 
     try:
         run(args)
     except KeyboardInterrupt:
+        telemetry.track_run("cancelled")
         console.print(strings.MSG_CANCELLED)
         return 130
     except WorkspaceDirectoryNotEmptyError as exc:
+        telemetry.track_run("failed", error_code=type(exc).__name__)
         print_dir_not_empty(exc.project_dir)
         return 2
     except WorkspaceError as exc:
+        telemetry.track_run("failed", error_code=type(exc).__name__)
         console.print(strings.MSG_ERROR_PREFIX.format(message=exc))
         return 1
     except Exception as exc:
+        telemetry.track_run("failed", error_code=type(exc).__name__)
         console.print(strings.MSG_UNEXPECTED_ERROR.format(message=exc))
         if args.verbose:
             console.print_exception()
         else:
             console.print(strings.MSG_UNEXPECTED_ERROR_HINT)
         return 1
+    telemetry.track_run("success")
     return 0
 
 
@@ -158,6 +169,8 @@ def run(args: argparse.Namespace) -> None:
     if interactive:
         print_banner()
         console.print()
+
+    telemetry.show_first_run_notice()
 
     if args.setup_only or args.scaffold_only:
         err_console.print(strings.MSG_TESTING_SHORTCUT_NOTE)
