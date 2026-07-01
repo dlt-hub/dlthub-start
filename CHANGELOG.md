@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Scaffold a committed `.python-version` (pinned to `3.13`) into the minimal workspace so a new workspace gets a self-contained, reproducible venv — uv auto-provisions the interpreter on `uv sync`. Matches uv's own `uv init` convention (commit the pin, don't ignore it).
 
+### Fixed
+- The onboarding notebook's "Copy logs" / "Copy traces" buttons copied placeholder text; removed them until real logs/traces are available to the notebook.
+
 ## [0.10.0] - 2026-06-30
 
 ### Added

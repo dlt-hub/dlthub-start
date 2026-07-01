@@ -143,12 +143,3 @@ def overview_payload(pipeline: str = RAW_PIPELINE) -> list[dict]:
             ],
         })
     return payload
-
-
-# Copy-for-AI payloads behind the copy icons; empty -> widget shows its fallback text.
-def pipeline_logs(name: str) -> str:
-    return ""
-
-
-def pipeline_trace(name: str) -> str:
-    return ""
