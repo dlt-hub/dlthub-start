@@ -55,6 +55,7 @@ class CopyScaffoldTests(unittest.TestCase):
             self.assertTrue((project_dir / "pyproject.toml").exists())
             self.assertTrue((project_dir / "pipeline.py").exists())
             self.assertTrue((project_dir / "__deployment__.py").exists())
+            self.assertTrue((project_dir / ".python-version").exists())
             self.assertTrue((project_dir / ".dlt" / "config.toml").exists())
 
     def test_skips_runtime_artifacts(self) -> None:
