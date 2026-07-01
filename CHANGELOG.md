@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- The onboarding notebook's "Copy logs" / "Copy traces" buttons copied placeholder text; removed them until real logs/traces are available to the notebook.
+
 ## [0.10.0] - 2026-06-30
 
 ### Added

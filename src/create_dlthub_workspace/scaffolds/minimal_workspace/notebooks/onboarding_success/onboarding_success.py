@@ -89,9 +89,7 @@ def _(mo):
 def _(SchemaOverview, get_data, mo):
     _d = get_data()
     if _d is not None:
-        schema_overview = mo.ui.anywidget(SchemaOverview(
-            payload=_d["payload"], logs=_d["logs"], traces=_d["traces"],
-        ))
+        schema_overview = mo.ui.anywidget(SchemaOverview(payload=_d["payload"]))
     else:
         schema_overview = None
     return (schema_overview,)
@@ -289,8 +287,6 @@ async def _(asyncio, da, get_data, mo, set_data):
         def _load():
             return {
                 "payload": da.overview_payload("sample_shop"),
-                "logs": da.pipeline_logs("sample_shop"),
-                "traces": da.pipeline_trace("sample_shop"),
                 "tables": [t for t in da.list_tables() if da.pipeline_of(t) == "sample_shop"],
             }
         set_data(await asyncio.to_thread(_load))
