@@ -19,8 +19,10 @@ from create_dlthub_workspace.scaffold import TargetResolution
 _HANDOFF_PROMPT = strings.CMD_DEPLOY_RUN_HANDOFF_PROMPT.format(
     skill_path=_entry_skill_path(Path("/tmp/test_workspace"), "claude")
 )
+_SETUP_ERROR = "dlthub login blew up"
 _RESOLVE_PROMPT = strings.CMD_RESOLVE_HANDOFF_PROMPT.format(
-    skill_path=_entry_skill_path(Path("/tmp/test_workspace"), "claude")
+    skill_path=_entry_skill_path(Path("/tmp/test_workspace"), "claude"),
+    error=_SETUP_ERROR,
 )
 
 
@@ -229,7 +231,7 @@ class RunFlowTests(unittest.TestCase):
         )
 
     def test_login_failure_still_hands_off_with_resolve_prompt(self) -> None:
-        self.m["run_uv_command"].side_effect = UvError("dlthub login blew up")
+        self.m["run_uv_command"].side_effect = UvError(_SETUP_ERROR)
 
         self._run()
 
@@ -241,7 +243,7 @@ class RunFlowTests(unittest.TestCase):
 
     def test_non_interactive_login_failure_prints_resolve_prompt(self) -> None:
         self.m["stdin_is_interactive"].return_value = False
-        self.m["run_uv_command"].side_effect = UvError("dlthub login blew up")
+        self.m["run_uv_command"].side_effect = UvError(_SETUP_ERROR)
 
         buf = io.StringIO()
         with contextlib.redirect_stdout(buf):
@@ -251,7 +253,8 @@ class RunFlowTests(unittest.TestCase):
         self.m["_launch_agent"].assert_not_called()
         self.m["print_next_steps"].assert_not_called()
         self.m["copy_to_clipboard"].assert_not_called()
-        self.assertIn("diagnose", out)
+        self.assertIn("Diagnose", out)
+        self.assertIn(_SETUP_ERROR, out)
 
     def test_explicit_agent_skips_the_prompt(self) -> None:
         self._run(agent="codex")

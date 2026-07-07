@@ -10,9 +10,11 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
 
-from rich.console import Console
+from rich.console import Console, Group, RenderableType
+from rich.padding import Padding
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.table import Table
 from rich.text import Text
 
 from . import strings
@@ -50,6 +52,27 @@ def substep_done(message: str) -> None:
 def substep_detail(message: str) -> None:
     """A dimmed detail line beneath a sub-step."""
     console.print(f"[dim]{message}[/dim]")
+
+
+def print_launch_plan(headline: str, project_dir: Path, prompt: str) -> None:
+    """Where the agent will run and the prompt it gets, shown before the launch confirmation."""
+    grid = Table.grid(padding=(0, 1))
+    grid.add_column(no_wrap=True)
+    grid.add_column(overflow="fold")
+    grid.add_row(strings.LABEL_WORKSPACE, Text(str(project_dir)))
+    grid.add_row(strings.LABEL_PROMPT, Text(prompt))
+    console.print(Group(Text(f"\n{headline}", style="bold"), Padding(grid, (0, 0, 0, 2))))
+
+
+def print_setup_error(message: str) -> None:
+    """Red headline + the raw error indented below. Built as Text, not markup,
+    so stderr containing bracketed tokens (e.g. `[WARNING]`) renders literally."""
+    console.print(
+        Group(
+            Text(f"\n{strings.MSG_SETUP_FAILED}", style="bold red"),
+            Padding(Text(message, style="red"), (0, 0, 0, 2)),
+        )
+    )
 
 
 @contextmanager
@@ -287,7 +310,7 @@ def print_created_tree(scaffold: str) -> None:
         console.print(f"[dim]{branch}{entry}[/dim]")
 
 
-def _print_steps_panel(body: Text, *, title: str) -> None:
+def _print_steps_panel(body: RenderableType, *, title: str) -> None:
     console.print(
         Panel(
             body,
@@ -314,13 +337,19 @@ def print_next_steps(
     body = Text()
 
     if agent_prompt is not None:
-        body.append(f"{strings.STEPS_LABEL_HANDOFF.format(project_dir=project_dir)}\n\n")
-        body.append(f"  {agent_prompt}", style="bold #59C1D5")
+        tail = Text()
         if prompt_copied:
-            body.append(f"\n\n  {strings.HINT_PROMPT_COPIED}", style="bold #C6D300")
-        body.append(f"\n\n  {strings.LABEL_DOCS} ", style="dim")
-        body.append(strings.LINK_DOCS_LABEL, style=f"underline #59C1D5 link {strings.LINK_DOCS_URL}")
-        _print_steps_panel(body, title=panel_title)
+            tail.append(f"  {strings.HINT_PROMPT_COPIED}\n\n", style="bold #C6D300")
+        tail.append(f"  {strings.LABEL_DOCS} ", style="dim")
+        tail.append(strings.LINK_DOCS_LABEL, style=f"underline #59C1D5 link {strings.LINK_DOCS_URL}")
+        _print_steps_panel(
+            Group(
+                Text(strings.STEPS_LABEL_HANDOFF.format(project_dir=project_dir)),
+                Padding(Text(agent_prompt, style="bold #59C1D5"), (1, 0, 1, 2)),
+                tail,
+            ),
+            title=panel_title,
+        )
         return
 
     cd = _cd_target(project_dir)

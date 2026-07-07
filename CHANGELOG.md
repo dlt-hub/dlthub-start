@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Setup failures now print the full error in red, and the agent hand-off prompt includes the error text so the agent can diagnose it directly.
+- Error output with bracket tokens (e.g. `[notice]`) is no longer swallowed by rich markup.
+
+### Changed
+- The launch-plan preview shows an `<error shown above>` placeholder instead of repeating the error; wrapped lines keep their indentation; non-interactive runs no longer hard-wrap the hand-off prompt.
+
 ## [0.10.1] - 2026-07-01
 
 ### Added
