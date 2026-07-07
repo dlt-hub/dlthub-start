@@ -85,7 +85,7 @@ class ShowNotebookUrlTests(unittest.TestCase):
             code, out, _, browser = _run(
                 ws / ".scripts" / "show_notebook.py", ["show_notebook.py", "jobs.onboarding_success"]
             )
-        url = "https://app.dlthub.com/w/ws-123/notebooks/jobs.onboarding_success/show"
+        url = "https://app.dlthub.com/w/ws-123/notebooks/jobs.onboarding_success/show?hide_header=true"
         self.assertEqual(code, 0)
         self.assertIn(url, out)
         browser.assert_called_once_with(url)
