@@ -1,7 +1,7 @@
 """Open a deployed notebook's read-only "show" page in the dltHub web app.
 
 Builds and opens:
-    {APP_BASE}/w/{workspace_id}/notebooks/{job_ref}/show
+    {APP_BASE}/w/{workspace_id}/notebooks/{job_ref}/show?hide_header=true
 
 The workspace id is read from this workspace's `.dlt/config.toml` (so it tracks
 whatever this workspace is connected to). Pass the job ref as the only argument.
@@ -39,6 +39,6 @@ ws = cfg.get("runtime", {}).get("workspace_id")
 if not ws:
     sys.exit("No workspace_id in .dlt/config.toml — connect the workspace first.")
 
-url = f"{APP_BASE}/w/{ws}/notebooks/{ref}/show"
+url = f"{APP_BASE}/w/{ws}/notebooks/{ref}/show?hide_header=true"
 print(f"Opening {url}")
 webbrowser.open(url)
