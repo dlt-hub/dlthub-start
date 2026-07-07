@@ -3,7 +3,8 @@
 Replaces marimo's default buttons (which can't be themed - shadow DOM) so the
 query controls match the rest of the design. Each click increments `clicks`,
 which marimo treats as a reactive value. With `href` set it renders as a link
-that opens in a new tab instead.
+that navigates the top-level page (the notebook is served inside an iframe,
+whose sandbox must grant allow-top-navigation-by-user-activation).
 """
 
 from __future__ import annotations
@@ -27,8 +28,7 @@ function render({ model, el }) {
   const btn = document.createElement(href ? "a" : "button");
   if (href) {
     btn.href = href;
-    btn.target = "_blank";
-    btn.rel = "noopener";
+    btn.target = "_top";
   }
   const variant = model.get("variant") || "secondary";
   const size = model.get("size") || "md";
