@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - The launch-plan preview shows an `<error shown above>` placeholder instead of repeating the error; wrapped lines keep their indentation; non-interactive runs no longer hard-wrap the hand-off prompt.
+- The hand-off prompt prints as plain flush-left text instead of inside a panel, so it can be selected and copied manually without grabbing box borders.
 
 ## [0.10.1] - 2026-07-01
 

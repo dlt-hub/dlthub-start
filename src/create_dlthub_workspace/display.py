@@ -333,25 +333,24 @@ def print_next_steps(
     prompt_copied: bool = False,
 ) -> None:
     """The agent hand-off prompt when ``agent_prompt`` is set, else any remaining setup
-    commands followed by the steps to run the sample pipeline."""
-    body = Text()
+    commands followed by the steps to run the sample pipeline.
 
+    The hand-off prompt prints without a panel: box borders would be dragged
+    into a manual selection when the clipboard copy isn't available."""
     if agent_prompt is not None:
-        tail = Text()
+        console.print(Text(f"\n{panel_title}", style="bold #C6D300"))
+        console.print(Text(strings.STEPS_LABEL_HANDOFF.format(project_dir=project_dir)))
+        console.print()
+        console.print(Text(agent_prompt, style="bold #59C1D5"), soft_wrap=True)
+        console.print()
         if prompt_copied:
-            tail.append(f"  {strings.HINT_PROMPT_COPIED}\n\n", style="bold #C6D300")
-        tail.append(f"  {strings.LABEL_DOCS} ", style="dim")
-        tail.append(strings.LINK_DOCS_LABEL, style=f"underline #59C1D5 link {strings.LINK_DOCS_URL}")
-        _print_steps_panel(
-            Group(
-                Text(strings.STEPS_LABEL_HANDOFF.format(project_dir=project_dir)),
-                Padding(Text(agent_prompt, style="bold #59C1D5"), (1, 0, 1, 2)),
-                tail,
-            ),
-            title=panel_title,
-        )
+            console.print(Text(strings.HINT_PROMPT_COPIED, style="bold #C6D300"))
+        docs = Text(f"{strings.LABEL_DOCS} ", style="dim")
+        docs.append(strings.LINK_DOCS_LABEL, style=f"underline #59C1D5 link {strings.LINK_DOCS_URL}")
+        console.print(docs)
         return
 
+    body = Text()
     cd = _cd_target(project_dir)
     cd_step: tuple[tuple[str, str | None], ...] = (
         () if cd == "." else ((strings.STEPS_LABEL_CD, strings.CMD_CD.format(project_dir=cd)),)
