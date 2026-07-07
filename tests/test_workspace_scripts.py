@@ -64,17 +64,6 @@ class ScriptsRequireRefTests(unittest.TestCase):
         self.assertIn("usage", (msg or "").lower())
 
 
-class ServeHeadlessOrgGuardTests(unittest.TestCase):
-    def test_errors_when_organization_id_missing(self) -> None:
-        with tempfile.TemporaryDirectory() as d:
-            ws = _workspace_with_config(Path(d), '[runtime]\nworkspace_id = "ws-123"\n')
-            code, _, msg, _ = _run(
-                ws / ".scripts" / "serve_headless.py", ["serve_headless.py", "jobs.onboarding_success"]
-            )
-        self.assertEqual(code, 1)
-        self.assertIn("organization_id", msg or "")
-
-
 class ExampleJobRefTests(unittest.TestCase):
     def test_scripts_reference_a_deployed_job(self) -> None:
         deployment = (SCAFFOLDS_DIR / "minimal_workspace" / "__deployment__.py").read_text()

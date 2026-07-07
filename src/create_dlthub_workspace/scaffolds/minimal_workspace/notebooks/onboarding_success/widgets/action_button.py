@@ -2,9 +2,12 @@
 
 Replaces marimo's default buttons (which can't be themed - shadow DOM) so the
 query controls match the rest of the design. Each click increments `clicks`,
-which marimo treats as a reactive value. With `href` set it renders as a link
-that navigates the top-level page (the notebook is served inside an iframe,
-whose sandbox must grant allow-top-navigation-by-user-activation).
+which marimo treats as a reactive value.
+
+With `route` set, a click also posts `{type: "dlthub:navigate", route}` to the
+embedding dltHub app, which validates the route against its allowlist and
+navigates for us — the iframe sandbox blocks the notebook from navigating
+anywhere itself. No-op when nothing is listening (standalone marimo).
 """
 
 from __future__ import annotations
@@ -24,18 +27,19 @@ const ICONS = {
 };
 
 function render({ model, el }) {
-  const href = model.get("href");
-  const btn = document.createElement(href ? "a" : "button");
-  if (href) {
-    btn.href = href;
-    btn.target = "_top";
-  }
+  const btn = document.createElement("button");
   const variant = model.get("variant") || "secondary";
   const size = model.get("size") || "md";
   btn.className = "dlt-btn dlt-btn-" + variant + (size === "lg" ? " dlt-btn-lg" : "");
   const ic = ICONS[model.get("icon")] || "";
   btn.innerHTML = ic + "<span>" + (model.get("label") || "") + "</span>";
   btn.addEventListener("click", () => {
+    const route = model.get("route");
+    if (route && window.parent !== window) {
+      // "*" is safe: the message carries no data, only a route name the
+      // parent checks against its own allowlist.
+      window.parent.postMessage({ type: "dlthub:navigate", route: route }, "*");
+    }
     model.set("clicks", (model.get("clicks") || 0) + 1);
     model.save_changes();
   });
@@ -54,7 +58,6 @@ _CSS = r"""
   padding: 9px 16px;
   cursor: pointer;
   border: 1px solid transparent;
-  text-decoration: none;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 .dlt-btn svg { width: 14px; height: 14px; }
@@ -84,5 +87,5 @@ class ActionButton(anywidget.AnyWidget):
     variant = traitlets.Unicode("secondary").tag(sync=True)
     icon = traitlets.Unicode("").tag(sync=True)
     size = traitlets.Unicode("md").tag(sync=True)
-    href = traitlets.Unicode("").tag(sync=True)
+    route = traitlets.Unicode("").tag(sync=True)
     clicks = traitlets.Int(0).tag(sync=True)

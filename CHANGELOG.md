@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The hand-off prompt prints as plain flush-left text instead of inside a panel, so it can be selected and copied manually without grabbing box borders.
 - The scaffold's `.scripts/show_notebook.py` opens the notebook with `?hide_header=true` for a cleaner view.
 - Refreshed the bundled minimal workspace `uv.lock` (`dlthub-client` 0.28.1, `marimo` 0.23.13, `pandas` 3.0.3 — 3.0.4 was yanked for datetime segfaults) and updated the notebook session snapshot's pinned marimo version.
-- The onboarding notebook is now a single page: the "You're all set" page (agent prompt + copy button) is gone, and the "Next step" button links to the organization's setup page on dltHub (`/org/{organization_id}/setup`, read from `.dlt/config.toml`).
+- The onboarding notebook is now a single page: the "You're all set" page (agent prompt + copy button) is gone, and the "Next step" button asks the embedding dltHub app to navigate to the organization's setup page (`postMessage` with an allowlisted route; the app resolves the org and navigates — the iframe sandbox stays locked).
 
 ## [0.10.1] - 2026-07-01
 

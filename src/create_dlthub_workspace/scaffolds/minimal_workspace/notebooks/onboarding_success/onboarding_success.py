@@ -60,12 +60,12 @@ def _(Path, mo):
 
 
 @app.cell
-def _(ActionButton, da, mo):
+def _(ActionButton, mo):
     run_button = mo.ui.anywidget(
         ActionButton(label="Run Query", variant="start", icon="run", size="lg")
     )
     to_next = mo.ui.anywidget(
-        ActionButton(label="Next step", variant="primary", size="lg", href=da.org_setup_url())
+        ActionButton(label="Next step", variant="primary", size="lg", route="org-setup")
     )
     return run_button, to_next
 
