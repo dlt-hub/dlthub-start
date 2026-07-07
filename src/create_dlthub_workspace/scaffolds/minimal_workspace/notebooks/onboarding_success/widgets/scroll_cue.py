@@ -1,6 +1,6 @@
 """Invisible widget that floats a down-arrow when there's content below the fold
 and smooth-scrolls to the bottom on click. Styled via onboarding_shell.css
-(.dlt-scroll-cue), like the ClipboardCopy button.
+(.dlt-scroll-cue).
 
 marimo's run-mode app scrolls an inner container, not the window, so we detect
 the tallest scrollable element instead of assuming the document scrolls.

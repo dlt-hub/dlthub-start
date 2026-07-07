@@ -6,10 +6,15 @@ resolves `playground` for us.
 
 from __future__ import annotations
 
+import os
+import tomllib
 from functools import lru_cache
+from pathlib import Path
 
 import dlt
 import pandas as pd
+
+APP_BASE = os.environ.get("DLTHUB_APP_URL", "https://app.dlthub.com").rstrip("/")
 
 # Must match pipeline.py.
 PIPELINE_NAME = "sample_shop_pipeline"
@@ -32,6 +37,17 @@ KEYS = {
     "supplies":  {"pk": {"id"}, "fk": {"sku"}, "fk_targets": {"sku": "products.sku"}},
     "stores":    {"pk": {"id"}, "fk": set(), "fk_targets": {}},
 }
+
+
+def org_setup_url() -> str:
+    """Setup page of the organization this workspace is connected to; the plain
+    app URL when the workspace has no organization_id (not connected yet)."""
+    for parent in Path(__file__).resolve().parents:
+        candidate = parent / ".dlt" / "config.toml"
+        if candidate.is_file():
+            org = tomllib.loads(candidate.read_text()).get("runtime", {}).get("organization_id")
+            return f"{APP_BASE}/org/{org}/setup" if org else APP_BASE
+    return APP_BASE
 
 
 def key_role(table: str, column: str) -> str | None:

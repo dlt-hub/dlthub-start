@@ -22,11 +22,10 @@ def _():
 
     import dlt_access as da
     from widgets.action_button import ActionButton
-    from widgets.clipboard_copy import ClipboardCopy
     from widgets.schema_overview import SchemaOverview
     from widgets.scroll_cue import ScrollCue
 
-    return ActionButton, ClipboardCopy, Path, SchemaOverview, ScrollCue, asyncio, da, html, mo, np, pd
+    return ActionButton, Path, SchemaOverview, ScrollCue, asyncio, da, html, mo, np, pd
 
 
 @app.cell
@@ -41,20 +40,12 @@ def _(Path, mo):
         "box-shadow": "var(--dlt-shadow)",
         "box-sizing": "border-box",
     }
-    COLUMN_STYLE = {
-        "max-width": "800px",
+    WIDE_COLUMN_STYLE = {
+        "max-width": "1120px",
         "margin": "0 auto",
         "padding": "44px 24px 72px",
         "box-sizing": "border-box",
     }
-    WIDE_COLUMN_STYLE = {**COLUMN_STYLE, "max-width": "1120px"}
-
-    def page_dots(current):
-        dots = "".join(
-            f'<span class="page-dot {"active" if i == current else "idle"}"></span>'
-            for i in (1, 2)
-        )
-        return mo.Html(f'<div class="page-dots">{dots}</div>')
 
     def page_header(title, subtitle):
         return mo.Html(
@@ -65,16 +56,16 @@ def _(Path, mo):
         )
 
     shell_css
-    return CARD_STYLE, COLUMN_STYLE, WIDE_COLUMN_STYLE, page_dots, page_header
+    return CARD_STYLE, WIDE_COLUMN_STYLE, page_header
 
 
 @app.cell
-def _(ActionButton, mo):
+def _(ActionButton, da, mo):
     run_button = mo.ui.anywidget(
         ActionButton(label="Run Query", variant="start", icon="run", size="lg")
     )
     to_next = mo.ui.anywidget(
-        ActionButton(label="Next step", variant="primary", size="lg")
+        ActionButton(label="Next step", variant="primary", size="lg", href=da.org_setup_url())
     )
     return run_button, to_next
 
@@ -112,8 +103,6 @@ def _(da, get_data, mo, schema_overview):
 @app.cell
 def _(
     CARD_STYLE,
-    COLUMN_STYLE,
-    ClipboardCopy,
     ScrollCue,
     WIDE_COLUMN_STYLE,
     da,
@@ -121,15 +110,12 @@ def _(
     mo,
     np,
     pd,
-    page_dots,
     page_header,
     run_button,
     schema_overview,
     sql_editor,
     to_next,
 ):
-    page = 1 + (to_next.clicks > 0)
-
     def _spark(series):
         s = series.dropna()
         if not len(s):
@@ -179,7 +165,7 @@ def _(
         "Take a quick look at your data, then run your first query.",
     )
 
-    if page == 1 and (schema_overview is None or sql_editor is None):
+    if schema_overview is None or sql_editor is None:
         _rows = "".join(
             f'<div class="sk-row"><span class="sk-dot"></span>'
             f'<span class="sk-line {w}"></span></div>'
@@ -195,7 +181,7 @@ def _(
                 "</div></div>"
             ),
         ]
-    elif page == 1:
+    else:
         queried = run_button.clicks > 0
         _schema_pane = mo.vstack([schema_overview], gap=0).style(
             {**CARD_STYLE, "flex": "1 1 300px", "min-width": "260px"}
@@ -245,37 +231,8 @@ def _(
                 ).style({"animation": "fade-in 0.3s ease"})
             )
             _content.append(mo.ui.anywidget(ScrollCue()))
-    else:
-        _content = [
-            page_header(
-                "You're all set.",
-                "Now build your own pipeline and explore your data on dltHub.",
-            ),
-            mo.Html(
-                '<div class="page-trial">Your trial includes $30 of free usage.</div>'
-                '<div class="pb-eyebrow">Prompt for Claude / Codex / Cursor</div>'
-                '<div class="pbo-a animated-gradient-border">'
-                '<div class="pb-text">Help me get started building and running a data pipeline on dltHub.</div>'
-                '<button class="dlt-prompt-copy" type="button"'
-                ' data-copy-text="Help me get started building and running a data pipeline on dltHub.">'
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"'
-                ' stroke-linecap="round" stroke-linejoin="round">'
-                '<path d="M3.5 14.5h-1a1.8 1.8 0 0 1-1.8-1.8V3.8A1.8 1.8 0 0 1 2.5 2h6.7A1.8 1.8 0 0 1 11 3.8v.7"/>'
-                '<rect x="4.5" y="7" width="11.5" height="13" rx="2"/>'
-                '<path d="M19.5 0.2L20.75 3.25L23.8 4.5L20.75 5.75L19.5 8.8L18.25 5.75L15.2 4.5L18.25 3.25Z"'
-                ' fill="#5c57c6" stroke="none"/>'
-                '<path d="M11 0L11.7 1.5L13.2 2.2L11.7 2.9L11 4.4L10.3 2.9L8.8 2.2L10.3 1.5Z"'
-                ' fill="#5c57c6" stroke="none"/>'
-                "</svg>"
-                '<span class="pb-copy-label">Copy</span>'
-                "</button>"
-                "</div>",
-            ),
-            mo.ui.anywidget(ClipboardCopy()),
-        ]
 
-    _column = WIDE_COLUMN_STYLE if page == 1 else COLUMN_STYLE
-    mo.vstack([page_dots(page), *_content], gap=1.25).style(_column)
+    mo.vstack(_content, gap=1.25).style(WIDE_COLUMN_STYLE)
     return
 
 @app.cell

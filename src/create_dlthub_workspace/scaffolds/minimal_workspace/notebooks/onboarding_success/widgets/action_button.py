@@ -2,7 +2,8 @@
 
 Replaces marimo's default buttons (which can't be themed - shadow DOM) so the
 query controls match the rest of the design. Each click increments `clicks`,
-which marimo treats as a reactive value.
+which marimo treats as a reactive value. With `href` set it renders as a link
+that opens in a new tab instead.
 """
 
 from __future__ import annotations
@@ -22,7 +23,13 @@ const ICONS = {
 };
 
 function render({ model, el }) {
-  const btn = document.createElement("button");
+  const href = model.get("href");
+  const btn = document.createElement(href ? "a" : "button");
+  if (href) {
+    btn.href = href;
+    btn.target = "_blank";
+    btn.rel = "noopener";
+  }
   const variant = model.get("variant") || "secondary";
   const size = model.get("size") || "md";
   btn.className = "dlt-btn dlt-btn-" + variant + (size === "lg" ? " dlt-btn-lg" : "");
@@ -47,6 +54,7 @@ _CSS = r"""
   padding: 9px 16px;
   cursor: pointer;
   border: 1px solid transparent;
+  text-decoration: none;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 .dlt-btn svg { width: 14px; height: 14px; }
@@ -76,4 +84,5 @@ class ActionButton(anywidget.AnyWidget):
     variant = traitlets.Unicode("secondary").tag(sync=True)
     icon = traitlets.Unicode("").tag(sync=True)
     size = traitlets.Unicode("md").tag(sync=True)
+    href = traitlets.Unicode("").tag(sync=True)
     clicks = traitlets.Int(0).tag(sync=True)
