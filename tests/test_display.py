@@ -21,8 +21,8 @@ from create_dlthub_workspace.display import (
     console,
     copy_to_clipboard,
     print_banner,
+    print_error,
     print_next_steps,
-    print_setup_error,
 )
 from create_dlthub_workspace.scaffold import SCAFFOLDS_DIR
 
@@ -90,10 +90,10 @@ class PrintNextStepsTests(unittest.TestCase):
         self.assertIn("uv run dlthub run load_sample_shop", output)
 
 
-class PrintSetupErrorTests(unittest.TestCase):
+class PrintErrorTests(unittest.TestCase):
     def test_prints_headline_and_indented_error_lines(self) -> None:
         with console.capture() as cap:
-            print_setup_error("Command failed with exit code 1: uv run dlthub login\n\nsome stderr")
+            print_error(strings.MSG_SETUP_FAILED, "Command failed with exit code 1: uv run dlthub login\n\nsome stderr")
         output = _ANSI_RE.sub("", cap.get())
 
         self.assertIn(strings.MSG_SETUP_FAILED, output)
@@ -102,7 +102,7 @@ class PrintSetupErrorTests(unittest.TestCase):
 
     def test_bracketed_stderr_is_not_eaten_as_markup(self) -> None:
         with console.capture() as cap:
-            print_setup_error("[red herring] login failed")
+            print_error(strings.MSG_SETUP_FAILED, "[red herring] login failed")
         output = _ANSI_RE.sub("", cap.get())
 
         self.assertIn("[red herring] login failed", output)

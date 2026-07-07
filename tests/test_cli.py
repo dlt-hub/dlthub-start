@@ -216,7 +216,7 @@ class RunFlowTests(unittest.TestCase):
         self.m["copy_to_clipboard"].assert_called_once_with(_HANDOFF_PROMPT)
         kwargs = self.m["print_next_steps"].call_args.kwargs
         self.assertEqual(kwargs["agent_prompt"], _HANDOFF_PROMPT)
-        self.assertEqual(kwargs["panel_title"], strings.TITLE_ALL_SET)
+        self.assertEqual(kwargs["headline"], strings.TITLE_ALL_SET)
 
     def test_unlaunchable_agent_skips_the_prompt_and_prints_the_handoff(self) -> None:
         self.m["_agent_launchable"].return_value = False
@@ -239,7 +239,7 @@ class RunFlowTests(unittest.TestCase):
         self.assertEqual(self.m["_launch_agent"].call_args.kwargs["prompt"], _RESOLVE_PROMPT)
         kwargs = self.m["print_next_steps"].call_args.kwargs
         self.assertEqual(kwargs["agent_prompt"], _RESOLVE_PROMPT)
-        self.assertEqual(kwargs["panel_title"], strings.TITLE_ALMOST_THERE)
+        self.assertEqual(kwargs["headline"], strings.TITLE_ALMOST_THERE)
 
     def test_non_interactive_login_failure_prints_resolve_prompt(self) -> None:
         self.m["stdin_is_interactive"].return_value = False
@@ -253,8 +253,7 @@ class RunFlowTests(unittest.TestCase):
         self.m["_launch_agent"].assert_not_called()
         self.m["print_next_steps"].assert_not_called()
         self.m["copy_to_clipboard"].assert_not_called()
-        self.assertIn("Diagnose", out)
-        self.assertIn(_SETUP_ERROR, out)
+        self.assertIn(_RESOLVE_PROMPT, out)
 
     def test_explicit_agent_skips_the_prompt(self) -> None:
         self._run(agent="codex")

@@ -12,9 +12,12 @@ Naming convention:
   STEPS_*   : prose labels for ordered command lists
   CMD_*     : shell command snippets shown to the user
 
-Rich markup stays in the strings — the styling IS the presentation. argparse
-``help=`` text intentionally stays in ``cli.py`` since it's tightly bound to
-the argument definitions and needs default-value interpolation.
+Rich markup stays in strings that are printed as markup. Strings rendered
+through the ``Text``-based display helpers (error blocks, launch plan, agent
+hand-off) stay plain here and are styled in ``display.py`` — markup added to
+them would print literally. argparse ``help=`` text intentionally stays in
+``cli.py`` since it's tightly bound to the argument definitions and needs
+default-value interpolation.
 """
 
 from __future__ import annotations
@@ -36,8 +39,6 @@ PROMPT_LAUNCH_NO = "Skip — I'll paste the prompt into an agent myself"
 # Shown before the launch confirmation so the user sees where it runs and the exact prompt.
 MSG_LAUNCH_PLAN = "Next step: let {agent} deploy and run the sample pipeline on dltHub for you."
 MSG_LAUNCH_PLAN_RESOLVE = "Setup hit an error — let {agent} help resolve it and finish onboarding."
-LABEL_WORKSPACE = "Workspace:"
-LABEL_PROMPT = "Prompt:"
 
 
 # Errors (call sites use .format() with named placeholders) -------------
@@ -72,8 +73,8 @@ MSG_TESTING_SHORTCUT_NOTE = (
     "Run without them for the full interactive setup."
 )
 MSG_CANCELLED = "\n[yellow]Cancelled.[/yellow]"
-MSG_ERROR_PREFIX = "[bold red]Error:[/bold red] [red]{message}[/red]"
-MSG_UNEXPECTED_ERROR = "[bold red]Unexpected error:[/bold red] [red]{message}[/red]"
+MSG_ERROR_PREFIX = "✗ Error:"
+MSG_UNEXPECTED_ERROR = "✗ Unexpected error:"
 MSG_UNEXPECTED_ERROR_HINT = "[dim]Re-run with --verbose to see the full traceback.[/dim]"
 MSG_RELOCATED = "[yellow]Heads up:[/yellow] {relocated_from} isn't empty — scaffolding into {project_dir} instead."
 MSG_PACKAGE_NAME = "Project package name: {package_name}"
@@ -120,10 +121,12 @@ MSG_DIR_NOT_EMPTY = (
 )
 
 
-# Section labels inside panels ------------------------------------------
+# Section labels inside panels and the launch plan ----------------------
 LABEL_WHAT_TO_TRY = "What to try next"
 LABEL_FINISH_SETUP = "Finish setup"
 LABEL_DOCS = "Docs:"
+LABEL_WORKSPACE = "Workspace:"
+LABEL_PROMPT = "Prompt:"
 
 
 # Links (URL + its display label) ---------------------------------------
