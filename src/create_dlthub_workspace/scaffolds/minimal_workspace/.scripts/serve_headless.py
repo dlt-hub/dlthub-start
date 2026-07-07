@@ -11,6 +11,9 @@ browser. This wrapper does two things differently:
    your notebook), so serve's positional selector alone is ambiguous and drops
    into an interactive picker. `narrow_candidates()` uses `job_ref` to pick the
    exact job deterministically — no prompt; errors if the ref isn't a candidate.
+3. Fails fast when `.dlt/config.toml` has no `runtime.organization_id` — the
+   notebook's "Next step" button links to /org/{organization_id}/setup, so
+   serving without it would deploy a broken link.
 
 Pass the job's full manifest ref (namespaced under `jobs.`), e.g.
 `jobs.onboarding_success` — NOT the `.py` path (a path is promoted to
@@ -21,10 +24,28 @@ Usage (run from the workspace root so the run context resolves):
 """
 
 import sys
+import tomllib
+from pathlib import Path
 
 if len(sys.argv) < 2:
     sys.exit("usage: uv run .scripts/serve_headless.py <job-ref>   e.g. jobs.onboarding_success")
 ref = sys.argv[1]
+
+
+def _find_config() -> Path:
+    """Locate .dlt/config.toml by walking up from this script (location-independent)."""
+    for parent in Path(__file__).resolve().parents:
+        candidate = parent / ".dlt" / "config.toml"
+        if candidate.is_file():
+            return candidate
+    sys.exit("Could not find .dlt/config.toml above this script — run inside a workspace.")
+
+
+if not tomllib.loads(_find_config().read_text()).get("runtime", {}).get("organization_id"):
+    sys.exit(
+        'No organization_id in .dlt/config.toml — the notebook\'s "Next step" link needs it. '
+        "Connect the workspace first."
+    )
 
 import dlt_runtime._runtime_command as rc
 
