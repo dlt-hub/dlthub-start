@@ -16,6 +16,11 @@ POSTHOG_HOST = "https://eu.i.posthog.com"
 
 GITHUB_ORG = "dlt-hub"
 
+# dltHub brand palette; rich styles across the CLI reference these.
+COLOR_CYAN = "#59C1D5"
+COLOR_LIME = "#C6D300"
+COLOR_AMBER = "#E0A500"
+
 AGENTS = ("claude", "codex", "cursor")
 
 AGENT_LAUNCH_COMMANDS = {
