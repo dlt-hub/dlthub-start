@@ -18,7 +18,10 @@ from rich.table import Table
 from rich.text import Text
 
 from . import strings
-from .config import VERSION
+from .config import COLOR_AMBER, COLOR_CYAN, COLOR_LIME, VERSION
+
+_BOLD_CYAN = f"bold {COLOR_CYAN}"
+_BOLD_LIME = f"bold {COLOR_LIME}"
 
 console = Console()
 # Separate stderr stream for out-of-band notes (e.g. the hidden testing-shortcut warning),
@@ -116,129 +119,129 @@ ROWS = [
     ],
     [
         ("    ", ""),
-        ("█", "bold #59C1D5"),
+        ("█", _BOLD_CYAN),
         (" ", ""),
-        ("█", "bold #59C1D5"),
+        ("█", _BOLD_CYAN),
         (" ", ""),
-        ("█", "bold #59C1D5"),
+        ("█", _BOLD_CYAN),
         ("  ", ""),
-        ("█", "bold #C6D300"),
+        ("█", _BOLD_LIME),
         ("  ", ""),
-        ("█", "bold #C6D300"),
+        ("█", _BOLD_LIME),
         ("      ", ""),
-        ("█", "bold #C6D300"),
+        ("█", _BOLD_LIME),
     ],
     [
         ("    ", ""),
-        ("█", "bold #59C1D5"),
+        ("█", _BOLD_CYAN),
         (" ", ""),
-        ("█", "bold #59C1D5"),
+        ("█", _BOLD_CYAN),
         (" ", ""),
-        ("█", "bold #59C1D5"),
+        ("█", _BOLD_CYAN),
         ("  ", ""),
-        ("█", "bold #C6D300"),
+        ("█", _BOLD_LIME),
         ("  ", ""),
-        ("█", "bold #C6D300"),
+        ("█", _BOLD_LIME),
         ("      ", ""),
-        ("█", "bold #C6D300"),
+        ("█", _BOLD_LIME),
     ],
     [
         ("  ", ""),
-        ("███", "bold #59C1D5"),
+        ("███", _BOLD_CYAN),
         (" ", ""),
-        ("█", "bold #59C1D5"),
+        ("█", _BOLD_CYAN),
         (" ", ""),
-        ("██", "bold #59C1D5"),
+        ("██", _BOLD_CYAN),
         (" ", ""),
-        ("█", "bold #C6D300"),
+        ("█", _BOLD_LIME),
         ("  ", ""),
-        ("█", "bold #C6D300"),
+        ("█", _BOLD_LIME),
         (" ", ""),
-        ("█", "bold #C6D300"),
+        ("█", _BOLD_LIME),
         ("  ", ""),
-        ("█", "bold #C6D300"),
+        ("█", _BOLD_LIME),
         (" ", ""),
-        ("███", "bold #C6D300"),
+        ("███", _BOLD_LIME),
     ],
     [
         (" ", ""),
-        ("█", "bold #59C1D5"),
+        ("█", _BOLD_CYAN),
         ("  ", ""),
-        ("█", "bold #59C1D5"),
+        ("█", _BOLD_CYAN),
         (" ", ""),
-        ("█", "bold #59C1D5"),
+        ("█", _BOLD_CYAN),
         (" ", ""),
-        ("█", "bold #59C1D5"),
+        ("█", _BOLD_CYAN),
         ("  ", ""),
-        ("████", "bold #C6D300"),
+        ("████", _BOLD_LIME),
         (" ", ""),
-        ("█", "bold #C6D300"),
+        ("█", _BOLD_LIME),
         ("  ", ""),
-        ("█", "bold #C6D300"),
+        ("█", _BOLD_LIME),
         (" ", ""),
-        ("█", "bold #C6D300"),
+        ("█", _BOLD_LIME),
         ("  ", ""),
-        ("█", "bold #C6D300"),
+        ("█", _BOLD_LIME),
     ],
     [
         (" ", ""),
-        ("█", "bold #59C1D5"),
+        ("█", _BOLD_CYAN),
         ("  ", ""),
-        ("█", "bold #59C1D5"),
+        ("█", _BOLD_CYAN),
         (" ", ""),
-        ("█", "bold #59C1D5"),
+        ("█", _BOLD_CYAN),
         (" ", ""),
-        ("█", "bold #59C1D5"),
+        ("█", _BOLD_CYAN),
         ("  ", ""),
-        ("█", "bold #C6D300"),
+        ("█", _BOLD_LIME),
         ("  ", ""),
-        ("█", "bold #C6D300"),
+        ("█", _BOLD_LIME),
         (" ", ""),
-        ("█", "bold #C6D300"),
+        ("█", _BOLD_LIME),
         ("  ", ""),
-        ("█", "bold #C6D300"),
+        ("█", _BOLD_LIME),
         (" ", ""),
-        ("█", "bold #C6D300"),
+        ("█", _BOLD_LIME),
         ("  ", ""),
-        ("█", "bold #C6D300"),
+        ("█", _BOLD_LIME),
     ],
     [
         (" ", ""),
-        ("█", "bold #59C1D5"),
+        ("█", _BOLD_CYAN),
         ("  ", ""),
-        ("█", "bold #59C1D5"),
+        ("█", _BOLD_CYAN),
         (" ", ""),
-        ("█", "bold #59C1D5"),
+        ("█", _BOLD_CYAN),
         (" ", ""),
-        ("█", "bold #59C1D5"),
+        ("█", _BOLD_CYAN),
         ("  ", ""),
-        ("█", "bold #C6D300"),
+        ("█", _BOLD_LIME),
         ("  ", ""),
-        ("█", "bold #C6D300"),
+        ("█", _BOLD_LIME),
         (" ", ""),
-        ("█", "bold #C6D300"),
+        ("█", _BOLD_LIME),
         ("  ", ""),
-        ("█", "bold #C6D300"),
+        ("█", _BOLD_LIME),
         (" ", ""),
-        ("█", "bold #C6D300"),
+        ("█", _BOLD_LIME),
         ("  ", ""),
-        ("█", "bold #C6D300"),
+        ("█", _BOLD_LIME),
     ],
     [
         ("  ", ""),
-        ("███", "bold #59C1D5"),
+        ("███", _BOLD_CYAN),
         (" ", ""),
-        ("█", "bold #59C1D5"),
+        ("█", _BOLD_CYAN),
         ("  ", ""),
-        ("█", "bold #C6D300"),
+        ("█", _BOLD_LIME),
         (" ", ""),
-        ("█", "bold #C6D300"),
+        ("█", _BOLD_LIME),
         ("  ", ""),
-        ("█", "bold #C6D300"),
+        ("█", _BOLD_LIME),
         ("  ", ""),
-        ("███", "bold #C6D300"),
+        ("███", _BOLD_LIME),
         (" ", ""),
-        ("███", "bold #C6D300"),
+        ("███", _BOLD_LIME),
     ],
 ]
 
@@ -265,7 +268,7 @@ def print_banner() -> None:
             _build_logo(),
             title=title,
             title_align="left",
-            border_style="#59C1D5",
+            border_style=COLOR_CYAN,
             padding=(1, 2),
         )
     )
@@ -322,7 +325,7 @@ def _print_steps_panel(body: Text, *, title: str) -> None:
             body,
             title=title,
             title_align="left",
-            border_style="#C6D300",
+            border_style=COLOR_LIME,
             padding=(1, 2),
         )
     )
@@ -344,15 +347,15 @@ def print_next_steps(
     The hand-off prompt prints without a panel: box borders would be dragged
     into a manual selection when the clipboard copy isn't available."""
     if agent_prompt is not None:
-        console.print(Text(f"\n{headline}", style="bold #C6D300"))
+        console.print(Text(f"\n{headline}", style=_BOLD_LIME))
         console.print(Text(strings.STEPS_LABEL_HANDOFF.format(project_dir=project_dir)))
         console.print()
-        console.print(Text(agent_prompt, style="bold #59C1D5"), soft_wrap=True)
+        console.print(Text(agent_prompt, style=_BOLD_CYAN), soft_wrap=True)
         console.print()
         if prompt_copied:
-            console.print(Text(strings.HINT_PROMPT_COPIED, style="bold #C6D300"))
+            console.print(Text(strings.HINT_PROMPT_COPIED, style=_BOLD_LIME))
         docs = Text(f"{strings.LABEL_DOCS} ", style="dim")
-        docs.append(strings.LINK_DOCS_LABEL, style=f"underline #59C1D5 link {strings.LINK_DOCS_URL}")
+        docs.append(strings.LINK_DOCS_LABEL, style=f"underline {COLOR_CYAN} link {strings.LINK_DOCS_URL}")
         console.print(docs)
         return
 
@@ -378,11 +381,11 @@ def print_next_steps(
     for index, (header, steps) in enumerate(sections):
         if index:
             body.append("\n")
-        body.append(f"{header}\n\n", style="bold #C6D300")
+        body.append(f"{header}\n\n", style=_BOLD_LIME)
         for label, command in steps:
             body.append(f"  {step}. {label}\n", style="dim")
             if command is not None:
-                body.append(f"     {command}\n", style="bold #59C1D5")
+                body.append(f"     {command}\n", style=_BOLD_CYAN)
             body.append("\n")
             step += 1
 
@@ -400,7 +403,7 @@ def print_dir_not_empty(project_dir: Path) -> None:
             body,
             title=strings.TITLE_DIR_NOT_EMPTY,
             title_align="left",
-            border_style="#E0A500",
+            border_style=COLOR_AMBER,
             padding=(1, 2),
         )
     )

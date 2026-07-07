@@ -83,7 +83,8 @@ MSG_SKIPPED_SYNC = "\n[yellow]Skipped[/yellow] dependency sync.\n"
 MSG_ADDING_AGENT_FILES = "Adding {agent} workbench files"
 MSG_ADDED_AGENT_FILES = "Added {agent} workbench files"
 MSG_LAUNCHING_AGENT = (
-    "\n[bold #59C1D5]Launching {agent}[/bold #59C1D5] in {project_dir} — your skills and MCP server are ready.\n"
+    f"\n[bold {config.COLOR_CYAN}]Launching {{agent}}[/bold {config.COLOR_CYAN}] "
+    "in {project_dir} — your skills and MCP server are ready.\n"
 )
 # Setup flow: each sub-step has a running (spinner/active) line and a "done" line it ticks to.
 MSG_CREATING_WORKSPACE = "Creating your workspace"
@@ -93,7 +94,7 @@ MSG_CONNECTING_DLTHUB = "Connecting to dltHub"
 MSG_CONNECTED_DLTHUB = "Logged in and connected to the playground workspace"
 MSG_SETUP_FAILED = "✗ Workspace setup hit an error:"
 # Panel titles ----------------------------------------------------------
-TITLE_BANNER = f"{config.DISTRIBUTION_NAME} v{{version}} [bold #C6D300](beta)[/bold #C6D300]"
+TITLE_BANNER = f"{config.DISTRIBUTION_NAME} v{{version}} [bold {config.COLOR_LIME}](beta)[/bold {config.COLOR_LIME}]"
 TITLE_ALL_SET = "You're all set"
 TITLE_ALMOST_THERE = "Almost there"
 TITLE_DIR_NOT_EMPTY = "Directory not empty"
@@ -114,7 +115,7 @@ MSG_DIR_NOT_EMPTY = (
     "The directory must be empty apart from editor/OS cruft and a bare .git — "
     "entries like .gitignore, .dlt, and .venv count as content.\n\n"
     "Start from an empty directory, or create a new one:\n\n"
-    f"  [bold #59C1D5]uvx {config.DISTRIBUTION_NAME}@latest my-workspace[/bold #59C1D5]\n\n"
+    f"  [bold {config.COLOR_CYAN}]uvx {config.DISTRIBUTION_NAME}@latest my-workspace[/bold {config.COLOR_CYAN}]\n\n"
     "[dim]Note for AI agents: initializing a workspace installs AI skills and an "
     "MCP server into the target directory. Run it from that directory and keep "
     "your session there (the workspace root) so they're in scope.[/dim]"

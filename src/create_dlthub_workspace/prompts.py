@@ -8,11 +8,11 @@ from typing import cast
 import beaupy
 
 from . import strings
-from .config import AGENTS, RECOMMENDED
+from .config import AGENTS, COLOR_CYAN, RECOMMENDED
 from .display import console
 
 CURSOR = "❯"
-CURSOR_STYLE = "#59C1D5"
+CURSOR_STYLE = COLOR_CYAN
 TICK_CHAR = "●"
 # Re-exported for tests + back-compat. Canonical value lives in strings.py.
 RECOMMENDED_SUFFIX = strings.HINT_RECOMMENDED_SUFFIX
