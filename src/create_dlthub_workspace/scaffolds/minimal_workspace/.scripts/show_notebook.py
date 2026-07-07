@@ -5,7 +5,9 @@ Builds and opens:
 
 The workspace id is read from this workspace's `.dlt/config.toml` (so it tracks
 whatever this workspace is connected to). Pass the job ref as the only argument.
-Override the web-app base with DLTHUB_APP_URL (defaults to prod).
+The web-app base follows the workspace's pinned `runtime.api_base_url`
+(api.* -> app.*, e.g. api.dlthub.test -> app.dlthub.test), defaulting to prod;
+DLTHUB_APP_URL overrides both.
 
 Usage (run from the workspace root):
     uv run .scripts/show_notebook.py jobs.onboarding_success
@@ -17,12 +19,21 @@ import sys
 import tomllib
 import webbrowser
 from pathlib import Path
-
-APP_BASE = os.environ.get("DLTHUB_APP_URL", "https://app.dlthub.com").rstrip("/")
+from urllib.parse import urlsplit
 
 if len(sys.argv) < 2:
     sys.exit("usage: uv run .scripts/show_notebook.py <job-ref>   e.g. jobs.onboarding_success")
 ref = sys.argv[1]
+
+
+def _app_base(cfg: dict) -> str:
+    env = os.environ.get("DLTHUB_APP_URL")
+    if env:
+        return env.rstrip("/")
+    api = urlsplit(cfg.get("runtime", {}).get("api_base_url", ""))
+    if api.hostname and api.hostname.startswith("api."):
+        return f"{api.scheme or 'https'}://app.{api.hostname[4:]}"
+    return "https://app.dlthub.com"
 
 
 def _find_config() -> Path:
@@ -39,6 +50,6 @@ ws = cfg.get("runtime", {}).get("workspace_id")
 if not ws:
     sys.exit("No workspace_id in .dlt/config.toml — connect the workspace first.")
 
-url = f"{APP_BASE}/w/{ws}/notebooks/{ref}/show?hide_header=true"
+url = f"{_app_base(cfg)}/w/{ws}/notebooks/{ref}/show?hide_header=true"
 print(f"Opening {url}")
 webbrowser.open(url)

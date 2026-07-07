@@ -90,9 +90,24 @@ class ShowNotebookUrlTests(unittest.TestCase):
         self.assertIn(url, out)
         browser.assert_called_once_with(url)
 
-    def test_respects_app_url_override(self) -> None:
+    def test_derives_app_base_from_pinned_api_base_url(self) -> None:
+        for api_base, app_base in (
+            ("https://api.dlthub.test", "https://app.dlthub.test"),
+            ("https://api.dlthub.dev", "https://app.dlthub.dev"),
+        ):
+            with self.subTest(api_base=api_base), tempfile.TemporaryDirectory() as d:
+                config = self.CONFIG + f'api_base_url = "{api_base}"\n'
+                ws = _workspace_with_config(Path(d), config)
+                code, out, _, _ = _run(
+                    ws / ".scripts" / "show_notebook.py", ["show_notebook.py", "jobs.onboarding_success"]
+                )
+            self.assertEqual(code, 0)
+            self.assertIn(f"{app_base}/w/ws-123/", out)
+
+    def test_app_url_override_beats_pinned_api_base_url(self) -> None:
         with tempfile.TemporaryDirectory() as d:
-            ws = _workspace_with_config(Path(d), self.CONFIG)
+            config = self.CONFIG + 'api_base_url = "https://api.dlthub.dev"\n'
+            ws = _workspace_with_config(Path(d), config)
             code, out, _, browser = _run(
                 ws / ".scripts" / "show_notebook.py",
                 ["show_notebook.py", "jobs.onboarding_success"],
