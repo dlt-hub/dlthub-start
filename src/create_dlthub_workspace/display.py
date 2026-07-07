@@ -10,9 +10,11 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
 
-from rich.console import Console
+from rich.console import Console, Group
+from rich.padding import Padding
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.table import Table
 from rich.text import Text
 
 from . import strings
@@ -50,6 +52,33 @@ def substep_done(message: str) -> None:
 def substep_detail(message: str) -> None:
     """A dimmed detail line beneath a sub-step."""
     console.print(f"[dim]{message}[/dim]")
+
+
+def print_launch_plan(headline: str, project_dir: Path, prompt: str) -> None:
+    """Where the agent will run and the prompt it gets, shown before the launch
+    confirmation. The prompt is collapsed to one line to fit the grid row."""
+    grid = Table.grid(padding=(0, 1))
+    grid.add_column(no_wrap=True)
+    grid.add_column(overflow="fold")
+    grid.add_row(strings.LABEL_WORKSPACE, Text(str(project_dir)))
+    grid.add_row(strings.LABEL_PROMPT, Text(" ".join(prompt.split())))
+    console.print(Group(Text(f"\n{headline}", style="bold"), Padding(grid, (0, 0, 0, 2))))
+
+
+def print_error(headline: str, message: str) -> None:
+    """Red headline + the raw message indented below. Built as Text, not markup,
+    so output containing bracketed tokens (e.g. `[WARNING]`) renders literally."""
+    console.print(
+        Group(
+            Text(f"\n{headline}", style="bold red"),
+            Padding(Text(message, style="red"), (0, 0, 0, 2)),
+        )
+    )
+
+
+def print_verbatim(text: str) -> None:
+    """Print ``text`` exactly: no markup interpretation, no hard wrapping."""
+    console.print(text, markup=False, soft_wrap=True)
 
 
 @contextmanager
@@ -304,25 +333,30 @@ def print_next_steps(
     *,
     scaffold: str,
     agent_prompt: str | None = None,
-    panel_title: str = strings.TITLE_ALL_SET,
+    headline: str = strings.TITLE_ALL_SET,
     needs_uv_install: bool = False,
     needs_deps: bool = False,
     prompt_copied: bool = False,
 ) -> None:
     """The agent hand-off prompt when ``agent_prompt`` is set, else any remaining setup
-    commands followed by the steps to run the sample pipeline."""
-    body = Text()
+    commands followed by the steps to run the sample pipeline.
 
+    The hand-off prompt prints without a panel: box borders would be dragged
+    into a manual selection when the clipboard copy isn't available."""
     if agent_prompt is not None:
-        body.append(f"{strings.STEPS_LABEL_HANDOFF.format(project_dir=project_dir)}\n\n")
-        body.append(f"  {agent_prompt}", style="bold #59C1D5")
+        console.print(Text(f"\n{headline}", style="bold #C6D300"))
+        console.print(Text(strings.STEPS_LABEL_HANDOFF.format(project_dir=project_dir)))
+        console.print()
+        console.print(Text(agent_prompt, style="bold #59C1D5"), soft_wrap=True)
+        console.print()
         if prompt_copied:
-            body.append(f"\n\n  {strings.HINT_PROMPT_COPIED}", style="bold #C6D300")
-        body.append(f"\n\n  {strings.LABEL_DOCS} ", style="dim")
-        body.append(strings.LINK_DOCS_LABEL, style=f"underline #59C1D5 link {strings.LINK_DOCS_URL}")
-        _print_steps_panel(body, title=panel_title)
+            console.print(Text(strings.HINT_PROMPT_COPIED, style="bold #C6D300"))
+        docs = Text(f"{strings.LABEL_DOCS} ", style="dim")
+        docs.append(strings.LINK_DOCS_LABEL, style=f"underline #59C1D5 link {strings.LINK_DOCS_URL}")
+        console.print(docs)
         return
 
+    body = Text()
     cd = _cd_target(project_dir)
     cd_step: tuple[tuple[str, str | None], ...] = (
         () if cd == "." else ((strings.STEPS_LABEL_CD, strings.CMD_CD.format(project_dir=cd)),)

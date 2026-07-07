@@ -26,7 +26,10 @@ from .display import (
     print_banner,
     print_created_tree,
     print_dir_not_empty,
+    print_error,
+    print_launch_plan,
     print_next_steps,
+    print_verbatim,
     substep,
     substep_detail,
 )
@@ -149,11 +152,11 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     except WorkspaceError as exc:
         telemetry.track_run("failed", error_code=type(exc).__name__)
-        console.print(strings.MSG_ERROR_PREFIX.format(message=exc))
+        print_error(strings.MSG_ERROR_PREFIX, str(exc))
         return 1
     except Exception as exc:
         telemetry.track_run("failed", error_code=type(exc).__name__)
-        console.print(strings.MSG_UNEXPECTED_ERROR.format(message=exc))
+        print_error(strings.MSG_UNEXPECTED_ERROR, str(exc))
         if args.verbose:
             console.print_exception()
         else:
@@ -231,22 +234,31 @@ def run(args: argparse.Namespace) -> None:
         print_next_steps(project_dir, scaffold=scaffold)
         return
 
-    setup_ok = True
+    setup_error: str | None = None
     try:
         _login_and_connect_playground(uv_executable, project_dir, verbose=verbose)
     except UvError as exc:
-        setup_ok = False
-        console.print(strings.MSG_SETUP_FAILED.format(message=exc))
+        setup_error = str(exc)
+        print_error(strings.MSG_SETUP_FAILED, setup_error)
 
     agent = _finalize_agent(project_dir, scaffold, args, verbose=verbose)
-    template = strings.CMD_DEPLOY_RUN_HANDOFF_PROMPT if setup_ok else strings.CMD_RESOLVE_HANDOFF_PROMPT
-    plan = strings.MSG_LAUNCH_PLAN if setup_ok else strings.MSG_LAUNCH_PLAN_RESOLVE
-    panel_title = strings.TITLE_ALL_SET if setup_ok else strings.TITLE_ALMOST_THERE
-    handoff_prompt = template.format(skill_path=_entry_skill_path(project_dir, agent))
+    skill_path = _entry_skill_path(project_dir, agent)
+    plan_skill_path = f"{AGENT_SKILLS_DIR[agent]}/{ONE_SHOT_ENTRY_SKILL}"
+    if setup_error is None:
+        plan = strings.MSG_LAUNCH_PLAN
+        headline = strings.TITLE_ALL_SET
+        handoff_prompt = strings.CMD_DEPLOY_RUN_HANDOFF_PROMPT.format(skill_path=skill_path)
+        plan_prompt = strings.CMD_DEPLOY_RUN_HANDOFF_PROMPT.format(skill_path=plan_skill_path)
+    else:
+        plan = strings.MSG_LAUNCH_PLAN_RESOLVE
+        headline = strings.TITLE_ALMOST_THERE
+        handoff_prompt = strings.CMD_RESOLVE_HANDOFF_PROMPT.format(skill_path=skill_path, error=setup_error)
+        plan_prompt = strings.CMD_RESOLVE_HANDOFF_PROMPT.format(
+            skill_path=plan_skill_path, error=strings.HINT_ERROR_SHOWN_ABOVE
+        )
 
     if interactive and _agent_launchable(agent):
-        plan_prompt = template.format(skill_path=f"{AGENT_SKILLS_DIR[agent]}/{ONE_SHOT_ENTRY_SKILL}")
-        console.print(plan.format(agent=agent, project_dir=project_dir, prompt=plan_prompt))
+        print_launch_plan(plan.format(agent=agent), project_dir, plan_prompt)
         launch = confirm(
             strings.PROMPT_LAUNCH_AGENT,
             yes_label=strings.PROMPT_LAUNCH_YES.format(agent=agent),
@@ -257,14 +269,14 @@ def run(args: argparse.Namespace) -> None:
 
     console.print()
     if not interactive:
-        console.print(handoff_prompt)
+        print_verbatim(handoff_prompt)
         return
     prompt_copied = copy_to_clipboard(handoff_prompt)
     print_next_steps(
         project_dir,
         scaffold=scaffold,
         agent_prompt=handoff_prompt,
-        panel_title=panel_title,
+        headline=headline,
         prompt_copied=prompt_copied,
     )
 

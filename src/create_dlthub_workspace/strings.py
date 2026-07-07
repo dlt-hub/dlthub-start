@@ -12,9 +12,12 @@ Naming convention:
   STEPS_*   : prose labels for ordered command lists
   CMD_*     : shell command snippets shown to the user
 
-Rich markup stays in the strings — the styling IS the presentation. argparse
-``help=`` text intentionally stays in ``cli.py`` since it's tightly bound to
-the argument definitions and needs default-value interpolation.
+Rich markup stays in strings that are printed as markup. Strings rendered
+through the ``Text``-based display helpers (error blocks, launch plan, agent
+hand-off) stay plain here and are styled in ``display.py`` — markup added to
+them would print literally. argparse ``help=`` text intentionally stays in
+``cli.py`` since it's tightly bound to the argument definitions and needs
+default-value interpolation.
 """
 
 from __future__ import annotations
@@ -34,16 +37,8 @@ PROMPT_LAUNCH_AGENT = "How do you want to continue?"
 PROMPT_LAUNCH_YES = "Launch {agent} now and hand it this prompt"
 PROMPT_LAUNCH_NO = "Skip — I'll paste the prompt into an agent myself"
 # Shown before the launch confirmation so the user sees where it runs and the exact prompt.
-MSG_LAUNCH_PLAN = (
-    "\n[bold]Next step: let {agent} deploy and run the sample pipeline on dltHub for you.[/bold]"
-    "\n  Workspace: {project_dir}"
-    "\n  Prompt:    {prompt}"
-)
-MSG_LAUNCH_PLAN_RESOLVE = (
-    "\n[bold]Setup hit an error — let {agent} help resolve it and finish onboarding.[/bold]"
-    "\n  Workspace: {project_dir}"
-    "\n  Prompt:    {prompt}"
-)
+MSG_LAUNCH_PLAN = "Next step: let {agent} deploy and run the sample pipeline on dltHub for you."
+MSG_LAUNCH_PLAN_RESOLVE = "Setup hit an error — let {agent} help resolve it and finish onboarding."
 
 
 # Errors (call sites use .format() with named placeholders) -------------
@@ -78,8 +73,8 @@ MSG_TESTING_SHORTCUT_NOTE = (
     "Run without them for the full interactive setup."
 )
 MSG_CANCELLED = "\n[yellow]Cancelled.[/yellow]"
-MSG_ERROR_PREFIX = "[red]Error:[/red] {message}"
-MSG_UNEXPECTED_ERROR = "[red]Unexpected error:[/red] {message}"
+MSG_ERROR_PREFIX = "✗ Error:"
+MSG_UNEXPECTED_ERROR = "✗ Unexpected error:"
 MSG_UNEXPECTED_ERROR_HINT = "[dim]Re-run with --verbose to see the full traceback.[/dim]"
 MSG_RELOCATED = "[yellow]Heads up:[/yellow] {relocated_from} isn't empty — scaffolding into {project_dir} instead."
 MSG_PACKAGE_NAME = "Project package name: {package_name}"
@@ -96,7 +91,7 @@ MSG_WORKSPACE_READY = "Workspace ready — dependencies installed in .venv"
 MSG_WORKSPACE_CREATED = "Workspace created"
 MSG_CONNECTING_DLTHUB = "Connecting to dltHub"
 MSG_CONNECTED_DLTHUB = "Logged in and connected to the playground workspace"
-MSG_SETUP_FAILED = "\n[yellow]Heads up:[/yellow] workspace setup hit an error ({message})."
+MSG_SETUP_FAILED = "✗ Workspace setup hit an error:"
 # Panel titles ----------------------------------------------------------
 TITLE_BANNER = f"{config.DISTRIBUTION_NAME} v{{version}} [bold #C6D300](beta)[/bold #C6D300]"
 TITLE_ALL_SET = "You're all set"
@@ -126,10 +121,12 @@ MSG_DIR_NOT_EMPTY = (
 )
 
 
-# Section labels inside panels ------------------------------------------
+# Section labels inside panels and the launch plan ----------------------
 LABEL_WHAT_TO_TRY = "What to try next"
 LABEL_FINISH_SETUP = "Finish setup"
 LABEL_DOCS = "Docs:"
+LABEL_WORKSPACE = "Workspace:"
+LABEL_PROMPT = "Prompt:"
 
 
 # Links (URL + its display label) ---------------------------------------
@@ -139,6 +136,7 @@ LINK_DOCS_LABEL = f"github.com/{config.GITHUB_ORG}/{config.WORKBENCH_REPO_NAME}"
 
 # Hint text / badges / taglines -----------------------------------------
 HINT_RECOMMENDED_SUFFIX = " [dim](recommended)[/dim]"
+HINT_ERROR_SHOWN_ABOVE = "<error shown above>"
 HINT_CODEX_SUFFIX = " [dim](or other agents, e.g. Copilot)[/dim]"
 HINT_NONE = "(none)"
 HINT_BANNER_TAGLINE = "Onboarding"
@@ -168,9 +166,9 @@ CMD_DEPLOY_RUN_HANDOFF_PROMPT = (
     "The skill is located at {skill_path}."
 )
 CMD_RESOLVE_HANDOFF_PROMPT = (
-    "The dltHub workspace is scaffolded and dependencies are installed, but a setup step "
-    "(dltHub login or playground connection) failed. Use your dltHub tools and the `dlthub` CLI "
-    "to diagnose and fix it, then use the "
+    "Workspace setup hit an error during dltHub login / playground connection:\n\n"
+    "{error}\n\n"
+    "Diagnose and fix it using your dltHub tools and the `dlthub` CLI, then use the "
     f"`{config.ONE_SHOT_ENTRY_SKILL}` skill to deploy and run the sample pipeline. "
     "The skill is located at {skill_path}."
 )
