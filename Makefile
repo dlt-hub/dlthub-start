@@ -127,8 +127,8 @@ workspace-env: ## Like workspace, but pins api_base_url (+ auth_base_url / dlthu
 	fi; \
 	echo "workspace-env: pinned + validated api_base_url = $(API_BASE_URL)$(if $(AUTH_BASE_URL), (auth_base_url = $(AUTH_BASE_URL))) in $$cfg"
 
-workspace-local: ## Scaffold a workspace pointed at the local stack (api + auth on *.dlthub.test) with an editable dlthub-client; skips TLS verify (mkcert CA is not in Python's bundle)
-	$(MAKE) workspace-env API_BASE_URL=https://api.dlthub.test AUTH_BASE_URL=https://auth.dlthub.test DLT_RUNTIME_INSECURE=true DLTHUB_CLIENT_SOURCE="$(or $(DLTHUB_CLIENT_SOURCE),$(CURDIR)/../runtime/clients/cli)"
+workspace-local: ## Scaffold a workspace pointed at the local stack (api + auth on *.dlthub.test) with the released dlthub-client; skips TLS verify (mkcert CA is not in Python's bundle)
+	$(MAKE) workspace-env API_BASE_URL=https://api.dlthub.test AUTH_BASE_URL=https://auth.dlthub.test DLT_RUNTIME_INSECURE=true
 
 workspace-stage: ## Scaffold a workspace pointed at the staging stack (api.dlthub.net)
 	$(MAKE) workspace-env API_BASE_URL=https://api.dlthub.net
