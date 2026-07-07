@@ -92,7 +92,7 @@ class ShowNotebookUrlTests(unittest.TestCase):
 
     def test_derives_app_base_from_pinned_api_base_url(self) -> None:
         for api_base, app_base in (
-            ("https://api.dlthub.test", "https://app.dlthub.test"),
+            ("https://api.dlthub.test", "https://dlthub.test"),
             ("https://api.dlthub.dev", "https://app.dlthub.dev"),
         ):
             with self.subTest(api_base=api_base), tempfile.TemporaryDirectory() as d:
@@ -111,10 +111,10 @@ class ShowNotebookUrlTests(unittest.TestCase):
             code, out, _, browser = _run(
                 ws / ".scripts" / "show_notebook.py",
                 ["show_notebook.py", "jobs.onboarding_success"],
-                app_url="https://app.dlthub.test/",
+                app_url="https://dlthub.test/",
             )
         self.assertEqual(code, 0)
-        self.assertIn("https://app.dlthub.test/w/ws-123/", out)
+        self.assertIn("https://dlthub.test/w/ws-123/", out)
 
     def test_errors_when_workspace_id_missing(self) -> None:
         with tempfile.TemporaryDirectory() as d:

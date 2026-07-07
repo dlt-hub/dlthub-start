@@ -6,12 +6,12 @@ Builds and opens:
 The workspace id is read from this workspace's `.dlt/config.toml` (so it tracks
 whatever this workspace is connected to). Pass the job ref as the only argument.
 The web-app base follows the workspace's pinned `runtime.api_base_url`
-(api.* -> app.*, e.g. api.dlthub.test -> app.dlthub.test), defaulting to prod;
-DLTHUB_APP_URL overrides both.
+(api.* -> app.*; the local stack's app lives on the apex, so
+api.dlthub.test -> dlthub.test), defaulting to prod; DLTHUB_APP_URL overrides both.
 
 Usage (run from the workspace root):
     uv run .scripts/show_notebook.py jobs.onboarding_success
-    DLTHUB_APP_URL=https://app.dlthub.test uv run .scripts/show_notebook.py jobs.onboarding_success
+    DLTHUB_APP_URL=https://dlthub.test uv run .scripts/show_notebook.py jobs.onboarding_success
 """
 
 import os
@@ -32,7 +32,10 @@ def _app_base(cfg: dict) -> str:
         return env.rstrip("/")
     api = urlsplit(cfg.get("runtime", {}).get("api_base_url", ""))
     if api.hostname and api.hostname.startswith("api."):
-        return f"{api.scheme or 'https'}://app.{api.hostname[4:]}"
+        host = api.hostname[4:]
+        if not host.endswith(".test"):
+            host = f"app.{host}"
+        return f"{api.scheme or 'https'}://{host}"
     return "https://app.dlthub.com"
 
 
