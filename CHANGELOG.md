@@ -9,11 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Setup failures print the full error in red and include it in the agent hand-off prompt, so the agent can diagnose it directly.
+- Connecting the playground workspace no longer fails with a confusing "already exists" error; setup connects to it directly.
 
 ### Changed
 - The hand-off prompt prints as plain text (no panel), so it can be copied manually.
 - The onboarding notebook is a single page; its "Next step" button navigates to the organization's setup page on dltHub.
-- `.scripts/show_notebook.py` opens the notebook with `?hide_header=true` and follows the connected stack's app URL (not always prod).
+- The dataset viewer now hides the notebook header, and opens on whichever stack (local or hosted) you're connected to instead of always pointing to production.
 - Refreshed the bundled workspace `uv.lock` (`dlthub-client` 0.28.1, `marimo` 0.23.13; `pandas` 3.0.3 — 3.0.4 was yanked).
 
 ## [0.10.1] - 2026-07-01
