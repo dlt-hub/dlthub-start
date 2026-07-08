@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The onboarding notebook is a single page; its "Next step" button navigates to the organization's setup page on dltHub.
 - The dataset viewer now hides the notebook header, and opens on whichever stack (local or hosted) you're connected to instead of always pointing to production.
 - Refreshed the bundled workspace `uv.lock` (`dlthub-client` 0.28.1, `marimo` 0.23.13; `pandas` 3.0.3 — 3.0.4 was yanked).
+- Refreshed the bundled AI workbench: added a `performance` toolkit for speeding up slow pipelines, and the onboarding agent now explains that sample data loads into a hosted playground destination (not for production).
 
 ## [0.10.1] - 2026-07-01
 
