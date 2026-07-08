@@ -133,8 +133,8 @@ workspace-local: ## Scaffold a workspace pointed at the local stack (api + auth 
 workspace-stage: ## Scaffold a workspace pointed at the staging stack (api.dlthub.net)
 	$(MAKE) workspace-env API_BASE_URL=https://api.dlthub.net
 
-workspace-dev: ## Scaffold a workspace pointed at the dev stack (api.dlthub.dev) with an editable dlthub-client matching the dev API
-	$(MAKE) workspace-env API_BASE_URL=https://api.dlthub.dev DLTHUB_CLIENT_SOURCE="$(or $(DLTHUB_CLIENT_SOURCE),$(CURDIR)/../runtime/clients/cli)"
+workspace-dev: ## Scaffold a workspace pointed at the dev stack (api.dlthub.dev) with the released dlthub-client
+	$(MAKE) workspace-env API_BASE_URL=https://api.dlthub.dev
 
 workspace-here: dev ## Init in place: make empty ./$(WORKSPACE_HERE_DIR), cd in, run the local CLI with no positional (pass ARGS="--yes --skip-uv-sync")
 	@case "$(WORKSPACE_HERE_DIR)" in *..*|"") echo "invalid WORKSPACE_HERE_DIR: $(WORKSPACE_HERE_DIR)"; exit 1;; esac
