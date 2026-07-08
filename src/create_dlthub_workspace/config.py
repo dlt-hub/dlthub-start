@@ -60,7 +60,7 @@ WORKBENCH_REPO = f"https://github.com/{GITHUB_ORG}/{WORKBENCH_REPO_NAME}.git"
 # To bump: pick a new SHA (the workbench repo has no tags today), update the
 # constant below, run `make generate-ai`, commit the resulting scaffold diff
 # alongside this change.
-WORKBENCH_REF: str | None = "f290a9b3eab9db7ebb7b6e1e56d75856674488e7"
+WORKBENCH_REF: str | None = "e82e1029ca56512631d4e7133f5d3b7186f54965"
 
 
 @dataclass(frozen=True)
