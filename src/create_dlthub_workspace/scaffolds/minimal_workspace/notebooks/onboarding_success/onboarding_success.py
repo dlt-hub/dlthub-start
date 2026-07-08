@@ -40,7 +40,7 @@ def _(Path, mo):
         "box-shadow": "var(--dlt-shadow)",
         "box-sizing": "border-box",
     }
-    WIDE_COLUMN_STYLE = {
+    COLUMN_STYLE = {
         "max-width": "1120px",
         "margin": "0 auto",
         "padding": "44px 24px 72px",
@@ -56,7 +56,7 @@ def _(Path, mo):
         )
 
     shell_css
-    return CARD_STYLE, WIDE_COLUMN_STYLE, page_header
+    return CARD_STYLE, COLUMN_STYLE, page_header
 
 
 @app.cell
@@ -103,8 +103,8 @@ def _(da, get_data, mo, schema_overview):
 @app.cell
 def _(
     CARD_STYLE,
+    COLUMN_STYLE,
     ScrollCue,
-    WIDE_COLUMN_STYLE,
     da,
     html,
     mo,
@@ -232,7 +232,7 @@ def _(
             )
             _content.append(mo.ui.anywidget(ScrollCue()))
 
-    mo.vstack(_content, gap=1.25).style(WIDE_COLUMN_STYLE)
+    mo.vstack(_content, gap=1.25).style(COLUMN_STYLE)
     return
 
 @app.cell

@@ -4,8 +4,6 @@
    client's design tokens (runtime/clients/web globals.css). */
 :root {
   /* dltHub brand */
-  --dlt-aqua: oklch(0.7 0.1 215);            /* #59c1d5 */
-  --dlt-lime: oklch(0.81 0.18 115);          /* #c6d300 */
   --dlt-green: oklch(0.65 0.15 135);         /* action / "run" */
   --dlt-dark-purple: oklch(0.16 0.06 285);   /* #191937 */
   --dlt-medium-purple: oklch(0.28 0.09 285);

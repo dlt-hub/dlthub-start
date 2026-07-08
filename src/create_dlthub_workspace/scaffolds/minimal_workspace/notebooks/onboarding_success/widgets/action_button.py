@@ -4,8 +4,8 @@ Replaces marimo's default buttons (which can't be themed - shadow DOM) so the
 query controls match the rest of the design. Each click increments `clicks`,
 which marimo treats as a reactive value.
 
-With `route` set, a click also posts `{type: "dlthub:navigate", route}` to the
-embedding dltHub app, which validates the route against its allowlist and
+With `route` set, a click instead posts `{type: "dlthub:navigate", route}` to
+the embedding dltHub app, which validates the route against its allowlist and
 navigates for us — the iframe sandbox blocks the notebook from navigating
 anywhere itself. No-op when nothing is listening (standalone marimo).
 """
@@ -35,10 +35,14 @@ function render({ model, el }) {
   btn.innerHTML = ic + "<span>" + (model.get("label") || "") + "</span>";
   btn.addEventListener("click", () => {
     const route = model.get("route");
-    if (route && window.parent !== window) {
+    if (route) {
       // "*" is safe: the message carries no data, only a route name the
-      // parent checks against its own allowlist.
-      window.parent.postMessage({ type: "dlthub:navigate", route: route }, "*");
+      // parent checks against its own allowlist. No clicks sync — nothing
+      // reads it, and the trait change would re-run dependent cells.
+      if (window.parent !== window) {
+        window.parent.postMessage({ type: "dlthub:navigate", route: route }, "*");
+      }
+      return;
     }
     model.set("clicks", (model.get("clicks") || 0) + 1);
     model.save_changes();

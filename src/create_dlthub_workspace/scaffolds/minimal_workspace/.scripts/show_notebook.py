@@ -35,7 +35,7 @@ def _app_base(cfg: dict) -> str:
         host = api.hostname[4:]
         if not host.endswith(".test"):
             host = f"app.{host}"
-        return f"{api.scheme or 'https'}://{host}"
+        return f"{api.scheme}://{host}"
     return "https://app.dlthub.com"
 
 

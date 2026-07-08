@@ -101,14 +101,14 @@ class ShowNotebookUrlTests(unittest.TestCase):
                 code, out, _, _ = _run(
                     ws / ".scripts" / "show_notebook.py", ["show_notebook.py", "jobs.onboarding_success"]
                 )
-            self.assertEqual(code, 0)
-            self.assertIn(f"{app_base}/w/ws-123/", out)
+                self.assertEqual(code, 0)
+                self.assertIn(f"{app_base}/w/ws-123/", out)
 
     def test_app_url_override_beats_pinned_api_base_url(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             config = self.CONFIG + 'api_base_url = "https://api.dlthub.dev"\n'
             ws = _workspace_with_config(Path(d), config)
-            code, out, _, browser = _run(
+            code, out, _, _ = _run(
                 ws / ".scripts" / "show_notebook.py",
                 ["show_notebook.py", "jobs.onboarding_success"],
                 app_url="https://dlthub.test/",
