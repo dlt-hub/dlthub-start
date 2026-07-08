@@ -3,6 +3,11 @@
 Replaces marimo's default buttons (which can't be themed - shadow DOM) so the
 query controls match the rest of the design. Each click increments `clicks`,
 which marimo treats as a reactive value.
+
+With `route` set, a click instead posts `{type: "dlthub:navigate", route}` to
+the embedding dltHub app, which validates the route against its allowlist and
+navigates for us — the iframe sandbox blocks the notebook from navigating
+anywhere itself. No-op when nothing is listening (standalone marimo).
 """
 
 from __future__ import annotations
@@ -29,6 +34,16 @@ function render({ model, el }) {
   const ic = ICONS[model.get("icon")] || "";
   btn.innerHTML = ic + "<span>" + (model.get("label") || "") + "</span>";
   btn.addEventListener("click", () => {
+    const route = model.get("route");
+    if (route) {
+      // "*" is safe: the message carries no data, only a route name the
+      // parent checks against its own allowlist. No clicks sync — nothing
+      // reads it, and the trait change would re-run dependent cells.
+      if (window.parent !== window) {
+        window.parent.postMessage({ type: "dlthub:navigate", route: route }, "*");
+      }
+      return;
+    }
     model.set("clicks", (model.get("clicks") || 0) + 1);
     model.save_changes();
   });
@@ -76,4 +91,5 @@ class ActionButton(anywidget.AnyWidget):
     variant = traitlets.Unicode("secondary").tag(sync=True)
     icon = traitlets.Unicode("").tag(sync=True)
     size = traitlets.Unicode("md").tag(sync=True)
+    route = traitlets.Unicode("").tag(sync=True)
     clicks = traitlets.Int(0).tag(sync=True)

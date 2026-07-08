@@ -8,14 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
-- Setup failures now print the full error in red, and the agent hand-off prompt includes the error text so the agent can diagnose it directly.
-- Error output with bracket tokens (e.g. `[notice]`) is no longer swallowed by rich markup.
+- Setup failures print the full error in red and include it in the agent hand-off prompt, so the agent can diagnose it directly.
+- Connecting the playground workspace no longer fails with a confusing "already exists" error; setup connects to it directly.
 
 ### Changed
-- The launch-plan preview shows an `<error shown above>` placeholder instead of repeating the error; wrapped lines keep their indentation; non-interactive runs no longer hard-wrap the hand-off prompt.
-- The hand-off prompt prints as plain flush-left text instead of inside a panel, so it can be selected and copied manually without grabbing box borders.
-- The scaffold's `.scripts/show_notebook.py` opens the notebook with `?hide_header=true` for a cleaner view.
-- Refreshed the bundled minimal workspace `uv.lock` (`dlthub-client` 0.28.1, `marimo` 0.23.13, `pandas` 3.0.3 — 3.0.4 was yanked for datetime segfaults) and updated the notebook session snapshot's pinned marimo version.
+- The hand-off prompt prints as plain text (no panel), so it can be copied manually.
+- The onboarding notebook is a single page; its "Next step" button navigates to the organization's setup page on dltHub.
+- The dataset viewer now hides the notebook header, and opens on whichever stack (local or hosted) you're connected to instead of always pointing to production.
+- Refreshed the bundled workspace `uv.lock` (`dlthub-client` 0.28.1, `marimo` 0.23.13; `pandas` 3.0.3 — 3.0.4 was yanked).
 
 ## [0.10.1] - 2026-07-01
 

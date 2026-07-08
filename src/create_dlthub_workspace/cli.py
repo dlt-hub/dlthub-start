@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import re
 import shutil
 import subprocess
 import sys
@@ -43,7 +42,7 @@ from .scaffold import (
     validate_agent,
     validate_scaffold_name,
 )
-from .uv import capture_uv_command, execute_uv_install, find_uv, run_uv_command, run_uv_sync
+from .uv import execute_uv_install, find_uv, run_uv_command, run_uv_sync
 
 
 def _ensure_utf8_io_on_windows() -> None:
@@ -325,55 +324,13 @@ def _login_and_connect_playground(uv_executable: str, project_dir: Path, *, verb
     """Log in and bind the playground workspace, the setup the entry skill assumes is done."""
     with substep(strings.MSG_CONNECTING_DLTHUB, strings.MSG_CONNECTED_DLTHUB, verbose=verbose):
         run_uv_command(uv_executable, project_dir, ["run", "dlthub", "login"], verbose=verbose)
-        # connect --create errors on an existing workspace, so pass it only when absent.
-        connect_args = ["run", "dlthub", "workspace", "connect", PLAYGROUND_WORKSPACE]
-        if not _playground_exists(uv_executable, project_dir):
-            connect_args.append("--create")
-        run_uv_command(uv_executable, project_dir, connect_args, verbose=verbose)
-
-
-def _workspace_in_list(list_output: str, name: str) -> bool:
-    """True if ``name`` appears in the Name column of `dlthub workspace list`.
-
-    The output is a space-padded table; workspace names can contain single
-    spaces (e.g. "My Workspace"), so columns are split on runs of 2+ spaces and
-    the first field is the name. The header row (before the dashed separator)
-    and the separator itself are skipped, so a workspace literally named like a
-    column header can't false-match.
-    """
-    seen_separator = False
-    for line in list_output.splitlines():
-        stripped = line.strip()
-        if not stripped:
-            continue
-        if set(stripped) <= {"-", " "}:
-            seen_separator = True
-            continue
-        if not seen_separator:
-            continue  # header row(s) above the separator
-        first_column = re.split(r"\s{2,}", stripped)[0]
-        if first_column == name:
-            return True
-    return False
-
-
-def _playground_exists(uv_executable: str, project_dir: Path) -> bool:
-    """Report whether the playground workspace already exists for the user.
-
-    Lists remote workspaces with --non-interactive so an unauthenticated user
-    fails fast (no hanging prompt) instead of blocking. On any failure we report
-    False, so the caller falls back to `connect --create` — and that connect
-    step then triggers the interactive login.
-    """
-    try:
-        output = capture_uv_command(
+        # The account always has a playground workspace, so connect without --create.
+        run_uv_command(
             uv_executable,
             project_dir,
-            ["run", "dlthub", "--non-interactive", "workspace", "list"],
+            ["run", "dlthub", "workspace", "connect", PLAYGROUND_WORKSPACE],
+            verbose=verbose,
         )
-    except UvError:
-        return False
-    return _workspace_in_list(output, PLAYGROUND_WORKSPACE)
 
 
 if __name__ == "__main__":

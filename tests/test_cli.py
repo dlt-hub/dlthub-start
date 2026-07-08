@@ -11,7 +11,7 @@ from typing import Iterator
 from unittest.mock import MagicMock, patch
 
 from create_dlthub_workspace import strings
-from create_dlthub_workspace.cli import _entry_skill_path, _launch_agent, _workspace_in_list, build_parser, main, run
+from create_dlthub_workspace.cli import _entry_skill_path, _launch_agent, build_parser, main, run
 from create_dlthub_workspace.config import PLAYGROUND_WORKSPACE, RECOMMENDED
 from create_dlthub_workspace.errors import UvError, WorkspaceDirectoryNotEmptyError, WorkspaceError
 from create_dlthub_workspace.scaffold import TargetResolution
@@ -141,7 +141,6 @@ _STEP_TARGETS = (
     "execute_uv_install",
     "run_uv_sync",
     "run_uv_command",
-    "capture_uv_command",
     "copy_to_clipboard",
     "_agent_launchable",
     "_launch_agent",
@@ -169,7 +168,6 @@ class RunFlowTests(unittest.TestCase):
         self.m["copy_to_clipboard"].return_value = True
         self.m["_agent_launchable"].return_value = True
         self.m["_launch_agent"].return_value = False
-        self.m["capture_uv_command"].return_value = "Name\n----\n"
         self.m["resolve_workspace_target"].return_value = TargetResolution(Path("/tmp/test_workspace"), None)
 
     def _run(self, **overrides: object) -> None:
@@ -312,9 +310,7 @@ class RunFlowTests(unittest.TestCase):
         self.assertTrue(kwargs["needs_deps"])
         self.assertFalse(kwargs.get("needs_uv_install", False))
 
-    def test_login_connect_creates_playground_when_absent(self) -> None:
-        self.m["capture_uv_command"].return_value = "Name\n----\nMy Workspace\n"
-
+    def test_login_then_connects_playground(self) -> None:
         self._run()
 
         run_uv_command = self.m["run_uv_command"]
@@ -322,20 +318,11 @@ class RunFlowTests(unittest.TestCase):
         login_args = run_uv_command.call_args_list[0].args[2]
         connect_args = run_uv_command.call_args_list[1].args[2]
         self.assertEqual(login_args, ["run", "dlthub", "login"])
-        self.assertEqual(connect_args, ["run", "dlthub", "workspace", "connect", PLAYGROUND_WORKSPACE, "--create"])
+        # The account always has a playground workspace, so we connect without --create.
+        self.assertEqual(connect_args, ["run", "dlthub", "workspace", "connect", PLAYGROUND_WORKSPACE])
         # Login and connect run quietly (output surfaces only on error); nothing streams.
         self.assertFalse(any(c.kwargs["verbose"] for c in run_uv_command.call_args_list))
         self.assertFalse(any(c.kwargs.get("stream", False) for c in run_uv_command.call_args_list))
-
-    def test_login_connect_skips_create_when_playground_exists(self) -> None:
-        self.m[
-            "capture_uv_command"
-        ].return_value = f"Name        Organization\n----------  ------------\n{PLAYGROUND_WORKSPACE}  Personal\n"
-
-        self._run()
-
-        connect_args = self.m["run_uv_command"].call_args_list[1].args[2]
-        self.assertEqual(connect_args, ["run", "dlthub", "workspace", "connect", PLAYGROUND_WORKSPACE])
 
     @patch("create_dlthub_workspace.cli.console")
     def test_relocation_notice_printed_only_when_relocated(self, console: MagicMock) -> None:
@@ -368,7 +355,6 @@ class RunNoticeTests(unittest.TestCase):
             patch("create_dlthub_workspace.cli.find_uv", return_value="/usr/local/bin/uv"),
             patch("create_dlthub_workspace.cli.run_uv_sync"),
             patch("create_dlthub_workspace.cli.run_uv_command"),
-            patch("create_dlthub_workspace.cli.capture_uv_command", return_value="Name\n----\n"),
             patch("create_dlthub_workspace.cli.copy_to_clipboard", return_value=False),
             patch("create_dlthub_workspace.cli.print_created_tree"),
             patch("create_dlthub_workspace.cli.confirm", return_value=False),
@@ -423,34 +409,6 @@ class LaunchAgentTests(unittest.TestCase):
     def test_returns_false_when_spawn_fails(self, _which: MagicMock, _run: MagicMock) -> None:
         with _silenced():
             self.assertFalse(_launch_agent(Path("/tmp/ws"), "claude", prompt="x"))
-
-
-class WorkspaceInListTests(unittest.TestCase):
-    """Parsing of `dlthub workspace list` output (space-padded table, Name first)."""
-
-    # Mirrors the real CLI output: header, separator, then space-padded rows.
-    SAMPLE = (
-        "Name                 Organization         ID                                    Role\n"
-        "-------------------  -------------------  ------------------------------------  ------\n"
-        "My Workspace         Personal Workspaces  927a586a-9d98-40ae-a70d-46b02ee19d80  owner\n"
-        "playground           Personal Workspaces  ebe84413-790a-41c1-9947-37ce70a491d9  owner\n"
-    )
-
-    def test_detects_existing_workspace(self) -> None:
-        self.assertTrue(_workspace_in_list(self.SAMPLE, "playground"))
-
-    def test_absent_workspace_returns_false(self) -> None:
-        self.assertFalse(_workspace_in_list(self.SAMPLE, "Sandbox"))
-
-    def test_matches_name_with_internal_spaces(self) -> None:
-        # "My Workspace" has a single internal space; columns split on 2+ spaces.
-        self.assertTrue(_workspace_in_list(self.SAMPLE, "My Workspace"))
-
-    def test_header_and_separator_rows_are_ignored(self) -> None:
-        self.assertFalse(_workspace_in_list(self.SAMPLE, "Name"))
-
-    def test_empty_output_returns_false(self) -> None:
-        self.assertFalse(_workspace_in_list("", "Playground"))
 
 
 if __name__ == "__main__":

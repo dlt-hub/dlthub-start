@@ -4,8 +4,6 @@
    client's design tokens (runtime/clients/web globals.css). */
 :root {
   /* dltHub brand */
-  --dlt-aqua: oklch(0.7 0.1 215);            /* #59c1d5 */
-  --dlt-lime: oklch(0.81 0.18 115);          /* #c6d300 */
   --dlt-green: oklch(0.65 0.15 135);         /* action / "run" */
   --dlt-dark-purple: oklch(0.16 0.06 285);   /* #191937 */
   --dlt-medium-purple: oklch(0.28 0.09 285);
@@ -36,16 +34,6 @@
 #App { padding-left: 0; padding-top: 0; background: var(--dlt-bg); box-sizing: border-box; }
 #App .marimo-cell { background: transparent !important; border-radius: 0 !important; box-shadow: none !important; margin: 0 !important; }
 
-/* ---- Page dots (3-step wizard progress) ---- */
-.page-dots { display: flex; justify-content: center; gap: 6px; margin: 0 0 12px; }
-.page-dot {
-  height: 6px; border-radius: 999px;
-  background: color-mix(in oklch, var(--dlt-text) 12%, transparent);
-  transition: width 0.2s ease, background 0.2s ease;
-}
-.page-dot.idle { width: 6px; }
-.page-dot.active { width: 18px; background: var(--dlt-accent); }
-
 /* ---- Page header (centered title + subtitle) ---- */
 .page-head { text-align: center; margin: 0; }
 .page-title {
@@ -59,12 +47,6 @@
   font-size: 18px; font-weight: 400; line-height: 1.55;
   color: var(--dlt-muted); margin: 14px auto 0; max-width: 560px;
 }
-.page-trial {
-  font-family: var(--dlt-font);
-  font-size: 16px; font-weight: 400; color: var(--dlt-muted);
-  text-align: center; margin: 0;
-}
-
 /* ---- Results (rendered inside the query card once a query runs) ---- */
 .dlt-section-label {
   font-family: var(--dlt-font);
@@ -99,7 +81,7 @@
   .run-arrow { animation: none; }
 }
 
-/* ---- loading skeleton (page 2, while the playground read resolves) ---- */
+/* ---- loading skeleton (while the playground read resolves) ---- */
 .dlt-skeleton {
   display: flex; gap: 16px; align-items: stretch; flex-wrap: wrap;
   animation: fade-in .25s ease;
@@ -159,60 +141,6 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .dlt-scroll-cue.show { animation: none; }
-}
-
-/* ---- copy-for-agent prompt box (page 3) ---- */
-.pb-eyebrow {
-  font-family: var(--dlt-font);
-  font-size: 16px; font-weight: 600; color: var(--dlt-text);
-  text-align: left; margin: 4px 0 10px;
-}
-.pbo-a {
-  --agb-fill: var(--dlt-card);
-  display: flex; align-items: center; justify-content: space-between; gap: 16px;
-  border-radius: var(--dlt-radius); padding: 14px 16px;
-}
-.pbo-a .pb-text {
-  flex: 1; min-width: 0; font-size: 16px; line-height: 1.55;
-  color: var(--dlt-text); text-align: left;
-  font-family: var(--dlt-font);
-}
-.dlt-prompt-copy {
-  flex: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  background: var(--dlt-accent); border: 1px solid var(--dlt-accent); border-radius: 6px;
-  padding: 12px 24px; cursor: pointer; color: var(--dlt-accent-fg);
-  font: 600 16px/1 var(--dlt-font); transition: background .12s ease, border-color .12s ease;
-}
-.dlt-prompt-copy:hover { background: color-mix(in oklch, var(--dlt-accent) 86%, black); border-color: color-mix(in oklch, var(--dlt-accent) 86%, black); }
-.dlt-prompt-copy svg { width: 18px; height: 18px; }
-.dlt-prompt-copy svg path[stroke="none"] { fill: var(--dlt-accent-fg); }
-.dlt-prompt-copy.copied { background: color-mix(in oklch, var(--dlt-accent) 86%, black); border-color: color-mix(in oklch, var(--dlt-accent) 86%, black); }
-
-/* Animated "AI" gradient border — brand conic gradient (purple→aqua→lime) drawn
-   in the border-box, with the fill in the padding-box. Override --agb-fill to
-   tint the inner surface. Mirrors the web client's signature onboarding effect. */
-@property --gradient-border-angle {
-  syntax: "<angle>";
-  inherits: false;
-  initial-value: 0deg;
-}
-@keyframes gradient-border-rotate {
-  to { --gradient-border-angle: 360deg; }
-}
-.animated-gradient-border {
-  --agb-fill: var(--dlt-card);
-  border: 2px solid transparent;
-  background:
-    linear-gradient(var(--agb-fill), var(--agb-fill)) padding-box,
-    conic-gradient(
-      from var(--gradient-border-angle),
-      var(--dlt-light-purple), var(--dlt-aqua), var(--dlt-lime),
-      var(--dlt-aqua), var(--dlt-light-purple)
-    ) border-box;
-  animation: gradient-border-rotate 3s linear infinite;
-}
-@media (prefers-reduced-motion: reduce) {
-  .animated-gradient-border { animation: none; }
 }
 
 /* ---- Results table ---- */
