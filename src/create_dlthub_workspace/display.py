@@ -80,8 +80,8 @@ def print_error(headline: str, message: str) -> None:
 
 
 def print_verbatim(text: str) -> None:
-    """Print ``text`` exactly: no markup interpretation, no hard wrapping."""
-    console.print(text, markup=False, soft_wrap=True)
+    """Print ``text`` exactly: no markup interpretation, no highlighting, no hard wrapping."""
+    console.print(text, markup=False, highlight=False, soft_wrap=True)
 
 
 @contextmanager
