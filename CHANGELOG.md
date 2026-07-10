@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
-- The agent hand-off prompt in non-interactive mode now prints without Rich highlighting, so it can be copied exactly as-is.
+- The setup-error hand-off prompt now prints as plain, unformatted text so it can be copied exactly as shown.
 
 ## [0.10.2] - 2026-07-08
 
