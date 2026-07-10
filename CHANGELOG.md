@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- The setup-error hand-off prompt now prints as plain, unformatted text so it can be copied exactly as shown.
+
+### Changed
+- Refreshed the bundled workspace `uv.lock` (`dlt` 1.28.2, `pyarrow` 25.0.0).
+
 ## [0.10.2] - 2026-07-08
 
 ### Fixed
