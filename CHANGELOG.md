@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Bumped the bundled workspace's `marimo` 0.23.13 → 0.23.14, moving the onboarding notebook's session snapshot `marimo_version` in lockstep so the pre-built cell outputs still replay on deploy (a version mismatch would silently fall back to a live kernel run). The session-cache format is unchanged (`version: "1"`).
+
 ## [0.10.3] - 2026-07-10
 
 ### Fixed
