@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- Bumped the bundled workspace's `marimo` 0.23.13 → 0.23.14, moving the onboarding notebook's session snapshot `marimo_version` in lockstep so the pre-built cell outputs still replay on deploy (a version mismatch would silently fall back to a live kernel run). The session-cache format is unchanged (`version: "1"`).
 - Refreshed the bundled workspace `uv.lock` to the latest within-constraint versions (notably `dlt` 1.28.2 → 1.29.0, `dlthub` 0.27.0 → 0.29.0, `sqlglot` 28.0 → 30.13); dropped the `python-jose` crypto stack (`python-jose`/`rsa`/`ecdsa`/`pyasn1`) in favor of `joserfc`.
 
 ## [0.10.3] - 2026-07-10
