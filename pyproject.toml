@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "dlthub-start"
-version = "0.10.4"
+version = "0.10.5"
 description = "Create a dltHub workspace and hand off to your coding agent — scaffold, install, log in, and connect a playground, then the agent deploys and runs the sample pipeline."
 readme = "README.md"
 requires-python = ">=3.10"
