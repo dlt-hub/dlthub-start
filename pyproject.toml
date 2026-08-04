@@ -31,7 +31,8 @@ Changelog = "https://github.com/dlt-hub/dlthub-start/releases"
 [project.optional-dependencies]
 dev = [
   "pytest>=8",
-  "ruff>=0.6",
+  # Cap below 0.16: it enables new default lint rules that need a separate migration.
+  "ruff>=0.6,<0.16",
   "mypy>=1.10",
   "dlt>=1.28.0",
 ]
