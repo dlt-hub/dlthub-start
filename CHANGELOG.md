@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.7] - 2026-08-31
+
 ### Changed
 - Bumped the bundled workspace's `marimo` 0.23.16 → 0.24.0, moving the onboarding notebook's session snapshot `marimo_version` in lockstep so the pre-built cell outputs still replay on deploy (a version mismatch would silently fall back to a live kernel run). The session-cache schema is unchanged in 0.24 (`version: "1"`, same `metadata`/`cells` shape).
 - Refreshed the bundled workspace `uv.lock` to the latest within-constraint versions (notably `marimo` 0.23.16 → 0.24.0, `dlthub-client` 0.28.2 → 0.28.3, `authlib` 1.7.2 → 1.8.0, `cyclopts` 4.22.5 → 4.23.3, `ipython` 9.16.1 → 9.17.0, `wrapt` 2.3.0 → 2.4.0), plus transitive updates. `dlt` and `dlthub` are unchanged.
