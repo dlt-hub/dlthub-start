@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "dlthub-start"
-version = "0.10.4"
+version = "0.10.7"
 description = "Create a dltHub workspace and hand off to your coding agent — scaffold, install, log in, and connect a playground, then the agent deploys and runs the sample pipeline."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -31,7 +31,8 @@ Changelog = "https://github.com/dlt-hub/dlthub-start/releases"
 [project.optional-dependencies]
 dev = [
   "pytest>=8",
-  "ruff>=0.6",
+  # Cap below 0.16: it enables new default lint rules that need a separate migration.
+  "ruff>=0.6,<0.16",
   "mypy>=1.10",
   "dlt>=1.28.0",
 ]

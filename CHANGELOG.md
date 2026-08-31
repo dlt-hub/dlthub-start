@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.7] - 2026-08-31
+
+### Changed
+- Bumped the bundled workspace's `marimo` 0.23.16 → 0.24.0, moving the onboarding notebook's session snapshot `marimo_version` in lockstep so the pre-built cell outputs still replay on deploy (a version mismatch would silently fall back to a live kernel run). The session-cache schema is unchanged in 0.24 (`version: "1"`, same `metadata`/`cells` shape).
+- Refreshed the bundled workspace `uv.lock` to the latest within-constraint versions (notably `marimo` 0.23.16 → 0.24.0, `dlthub-client` 0.28.2 → 0.28.3, `authlib` 1.7.2 → 1.8.0, `cyclopts` 4.22.5 → 4.23.3, `ipython` 9.16.1 → 9.17.0, `wrapt` 2.3.0 → 2.4.0), plus transitive updates. `dlt` and `dlthub` are unchanged.
+- Refreshed the root `uv.lock` (notably `posthog` 7.39.1 → 7.45.1, `click` 8.4.2 → 8.5.0, `gitpython` 3.1.59 → 3.1.61, `pygments` 2.20.0 → 2.21.0).
+
+## [0.10.6] - 2026-08-18
+
+### Changed
+- Refreshed the bundled workspace `uv.lock` to the latest within-constraint versions (notably `dlt` 1.29.1 → 1.30.0, `dlthub` 0.29.0 → 0.30.0, `dlthub-client` 0.28.1 → 0.28.2, `starlette` 1.3.1 → 1.6.0, `numpy` 2.5.1 → 2.5.2), plus transitive updates.
+
+## [0.10.5] - 2026-08-04
+
+### Changed
+- Bumped the bundled workspace's `marimo` 0.23.14 → 0.23.16, moving the onboarding notebook's session snapshot `marimo_version` in lockstep so the pre-built cell outputs still replay on deploy (a version mismatch would silently fall back to a live kernel run). The session-cache format is unchanged (`version: "1"`).
+- Refreshed the bundled workspace `uv.lock` to the latest within-constraint versions (notably `dlt` 1.29.0 → 1.29.1, `pandas` 3.0.3 → 3.0.5, `s3fs` 2026.6.0 → 2026.7.0, `aiobotocore` 3.8.0 → 3.9.0, `cryptography` 49.0 → 50.0), plus transitive updates.
+
 ## [0.10.4] - 2026-07-22
 
 ### Changed
