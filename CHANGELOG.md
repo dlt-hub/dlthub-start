@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.8] - 2026-09-15
+
 ### Changed
 - Bumped the bundled workspace's `dlthub-client` 0.28.3 → 0.28.4, pulling in its new `regex` transitive.
 
