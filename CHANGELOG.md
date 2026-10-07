@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.9] - 2026-10-07
+
 ### Changed
 - Bumped the bundled workspace's `marimo` 0.24.0 → 0.25.1, moving the onboarding notebook's session snapshot `marimo_version` in lockstep.
 - Refreshed the bundled workspace `uv.lock` (notably `dlt` 1.30.0 → 1.31.0, `dlthub-client` 0.28.4 → 0.28.7, `fastmcp` 3.4.7 → 4.0.11, `mcp` 1.29.1 → 2.3.0), plus transitive updates.
