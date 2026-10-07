@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Bumped the bundled workspace's `marimo` 0.24.0 → 0.25.1, moving the onboarding notebook's session snapshot `marimo_version` in lockstep.
+- Refreshed the bundled workspace `uv.lock` (notably `dlt` 1.30.0 → 1.31.0, `dlthub-client` 0.28.4 → 0.28.7, `fastmcp` 3.4.7 → 4.0.11, `mcp` 1.29.1 → 2.3.0), plus transitive updates.
+- Refreshed the root `uv.lock` (notably `dlt` 1.31.0, `posthog` 7.64.1).
+- Bumped the bundled AI workbench (`WORKBENCH_REF` → `c3f4f78`): the `dlthub-router` skill now routes failed deployed jobs to `debug-deployment` or the `job-inspector` agent.
+
 ## [0.10.8] - 2026-09-15
 
 ### Changed

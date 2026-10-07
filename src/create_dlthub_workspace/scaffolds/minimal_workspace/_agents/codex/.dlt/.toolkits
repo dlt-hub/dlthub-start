@@ -11,17 +11,17 @@ init:
   agent: codex
   files:
     .agents/skills/dlthub-router/SKILL.md:
-      sha3_256: 5d383df737cd33c30a5418af43f5b470d5bcc51aa25b9e346b8f4c3698a6e27f
+      sha3_256: e888d893f26e821c327071507422d0699d1bb5b5cbef2264c0f7a57363b97949
     .agents/skills/improve-skills/SKILL.md:
       sha3_256: c52b222d82d101eaacbbf19d271d3f24b20d8e2bc70d49919d56144d448cd5c4
     .agents/skills/setup-secrets/SKILL.md:
-      sha3_256: 83fb6e1af003c065ce3bb26042f0e2de24a22df14353db23ad4f6192d90e7785
+      sha3_256: 3ffb309fa54cac4c2283cf7690fb51cdee9eebc0f53c5e9a8004f0ebac8fe67d
     .agents/skills/setup-secrets/cli-reference.md:
       sha3_256: b3aed4466ecb84770e11176b5b07b109093c72808c44b73d02c5cd789af86c97
     .codexignore:
       sha3_256: 1aa4dc9286dd219dcb55399f388c5ee1f940ab5e399a42b644d488cba57a9ec0
     .agents/skills/init-dlthub-workspace/SKILL.md:
-      sha3_256: 0641e3c3fc78e924050bf6dda703fc2072d1f52f73c500f66bdc964b0df96a3c
+      sha3_256: 0385f275bc649db403850f6c9cda16afecffe1fd3e148b2f0fa5f6f90c14136f
   mcp_servers:
   - dlt-workspace-mcp
   name: init
@@ -43,4 +43,4 @@ one-shot:
     .agents/skills/deploy-run-sample-pipeline/SKILL.md:
       sha3_256: 91eb1893d0eff52a11af80459d54663428254a9ad17bda38940154d2600a056e
     .agents/skills/one-shot-workflow/SKILL.md:
-      sha3_256: 0f985a1242bd241020f1ff4b8e56ccc157004314f164e483186b238bd0860a9d
+      sha3_256: 8e3f7b72d688791fbf12d619cf745cf93f6a1f6fece5a78e33415c7b5a862ed3
