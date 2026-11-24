@@ -1,0 +1,263 @@
+# Installed by the engineering agent loop. Edit it in dlt-hub/engineering-agent-loop, not
+# here. The two halves of the release recipe, neither of which calls a model. `open` moves
+# the version and opens the release pull request; `tag` follows it into the default branch
+# and creates the GitHub release from the changelog section `open` wrote.
+#
+# Uploading to PyPI stays a person's act: `make publish` reads a token from an interactive
+# prompt.
+name: release-dlthub-start
+
+on:
+  workflow_dispatch:
+    inputs:
+      level:
+        description: Which part of the version to bump
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+  push:
+    # a release is tagged where it merges, and nowhere else
+    branches: [devel]
+    # the version lives in this file, so a release cannot merge without moving it, and every
+    # other merge here starts no run at all
+    paths: [pyproject.toml]
+
+permissions:
+  contents: read
+
+# queued rather than cancelled: a run that has pushed a branch must finish opening its
+# pull request
+concurrency:
+  group: release-dlthub-start
+  cancel-in-progress: false
+
+jobs:
+  open:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mint a token for the loop's App
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.AGENT_LOOP_PUBLIC_APP_CLIENT_ID }}
+          private-key: ${{ secrets.AGENT_LOOP_PUBLIC_APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Is a release already open
+        id: decide
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          open_releases=$(gh pr list --state open --limit 100 --json headRefName \
+            --jq '[.[] | select(.headRefName | startswith("chore/release-v"))] | length')
+          if [ "$open_releases" != "0" ]; then
+            echo "::notice::a release pull request is already open; merge or close it first."
+            echo "go=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # not a refusal: releasing with a bump still open is the dispatcher's choice
+          open_bumps=$(gh pr list --state open --label agent:authored --limit 100 \
+            --json number,headRefName \
+            --jq '[.[] | select(.headRefName | startswith("chore/bump-scaffold-")) | .number] | join(", ")')
+          if [ -n "$open_bumps" ]; then
+            echo "::warning::bump pull request(s) ${open_bumps} are open and their entries are not in this release."
+          fi
+
+          echo "go=true" >> "$GITHUB_OUTPUT"
+
+      # the installer puts `uv` in `~/.local/bin`, which is not on a runner's PATH
+      - name: Install uv
+        if: steps.decide.outputs.go == 'true'
+        run: |
+          set -euo pipefail
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "${HOME}/.local/bin" >> "$GITHUB_PATH"
+
+      # `uv version --bump <level> --no-sync` moves `pyproject.toml` and `uv.lock` together,
+      # which is why `make lock-check` follows
+      - name: Bump the version
+        id: version
+        if: steps.decide.outputs.go == 'true'
+        env:
+          LEVEL: ${{ inputs.level }}
+        run: |
+          set -euo pipefail
+          # no `make dev`: `uv version` and `uv lock --check` read the project rather than
+          # the environment
+          make "version-upgrade-${LEVEL}"
+          version=$(uv version --short)
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "::notice::the version is now ${version}"
+
+      # the heading goes *under* `## [Unreleased]`, so that heading stays and empties and
+      # the bumps' sections drop beneath the new version. An empty `[Unreleased]` is exit 3
+      - name: Cut the changelog
+        id: cut
+        if: steps.decide.outputs.go == 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -uo pipefail
+          # read once, so a run straddling midnight quotes the heading it wrote
+          date=$(date -u +%Y-%m-%d)
+          echo "date=${date}" >> "$GITHUB_OUTPUT"
+          set +e
+          node "${GITHUB_WORKSPACE}/.github/workflows/release-changelog.cjs" \
+            --cut --version "$VERSION" --date "$date" \
+            --changelog CHANGELOG.md > /tmp/release-notes.md
+          code=$?
+          set -e
+          if [ "$code" = "3" ]; then
+            echo "::notice::\`## [Unreleased]\` holds no entries, so there is nothing to release."
+            echo "cut=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          [ "$code" = "0" ] || exit "$code"
+          cat /tmp/release-notes.md
+          echo "cut=true" >> "$GITHUB_OUTPUT"
+
+      # the one thing `uv version` can get wrong. The branch's own CI runs the whole of
+      # `make ci` after the push
+      - name: make lock-check
+        if: steps.cut.outputs.cut == 'true'
+        run: make lock-check
+
+      - name: Open the pull request
+        if: steps.cut.outputs.cut == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_REPO: ${{ github.repository }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+          VERSION: ${{ steps.version.outputs.version }}
+          DATE: ${{ steps.cut.outputs.date }}
+          LEVEL: ${{ inputs.level }}
+          BASE: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          branch="chore/release-v${VERSION}"
+
+          git config user.name  "${APP_SLUG}[bot]"
+          git config user.email "${APP_SLUG}[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add -A
+          git commit -q -m "Release v${VERSION}"
+
+          # written line by line: a heredoc terminator has to be unindented, and an unindented
+          # line inside a `run: |` block ends the block
+          {
+            echo "This releases \`${VERSION}\`. [Run ${GITHUB_RUN_ID}](${run_url}) moved the version and put everything \`## [Unreleased]\` had collected under a heading for it."
+            echo
+            echo "## What changed"
+            echo
+            echo "- \`pyproject.toml\` and \`uv.lock\` carry \`${VERSION}\`."
+            echo "- \`CHANGELOG.md\` gains \`## [${VERSION}] - ${DATE}\`, and \`## [Unreleased]\` stays, empty."
+            echo
+            echo "## How to check it"
+            echo
+            echo "\`make lock-check\` passed before this branch was pushed, and this repository's own CI runs \`make ci\` on it. The entries below were reviewed when the pull requests that wrote them merged. What is new here is the version they land under."
+            echo
+            echo "## Release notes"
+            echo
+            echo "Merging this tags the merge commit \`v${VERSION}\` and creates the GitHub release with the block below as its body. Publishing to PyPI is still \`make publish\`, by hand."
+            echo
+            cat /tmp/release-notes.md
+          } > /tmp/release-pr.md
+
+          # after the body, so a body that could not be built leaves no branch behind
+          git push -q origin "$branch"
+
+          # the tier and the reviewer request are normally the review pass's, and that pass
+          # cannot run here. the logins are a literal, held equal to the profile by a test
+          pr=$(gh pr create --base "$BASE" --head "$branch" \
+            --title "Release v${VERSION}" \
+            --label agent:authored --label risk:low \
+            --reviewer burnash,sh-rp,anuunchin,rudolfix \
+            --body-file /tmp/release-pr.md | sed 's#.*/##')
+          echo "::notice::opened pull request #${pr}"
+
+          # a request naming an account without access here is accepted and requests nobody,
+          # so it is read back. an empty one is a warning: the pull request is already open
+          requested=$(gh pr view "$pr" --json reviewRequests \
+            --jq '[.reviewRequests[] | .login // .slug] | join(", ")')
+          if [ -z "$requested" ]; then
+            echo "::warning::no reviewer is requested on #${pr}. The logins in this workflow may not have access here."
+          else
+            echo "::notice::reviewers requested on #${pr}: ${requested}"
+          fi
+
+  # Keyed on the state of the default branch rather than on which pull request merged: the
+  # version has a changelog heading and no tag exactly when a release has merged and has
+  # not been tagged. Every other push here reads one tag and stops
+  tag:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mint a token for the loop's App
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.AGENT_LOOP_PUBLIC_APP_CLIENT_ID }}
+          private-key: ${{ secrets.AGENT_LOOP_PUBLIC_APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Is this commit a release
+        id: decide
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          # the `version` of the `[project]` table, without a TOML parser
+          version=$(awk '
+            /^\[/ { want = ($0 == "[project]") }
+            want && /^version = / { gsub(/^version = "|"$/, ""); print; exit }
+          ' pyproject.toml)
+          if [ -z "$version" ]; then
+            echo "::error::pyproject.toml states no version."
+            exit 1
+          fi
+
+          if ! grep -q "^## \[${version}\]" CHANGELOG.md; then
+            echo "::notice::the changelog has no \`## [${version}]\` heading, so ${version} is not released yet."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if gh release view "v${version}" >/dev/null 2>&1; then
+            echo "::notice::v${version} is already released."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "release=true" >> "$GITHUB_OUTPUT"
+
+      # `gh release create` creates the tag at `--target` when none exists
+      - name: Tag the merge commit and create the release
+        if: steps.decide.outputs.release == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ steps.decide.outputs.version }}
+        run: |
+          set -euo pipefail
+          node "${GITHUB_WORKSPACE}/.github/workflows/release-changelog.cjs" \
+            --version "$VERSION" --changelog CHANGELOG.md > /tmp/release-notes.md
+          cat /tmp/release-notes.md
+          gh release create "v${VERSION}" \
+            --target "$GITHUB_SHA" \
+            --title "v${VERSION}" \
+            --notes-file /tmp/release-notes.md
+          echo "::notice::released v${VERSION} at ${GITHUB_SHA}. \`make publish\` is still a person's act."
