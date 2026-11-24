@@ -1,33 +1,97 @@
 init:
-  version: 0.1.1
-  description: Shared rules, secrets handling, and workspace MCP for dlthub
+  version: 0.1.4
+  description: Shared rules, secrets handling, background agent authoring and the
+    workspace MCP server used by the other dlthub toolkits. Requires dlt[hub].
   tags:
   - dlthub
   - init
   - rules
   - secrets
   - mcp
+  - agents
   installed_at: '1970-01-01T00:00:00+00:00'
   agent: cursor
   files:
+    .cursor/skills/create-background-agent/SKILL.md:
+      sha3_256: 750584955eee7c849ee5de12447c41bd3abbbf3a786423f843dd789a776420ca
+    .cursor/skills/create-background-agent/agent-md-reference.md:
+      sha3_256: e047072fd5ab2f724cf8361ef98dbe4c967670e03dc3a935eb83b4947e2020a8
+    .cursor/skills/create-background-agent/check_agent.py:
+      sha3_256: d3aea7284fae1ceaacc77a2941cb96e98e2fcf571fa43891f024899e33018188
+    .cursor/skills/create-background-agent/deployment.md:
+      sha3_256: 0e2d81481d8ccbebf075fee5cbac8f79ab6f400ca681a3a6f9ce4e3a5b74e41c
+    .cursor/skills/create-background-agent/summary-format.md:
+      sha3_256: ba8d86e6fa8c08cfeb924387f38bfebf66082b76b073968f7c4dda9b390ce825
     .cursor/skills/dlthub-router/SKILL.md:
-      sha3_256: 7c90ccf8ee116dfa774dc99948a835ef4bda8ab673fdf2eab44ec61c54da13d4
+      sha3_256: ec5ad323438f9a6d2626a759e13e6b0dce88bab7eb8a0fabaf5faf5f8fcf04f8
     .cursor/skills/improve-skills/SKILL.md:
       sha3_256: c52b222d82d101eaacbbf19d271d3f24b20d8e2bc70d49919d56144d448cd5c4
     .cursor/skills/setup-secrets/SKILL.md:
       sha3_256: 3ffb309fa54cac4c2283cf7690fb51cdee9eebc0f53c5e9a8004f0ebac8fe67d
     .cursor/skills/setup-secrets/cli-reference.md:
       sha3_256: b3aed4466ecb84770e11176b5b07b109093c72808c44b73d02c5cd789af86c97
+    .cursor/skills/troubleshoot-pipeline-run/SKILL.md:
+      sha3_256: f87fcec16152d7edb3989eb7219b1d9b877b11da361056cd4e484859393499ae
+    .cursor/skills/troubleshoot-pipeline-run/verified-sources.md:
+      sha3_256: f6473d712b2b75022dd3abd783b8b6902ecaa2621556ce104633b66c3142aafb
     .cursorignore:
       sha3_256: 1aa4dc9286dd219dcb55399f388c5ee1f940ab5e399a42b644d488cba57a9ec0
     .cursor/rules/init-dlthub-workspace.mdc:
-      sha3_256: 5aeb60067d8223e1e94ed9aae9e8e285367b08640c67f06c070d07364febe6ac
+      sha3_256: 790dc241fb333f91dc8bcd71e9adfc7e9bc0cbb17bb429ad8e1b6b11a8cf76f9
   mcp_servers:
   - dlt-workspace-mcp
   name: init
+dlthub-platform:
+  version: 0.3.3
+  description: Prepare and deploy your dlthub workspace and pipelines to the dltHub
+    platform, and debug failed deployments. Requires dlt[hub].
+  tags:
+  - dlthub
+  - deploy
+  - platform
+  dependencies:
+  - init
+  workflow_entry_skill: setup-runtime
+  installed_at: '1970-01-01T00:00:00+00:00'
+  agent: cursor
+  files:
+    .cursor/skills/debug-deployment/SKILL.md:
+      sha3_256: fc21539ebeac097f14f545efc5d00a48d23b9af5a8630c641b6bf772c6003ffc
+    .cursor/skills/debug-deployment/cli-reference.md:
+      sha3_256: 9e0fcffbce6365a394db8ec901888cc6bb93dd9f3a6888cb6927ff7242d9973f
+    .cursor/skills/deploy-workspace/SKILL.md:
+      sha3_256: ec48c3b76619b7ddab19c9281c4b8b83a09521218f13e4d3f122432e2d1f3928
+    .cursor/skills/deploy-workspace/advanced-patterns.md:
+      sha3_256: 91b44fdac47723c1b2c1604e2112adc9ddbd818ec20ea226043e8a48f0f0585a
+    .cursor/skills/deploy-workspace/runtime-settings.md:
+      sha3_256: 67ac6d603a9297a71025577eb551332007515faa9e9fb321c4d8a7f433033edc
+    .cursor/skills/deploy-workspace/scheduling-triggers.md:
+      sha3_256: 2c67e4c1a8012d75f1943d7e874df69d8898219973eb295b42c5c706f7274f8f
+    .cursor/skills/prepare-deployment/SKILL.md:
+      sha3_256: 8b03c6151e8d11ab68f99edd72bfa4d8a7e65772590dfa50363e2e9c11292457
+    .cursor/skills/prepare-deployment/check_destination.py:
+      sha3_256: 5564cfdd432b0a55860226b94b05b88d8023ea2e73fe11dd6210de1fbf8cd6dd
+    .cursor/skills/prepare-deployment/deployment-module.md:
+      sha3_256: 7febda25e999ddd05551036eeff285758fef41c7a25ec7dedd41dfc2f1151d24
+    .cursor/skills/setup-runtime/SKILL.md:
+      sha3_256: ee6888e0cbefde7907599cb0ecd9907ab6a5edd789c6119a406ccf7fc1180ace
+    .cursor/dlthub/agents/dlthub-platform/job-inspector/AGENT.md:
+      sha3_256: 0b339ca7083c6db7b9d7e26883fe903551b1657ea9c943d3feb3ff4ff2d6d320
+    .cursor/dlthub/agents/dlthub-platform/job-inspector/agent.py:
+      sha3_256: 75ce631a678712620a7a95d70590376ebd6fd9453768430a35ae0c1f45af5259
+    .cursor/dlthub/agents/dlthub-platform/job-inspector/links.py:
+      sha3_256: 319af857b399e6057006108d70d3261581e6903f4258f340a43e0065999bee95
+    .cursor/rules/dlthub-platform-job-resources.mdc:
+      sha3_256: 61a2912c3d162738978130ab6ab24b1f7b42b113a000940996ab18d59b5e4119
+    .cursor/rules/dlthub-platform-profiles.mdc:
+      sha3_256: 0e9d24d31da3be0a23a8905e6bc6f2b331a499942709cca4cf63dd5b3be5f254
+    .cursor/rules/dlthub-platform-workflow.mdc:
+      sha3_256: 047dec6b0fbd9b5172959eed8f96bf8b5f4028a3c66b23ebe7155773aecce825
+  name: dlthub-platform
 one-shot:
   version: 0.1.0
-  description: Deploy a GitHub issues pipeline to dltHub Platform in one shot
+  description: Build a minimal GitHub issues pipeline and deploy it to the dltHub
+    platform in one go. Requires dlt[hub].
   tags:
   - dlthub
   - pipeline
@@ -35,7 +99,7 @@ one-shot:
   - data-pipeline
   - python
   dependencies:
-  - init
+  - dlthub-platform
   workflow_entry_skill: deploy-run-sample-pipeline
   installed_at: '1970-01-01T00:00:00+00:00'
   agent: cursor

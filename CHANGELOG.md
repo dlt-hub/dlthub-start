@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Refreshed the bundled minimal workspace `uv.lock` to the latest within-constraint versions (`dlt` 1.31.0 → 1.32.0, `dlthub` 0.30.0 → 0.32.0, `dlthub-client` 0.28.7 → 0.28.8, `marimo` 0.25.1 → 0.25.2, `numpy` 2.5.3 → 2.5.5, `pandas` 3.0.6 → 3.1.1, `pyarrow` 25.0.1 → 26.0.1), plus 69 transitive updates, 1 new transitive and 8 transitive removals.
+- Refreshed the root `uv.lock` to the latest within-constraint versions (`beaupy` 3.12.0 → 4.0.1, `dlt` 1.31.0 → 1.32.0, `mypy` 2.4.0 → 2.4.1, `posthog` 7.64.1 → 8.2.1, `pytest` 9.1.1 → 9.2.0), plus 26 transitive updates and 2 transitive removals.
+- Refreshed the bundled skills to workbench `01e6730`, adding `create-background-agent`, `debug-deployment`, `deploy-workspace`, `prepare-deployment`, `setup-runtime` and `troubleshoot-pipeline-run`.
+- Re-stamped the bundled notebook session snapshot to marimo `0.25.2`.
+
 ## [0.10.9] - 2026-10-07
 
 ### Changed
