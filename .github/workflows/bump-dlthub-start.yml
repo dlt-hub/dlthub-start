@@ -1,0 +1,454 @@
+# Installed by the engineering agent loop. Edit it in dlt-hub/engineering-agent-loop, not
+# here. Refreshes the dependency locks this repository ships after a `dlt`, `dlthub` or
+# `dlthub-client` release and opens a pull request. No model is called.
+#
+# The schedule polls PyPI because a release event is not reliably behind the upload.
+name: bump-dlthub-start
+
+on:
+  schedule:
+    - cron: '41 * * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Refresh the locks even when they already resolve the newest releases
+        type: boolean
+        default: false
+  # nothing sends this today
+  repository_dispatch:
+    types: [dlt-release, dlthub-release, dlthub-client-release]
+
+permissions:
+  contents: read
+
+# queued rather than cancelled: a run that has pushed a branch must finish opening its
+# pull request
+concurrency:
+  group: bump-dlthub-start
+  cancel-in-progress: false
+
+env:
+  SCAFFOLD: src/create_dlthub_workspace/scaffolds/minimal_workspace
+  # relative to the scaffold. The notebook replays its pre-built cell outputs only while
+  # this file's `marimo_version` matches the installed marimo, and nothing reports a
+  # mismatch. `make generate-ai` writes nothing under `notebooks/`, so this is stamped by hand
+  SESSION: notebooks/onboarding_success/__marimo__/session/onboarding_success.py.json
+  # relative to the scaffold. `make update-ai` regenerates one tree per agent target
+  SKILLS: _agents/claude/.claude/skills
+  BRANCH: chore/bump-scaffold-${{ github.run_id }}
+  # everything else in the lock moves as a transitive of these three
+  WATCHED: dlt dlthub dlthub-client
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mint a token for the loop's App
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.AGENT_LOOP_PUBLIC_APP_CLIENT_ID }}
+          private-key: ${{ secrets.AGENT_LOOP_PUBLIC_APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          token: ${{ steps.app-token.outputs.token }}
+          # the changelog entry is written against the last release tag, and a shallow clone
+          # carries no tag to describe
+          fetch-depth: 0
+
+      - name: Is the bundled lock behind a release
+        id: decide
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_REPO: ${{ github.repository }}
+          FORCE: ${{ inputs.force }}
+        run: |
+          set -euo pipefail
+
+          # an open bump stops the next one: the pull request a run left, or the issue a
+          # failed run left
+          open_prs=$(gh pr list --state open --label agent:authored --limit 100 \
+            --json headRefName \
+            --jq '[.[] | select(.headRefName | startswith("chore/bump-scaffold-"))] | length')
+          open_issues=$(gh issue list --state open --label agent:authored --limit 100 \
+            --json number --jq 'length')
+          if [ "$open_prs" != "0" ] || [ "$open_issues" != "0" ]; then
+            echo "::notice::a bump is already open ($open_prs pull request(s), $open_issues issue(s)); nothing to do."
+            echo "bump=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          behind=""
+          for pkg in $WATCHED; do
+            latest=$(curl -fsSL "https://pypi.org/pypi/${pkg}/json" | jq -r '.info.version')
+            # the version line of the package's own table
+            locked=$(awk -v p="$pkg" '
+              /^\[\[package\]\]/ { want=0 }
+              $0 == "name = \"" p "\"" { want=1; next }
+              want && /^version = / { gsub(/^version = "|"$/, ""); print; exit }
+            ' "${SCAFFOLD}/uv.lock")
+            echo "${pkg}: locked ${locked:-none}, PyPI ${latest}"
+            [ "$locked" = "$latest" ] || behind="${behind}${behind:+, }${pkg} ${locked:-none} → ${latest}"
+          done
+
+          if [ -z "$behind" ] && [ "$FORCE" != "true" ]; then
+            echo "::notice::the bundled lock already resolves the latest release of each watched package."
+            echo "bump=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ -n "$behind" ]; then
+            why="A new release on PyPI started this: ${behind}."
+          else
+            why="Nothing newer was on PyPI. Somebody started this run by hand."
+          fi
+
+          echo "bump=true" >> "$GITHUB_OUTPUT"
+          echo "why=${why}" >> "$GITHUB_OUTPUT"
+
+      # the installer puts `uv` in `~/.local/bin`, which is not on a runner's PATH
+      - name: Install uv
+        if: steps.decide.outputs.bump == 'true'
+        run: |
+          set -euo pipefail
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "${HOME}/.local/bin" >> "$GITHUB_PATH"
+
+      # The entry is written against the last release tag rather than the tip, so it states
+      # the whole unreleased delta and replaces what the bump before it wrote. All five
+      # paths or none: two baselines in one entry read as packages arriving and going
+      - name: Keep the state the entry is written against
+        id: base
+        if: steps.decide.outputs.bump == 'true'
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/bump-base /tmp/bump-tag
+          mkdir -p /tmp/bump-base /tmp/bump-tag
+
+          # `_agents/` is copied whole: the entry names the skills under it, and whether an
+          # agent target arrived or went
+          cp uv.lock /tmp/bump-base/root.uv.lock
+          cp "${SCAFFOLD}/uv.lock" /tmp/bump-base/scaffold.uv.lock
+          cp src/create_dlthub_workspace/config.py /tmp/bump-base/config.py
+          cp "${SCAFFOLD}/${SESSION}" /tmp/bump-base/session.json
+          cp -r "${SCAFFOLD}/_agents" /tmp/bump-base/_agents
+          against="this branch's tip"
+
+          tag=$(git describe --tags --abbrev=0 --match 'v[0-9]*' 2>/dev/null || true)
+          if [ -z "$tag" ]; then
+            echo "::warning::no release tag is reachable from this branch."
+          # the directory is tested rather than the command: a pipeline reports `tar`'s
+          # status, and `tar` is content with the empty input a refused pathspec gives it
+          elif git show "${tag}:uv.lock" > /tmp/bump-tag/root.uv.lock \
+            && git show "${tag}:${SCAFFOLD}/uv.lock" > /tmp/bump-tag/scaffold.uv.lock \
+            && git show "${tag}:src/create_dlthub_workspace/config.py" > /tmp/bump-tag/config.py \
+            && git show "${tag}:${SCAFFOLD}/${SESSION}" > /tmp/bump-tag/session.json \
+            && git archive "${tag}:${SCAFFOLD}" _agents | tar -xf - -C /tmp/bump-tag \
+            && [ -d /tmp/bump-tag/_agents ]
+          then
+            # replaced rather than merged into: a skill directory the tip holds and the tag
+            # does not would survive a merge and go unnamed
+            rm -rf /tmp/bump-base
+            mv /tmp/bump-tag /tmp/bump-base
+            against="$tag"
+          else
+            echo "::warning::${tag} does not carry every path the entry is written from."
+          fi
+
+          echo "::notice::the changelog entry is written against ${against}."
+          echo "against=${against}" >> "$GITHUB_OUTPUT"
+
+      # one step, because a step's own name is not readable from a later one and the failure
+      # report has to name the command that failed. The order is fail-fast rather than
+      # `make ci`'s: `test-integration` invokes the real CLI and a `uv sync`
+      - name: Run the bump recipe
+        id: recipe
+        if: steps.decide.outputs.bump == 'true'
+        run: |
+          set -uo pipefail
+          run() {
+            name="$1"; shift
+            echo "::group::$name"
+            if ! "$@" > /tmp/step.log 2>&1; then
+              cat /tmp/step.log
+              echo "::endgroup::"
+              printf '%s\n' "$name" > /tmp/bump-failed-step
+              tail -n 60 /tmp/step.log > /tmp/bump-failed-log
+              echo "::error::$name failed"
+              exit 1
+            fi
+            cat /tmp/step.log
+            echo "::endgroup::"
+          }
+
+          run "make dev" make dev
+          run "make lock-upgrade" make lock-upgrade
+          run "make scaffold-lock-upgrade" make scaffold-lock-upgrade
+          run "make lock-check" make lock-check
+          run "make scaffold-lock-check" make scaffold-lock-check
+          # the one guard with no writer behind it: widening the bundled workspace's own
+          # `pyproject.toml` is a person's call, so this reports and opens the issue
+          run "make scaffold-launcher-deps-check" make scaffold-launcher-deps-check
+          run "make update-ai" make update-ai
+          # no `make check-ai` here, nor any target reading `git status`: this step has just
+          # rewritten the files they compare against the index. `make ci` runs them later
+
+      # A package resolved at two versions installs the older one for whoever the
+      # `resolution-markers` select. Refused rather than reported: the fix is narrowing
+      # `requires-python` in the bundled workspace, which is a person's call
+      - name: Refuse a bundled lock that forked a package
+        if: steps.decide.outputs.bump == 'true'
+        run: |
+          set -euo pipefail
+          printf '%s\n' "checking the bundled lock for a forked package" > /tmp/bump-failed-step
+
+          # `[[package]]` names are the only ones at the start of a line: a dependency is an
+          # inline table inside an array and a wheel carries a url rather than a name
+          forked=$(grep '^name = ' "${SCAFFOLD}/uv.lock" | sort | uniq -d \
+            | sed 's/^name = "//; s/"$//')
+          if [ -z "$forked" ]; then
+            echo "::notice::every package in the bundled lock resolves to one version."
+            rm -f /tmp/bump-failed-step
+            exit 0
+          fi
+
+          {
+            echo "The bundled workspace lock resolves these packages at more than one version:"
+            echo
+            for pkg in $forked; do
+              versions=$(awk -v p="$pkg" '
+                $0 == "name = \"" p "\"" { want=1; next }
+                want && /^version = / { gsub(/^version = "|"$/, ""); print; want=0 }
+              ' "${SCAFFOLD}/uv.lock" | paste -sd, - | sed 's/,/, /g')
+              echo "  ${pkg}: ${versions}"
+            done
+            echo
+            echo "A workspace installs the older one wherever the newer release has dropped a"
+            echo "Python version that is still claimed in requires-python here:"
+            echo
+            echo "  ${SCAFFOLD}/pyproject.toml"
+            echo
+            echo "Narrowing that is the fix, and it is a person's call."
+          } > /tmp/bump-failed-log
+          cat /tmp/bump-failed-log
+          echo "::error::the bundled lock forked $(echo "$forked" | paste -sd, - | sed 's/,/, /g')"
+          exit 1
+
+      # after the lock, which decides the version, and before the commit
+      - name: Stamp the bundled notebook session snapshot
+        if: steps.decide.outputs.bump == 'true'
+        run: |
+          set -euo pipefail
+          printf '%s\n' "stamping the notebook session snapshot" > /tmp/bump-failed-step
+
+          pin=$(awk '
+            /^\[\[package\]\]/ { want=0 }
+            $0 == "name = \"marimo\"" { want=1; next }
+            want && /^version = / { gsub(/^version = "|"$/, ""); print; exit }
+          ' "${SCAFFOLD}/uv.lock")
+          if [ -z "$pin" ]; then
+            echo "::warning::the bundled lock pins no marimo, so the session snapshot is left as it is."
+            rm -f /tmp/bump-failed-step
+            exit 0
+          fi
+
+          # one line, or this is not the file this step was written against
+          count=$(grep -c '"marimo_version":' "${SCAFFOLD}/${SESSION}")
+          if [ "$count" != "1" ]; then
+            echo "::error::the session snapshot states marimo_version ${count} time(s), and this step edits it where it states it once."
+            exit 1
+          fi
+          # not `sed -i`: BSD sed reads the argument after it as a backup suffix, so the
+          # same line run by hand on a Mac edits nothing and reports the file as its script
+          edited=$(mktemp)
+          sed 's/"marimo_version": "[^"]*"/"marimo_version": "'"${pin}"'"/' \
+            "${SCAFFOLD}/${SESSION}" > "$edited"
+          mv "$edited" "${SCAFFOLD}/${SESSION}"
+
+          stamped=$(sed -n 's/.*"marimo_version": "\([^"]*\)".*/\1/p' "${SCAFFOLD}/${SESSION}")
+          if [ "$stamped" != "$pin" ]; then
+            echo "::error::the session snapshot still states ${stamped}."
+            exit 1
+          fi
+          echo "::notice::the session snapshot is stamped to marimo ${pin}."
+          rm -f /tmp/bump-failed-step
+
+      - name: Write the changelog entry
+        id: entry
+        if: steps.decide.outputs.bump == 'true'
+        env:
+          AGAINST: ${{ steps.base.outputs.against }}
+        run: |
+          set -uo pipefail
+          # `make update-ai` can add a file, and an untracked one is invisible to `git diff`
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "::warning::nothing was refreshed. A release outside the bundled workspace's own version constraints cannot be resolved into the lock, and widening a constraint in ${SCAFFOLD}/pyproject.toml is a person's call."
+            echo "wrote=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # the entry names one target's skills, so a target arriving or going is said here
+          agents_before=$(ls /tmp/bump-base/_agents | sort | tr '\n' ' ')
+          agents_after=$(ls "${SCAFFOLD}/_agents" | sort | tr '\n' ' ')
+          if [ "$agents_before" != "$agents_after" ]; then
+            echo "::warning::the bundled agent targets went from [${agents_before}] to [${agents_after}] since ${AGAINST}. The entry names the skills under ${SKILLS} and no other target's."
+          fi
+
+          printf '%s\n' "writing the changelog entry" > /tmp/bump-failed-step
+          set +e
+          node "${GITHUB_WORKSPACE}/.github/workflows/bump-changelog-entry.cjs" \
+            --scaffold-before /tmp/bump-base/scaffold.uv.lock \
+            --scaffold-after "${SCAFFOLD}/uv.lock" \
+            --root-before /tmp/bump-base/root.uv.lock \
+            --root-after uv.lock \
+            --direct "${SCAFFOLD}/pyproject.toml" \
+            --root-direct pyproject.toml \
+            --also-name "${WATCHED// /,}" \
+            --skills-before "$(sed -n 's/^WORKBENCH_REF: str | None = "\(.*\)"$/\1/p' /tmp/bump-base/config.py | cut -c1-7)" \
+            --skills-after "$(sed -n 's/^WORKBENCH_REF: str | None = "\(.*\)"$/\1/p' src/create_dlthub_workspace/config.py | cut -c1-7)" \
+            --skills-dir-before "/tmp/bump-base/${SKILLS}" \
+            --skills-dir-after "${SCAFFOLD}/${SKILLS}" \
+            --session-before "$(sed -n 's/.*"marimo_version": "\([^"]*\)".*/\1/p' /tmp/bump-base/session.json)" \
+            --session-after "$(sed -n 's/.*"marimo_version": "\([^"]*\)".*/\1/p' "${SCAFFOLD}/${SESSION}")" \
+            --changelog CHANGELOG.md > /tmp/bump-entry.md
+          code=$?
+          set -e
+
+          # exit 1 is the script saying this run adds nothing to `## [Unreleased]`: no
+          # version moved, or the entry is the one the bump before it left. A bump with
+          # nothing to say opens nothing
+          if [ "$code" != "0" ]; then
+            echo "::warning::a lock was rewritten and nothing it moved is new to \`## [Unreleased]\`, so there is no pull request to open."
+            git checkout -- . && git clean -fdq
+            echo "wrote=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          rm -f /tmp/bump-failed-step
+          cat /tmp/bump-entry.md
+          echo "wrote=true" >> "$GITHUB_OUTPUT"
+
+      # before `make ci`, whose `check-ai` reads `git status` over the directory this run
+      # has just regenerated. Nothing is pushed here, so a red `make ci` leaves the target
+      # as it was
+      - name: Commit the bump
+        if: steps.entry.outputs.wrote == 'true'
+        env:
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+        run: |
+          set -euo pipefail
+          printf '%s\n' "committing the bump" > /tmp/bump-failed-step
+          git config user.name  "${APP_SLUG}[bot]"
+          git config user.email "${APP_SLUG}[bot]@users.noreply.github.com"
+          git switch -c "$BRANCH"
+          git add -A
+          git commit -q -m 'chore: refresh the bundled workspace lock'
+          rm -f /tmp/bump-failed-step
+
+      - name: make ci
+        if: steps.entry.outputs.wrote == 'true'
+        run: |
+          set -uo pipefail
+          printf '%s\n' "make ci" > /tmp/bump-failed-step
+          if ! make ci > /tmp/ci.log 2>&1; then
+            cat /tmp/ci.log
+            tail -n 60 /tmp/ci.log > /tmp/bump-failed-log
+            echo "::error::make ci failed"
+            exit 1
+          fi
+          cat /tmp/ci.log
+          rm -f /tmp/bump-failed-step
+
+      # written line by line: a heredoc terminator has to be unindented, and an unindented
+      # line inside a `run: |` block ends the block
+      - name: Open the pull request
+        if: steps.entry.outputs.wrote == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_REPO: ${{ github.repository }}
+          WHY: ${{ steps.decide.outputs.why }}
+          BASE: ${{ github.event.repository.default_branch }}
+          AGAINST: ${{ steps.base.outputs.against }}
+        run: |
+          set -euo pipefail
+          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+          {
+            echo "\`uvx dlthub-start\` scaffolds a workspace from the dependency locks in this repository. This refreshes them, so a new workspace resolves the newest \`dlt\`, \`dlthub\` and \`dlthub-client\` that \`${SCAFFOLD}/pyproject.toml\` allows, and the bundled AI workbench files come from the newest workbench commit. ${WHY}"
+            echo
+            echo "The version in the root \`pyproject.toml\` moves at a release and is left alone here. Publishing one stays a person's job."
+            echo
+            echo '## What changed'
+            echo
+            cat /tmp/bump-entry.md
+            echo
+            echo "Those bullets are the whole \`## [Unreleased]\` section, measured from ${AGAINST}. They cover every refresh merged since then and replace the bullets those left behind, so a version pair can start earlier than this pull request's own diff."
+            echo
+            echo '## How to check it'
+            echo
+            echo "\`make ci\` passed on [run ${GITHUB_RUN_ID}](${run_url}) before this branch was pushed, and this repository's own checks run it again here. It covers both lock guards, the launcher dependency check, the bundled workbench check, the unit and integration suites and the wheel build."
+            echo
+            echo "The entry above is the part a person checks: \`CHANGELOG.md\` has to name every dependency whose version moved since the last release, once each, with its old and new version, every skill the bundled agent workspace gained or lost in that span, and the marimo the notebook session snapshot is stamped to."
+            echo
+            echo "That snapshot is \`${SCAFFOLD}/${SESSION}\`, and its \`marimo_version\` has to equal the \`marimo\` the bundled lock resolves. The notebook replays its pre-built cell outputs while the two agree and starts a live kernel instead when they do not, which nothing reports."
+            echo
+            echo "Neither \`uv.lock\` is worth reading as a diff. The bullets above are the account of them, and \`${SCAFFOLD}/pyproject.toml\` is what decides which versions they may resolve to."
+            echo
+            echo 'No further refresh is prepared while this is open. Merge it or close it.'
+          } > /tmp/bump-pr.md
+
+          # after the body, so a body that could not be built leaves no branch behind
+          git push -q origin "$BRANCH"
+
+          # the tier and the reviewer request are normally the review pass's, and that pass
+          # cannot run here. the logins are a literal, held equal to the profile by a test
+          pr=$(gh pr create --base "$BASE" --head "$BRANCH" \
+            --title 'chore: refresh the bundled workspace lock' \
+            --label agent:authored --label risk:low \
+            --reviewer burnash,sh-rp,anuunchin,rudolfix \
+            --body-file /tmp/bump-pr.md | sed 's#.*/##')
+          echo "::notice::opened pull request #${pr}"
+
+          # a request naming an account without access here is accepted and requests nobody,
+          # so it is read back. an empty one is a warning: the pull request is already open
+          requested=$(gh pr view "$pr" --json reviewRequests \
+            --jq '[.reviewRequests[] | .login // .slug] | join(", ")')
+          if [ -z "$requested" ]; then
+            echo "::warning::no reviewer is requested on #${pr}. The logins in this workflow may not have access here."
+          else
+            echo "::notice::reviewers requested on #${pr}: ${requested}"
+          fi
+
+          # no reviewing pass is dispatched: this repository is public and the loop's own
+          # repository is private, so a stage run here dies before its first step. The
+          # reviewer requested above is who reads this
+
+      # stops the next hourly run too: the decide step reads an open issue as a bump in
+      # flight
+      - name: Report a failed recipe on an issue
+        if: failure() && steps.decide.outputs.bump == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_REPO: ${{ github.repository }}
+          WHY: ${{ steps.decide.outputs.why }}
+        run: |
+          set -uo pipefail
+          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          step="$(cat /tmp/bump-failed-step 2>/dev/null || echo 'a step before the refresh')"
+          {
+            echo "Refreshing the dependency locks that \`uvx dlthub-start\` ships failed. ${WHY}"
+            echo
+            echo "**\`${step}\` failed** on [run ${GITHUB_RUN_ID}](${run_url}). No branch was pushed and no pull request opened."
+            echo
+            echo '```'
+            cat /tmp/bump-failed-log 2>/dev/null || echo '(no output was captured)'
+            echo '```'
+            echo
+            echo 'No further refresh is prepared while this issue is open. Close it once the cause is fixed, or start `bump-dlthub-start.yml` by hand.'
+          } > /tmp/bump-failure.md
+          gh issue create \
+            --title 'chore: refresh the bundled workspace lock' \
+            --label risk:low --label agent:authored --label agent:needs-human \
+            --body-file /tmp/bump-failure.md \
+            || echo "::error::could not open the issue reporting ${step}"
