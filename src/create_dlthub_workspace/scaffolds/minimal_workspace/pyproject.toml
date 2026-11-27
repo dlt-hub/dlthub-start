@@ -21,8 +21,8 @@ dependencies = [
 ]
 
 [tool.uv]
-# deltalake 1.6.1 ships no Windows wheel; cap until it does.
-constraint-dependencies = ["deltalake<1.6.1"]
+# deltalake 1.6.1 and loro 1.19.0 ship no Windows wheel; cap until they do.
+constraint-dependencies = ["deltalake<1.6.1", "loro<1.19.0"]
 
 [tool.uv.sources]
 
