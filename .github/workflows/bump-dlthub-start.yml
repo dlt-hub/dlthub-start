@@ -30,8 +30,8 @@ concurrency:
 env:
   SCAFFOLD: src/create_dlthub_workspace/scaffolds/minimal_workspace
   # relative to the scaffold. The notebook replays its pre-built cell outputs only while
-  # this file's `marimo_version` matches the installed marimo, and nothing reports a
-  # mismatch. `make generate-ai` writes nothing under `notebooks/`, so this is stamped by hand
+  # this file's `marimo_version` matches the installed marimo. `make generate-ai` writes
+  # nothing under `notebooks/`, so the bump stamps this one by hand
   SESSION: notebooks/onboarding_success/__marimo__/session/onboarding_success.py.json
   # relative to the scaffold. `make update-ai` regenerates one tree per agent target
   SKILLS: _agents/claude/.claude/skills
@@ -375,25 +375,21 @@ jobs:
           run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
 
           {
-            echo "\`uvx dlthub-start\` scaffolds a workspace from the dependency locks in this repository. This refreshes them, so a new workspace resolves the newest \`dlt\`, \`dlthub\` and \`dlthub-client\` that \`${SCAFFOLD}/pyproject.toml\` allows, and the bundled AI workbench files come from the newest workbench commit. ${WHY}"
+            echo '## Overview'
             echo
-            echo "The version in the root \`pyproject.toml\` moves at a release and is left alone here. Publishing one stays a person's job."
+            echo "\`uvx dlthub-start\` builds a workspace from the dependency locks in this repository. This refreshes them and brings the bundled AI workbench files up to the newest workbench commit. ${WHY}"
             echo
-            echo '## What changed'
+            echo '## Changes'
             echo
             cat /tmp/bump-entry.md
             echo
-            echo "Those bullets are the whole \`## [Unreleased]\` section, measured from ${AGAINST}. They cover every refresh merged since then and replace the bullets those left behind, so a version pair can start earlier than this pull request's own diff."
+            echo "These bullets are the whole \`## [Unreleased]\` section, measured from ${AGAINST}, so a version pair can start earlier than this pull request's own diff."
             echo
-            echo '## How to check it'
+            echo "\`CHANGELOG.md\` is the part to read: it has to name every dependency whose version moved since the last release, once each with both versions, and every skill the bundled agent workspace gained or lost. It is the account of both \`uv.lock\` files, so neither is worth reading as a diff. The version in the root \`pyproject.toml\` moves at a release and is untouched here."
             echo
-            echo "\`make ci\` passed on [run ${GITHUB_RUN_ID}](${run_url}) before this branch was pushed, and this repository's own checks run it again here. It covers both lock guards, the launcher dependency check, the bundled workbench check, the unit and integration suites and the wheel build."
+            echo '## Tests'
             echo
-            echo "The entry above is the part a person checks: \`CHANGELOG.md\` has to name every dependency whose version moved since the last release, once each, with its old and new version, every skill the bundled agent workspace gained or lost in that span, and the marimo the notebook session snapshot is stamped to."
-            echo
-            echo "That snapshot is \`${SCAFFOLD}/${SESSION}\`, and its \`marimo_version\` has to equal the \`marimo\` the bundled lock resolves. The notebook replays its pre-built cell outputs while the two agree and starts a live kernel instead when they do not, which nothing reports."
-            echo
-            echo "Neither \`uv.lock\` is worth reading as a diff. The bullets above are the account of them, and \`${SCAFFOLD}/pyproject.toml\` is what decides which versions they may resolve to."
+            echo "\`make ci\` passed on [run ${GITHUB_RUN_ID}](${run_url}) and runs again on this branch."
             echo
             echo 'No further refresh is prepared while this is open. Merge it or close it.'
           } > /tmp/bump-pr.md
